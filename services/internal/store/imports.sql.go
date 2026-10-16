@@ -423,6 +423,48 @@ func (q *Queries) ListEnabledSourceAdapters(ctx context.Context) ([]SourceAdapte
 	return items, nil
 }
 
+const listImportsForProduct = `-- name: ListImportsForProduct :many
+SELECT id, source, status, decision, payload, normalized, warnings, error, duplicate_candidates, product_id, duplicate_of_id, captured_page_id, device_id, created_by, reviewed_by, created_at, processed_at FROM product_imports WHERE product_id = $1 OR duplicate_of_id = $1 ORDER BY created_at DESC LIMIT 50
+`
+
+func (q *Queries) ListImportsForProduct(ctx context.Context, productID *uuid.UUID) ([]ProductImport, error) {
+	rows, err := q.db.Query(ctx, listImportsForProduct, productID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ProductImport{}
+	for rows.Next() {
+		var i ProductImport
+		if err := rows.Scan(
+			&i.ID,
+			&i.Source,
+			&i.Status,
+			&i.Decision,
+			&i.Payload,
+			&i.Normalized,
+			&i.Warnings,
+			&i.Error,
+			&i.DuplicateCandidates,
+			&i.ProductID,
+			&i.DuplicateOfID,
+			&i.CapturedPageID,
+			&i.DeviceID,
+			&i.CreatedBy,
+			&i.ReviewedBy,
+			&i.CreatedAt,
+			&i.ProcessedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listProductImports = `-- name: ListProductImports :many
 SELECT i.id, i.source, i.status, i.decision, i.payload, i.normalized, i.warnings, i.error, i.duplicate_candidates, i.product_id, i.duplicate_of_id, i.captured_page_id, i.device_id, i.created_by, i.reviewed_by, i.created_at, i.processed_at, p.title AS product_title, u.display_name AS created_by_name, count(*) OVER () AS total
 FROM product_imports i

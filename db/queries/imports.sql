@@ -75,3 +75,6 @@ WHERE id = $1 RETURNING *;
 
 -- name: DeleteSourceAdapter :execrows
 DELETE FROM source_adapters WHERE id = $1 AND kind = 'selector';
+
+-- name: ListImportsForProduct :many
+SELECT * FROM product_imports WHERE product_id = $1 OR duplicate_of_id = $1 ORDER BY created_at DESC LIMIT 50;

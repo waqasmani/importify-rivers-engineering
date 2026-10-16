@@ -1,0 +1,32 @@
+# Dependencies and builds
+node_modules/
+dist/
+dist-*/
+coverage/
+*.tsbuildinfo
+/bin/
+/build/
+.vite/
+
+# Local runtime data and secrets
+.env
+.env.*
+!.env.example
+/data/
+deploy/.env
+deploy/data/
+deploy/backups/
+*.pem
+*.key
+!apps/extension/manifest-key.txt
+
+# Test output
+playwright-report/
+test-results/
+apps/web/playwright/.cache/
+
+# Editors
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store

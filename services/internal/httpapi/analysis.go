@@ -835,18 +835,13 @@ func (s *Server) handleListFindings(w http.ResponseWriter, r *http.Request) erro
 	if err != nil {
 		return err
 	}
-	type item struct {
-		store.AnalysisFinding
-		SourceTitle *string `json:"source_title"`
-		SourceKind  *string `json:"source_kind"`
-	}
-	out := make([]item, 0, len(rows))
+	out := make([]FindingListItem, 0, len(rows))
 	var total int64
 	for _, row := range rows {
-		out = append(out, item{row.AnalysisFinding, row.SourceTitle, row.SourceKind})
+		out = append(out, FindingListItem{row.AnalysisFinding, row.SourceTitle, row.SourceKind})
 		total = row.Total
 	}
-	return ok(w, Page[item]{Items: out, Total: total, Limit: limit, Offset: offset})
+	return ok(w, Page[FindingListItem]{Items: out, Total: total, Limit: limit, Offset: offset})
 }
 
 func (s *Server) handleFindingSummary(w http.ResponseWriter, r *http.Request) error {

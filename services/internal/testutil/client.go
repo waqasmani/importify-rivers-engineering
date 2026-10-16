@@ -20,6 +20,8 @@ type Client struct {
 	CSRF    string
 	Bearer  string
 	Headers map[string]string
+	// Validate, when set, checks every response (for example against the OpenAPI document).
+	Validate func(req *http.Request, res *Response)
 }
 
 // NewClient creates a client for srv.
@@ -100,6 +102,9 @@ func (c *Client) send(req *http.Request) *Response {
 	out := &Response{Status: resp.StatusCode, Header: resp.Header, Body: raw}
 	if strings.HasPrefix(resp.Header.Get("Content-Type"), "application/json") {
 		_ = json.Unmarshal(raw, &out.JSON)
+	}
+	if c.Validate != nil {
+		c.Validate(req, out)
 	}
 	return out
 }

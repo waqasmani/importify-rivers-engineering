@@ -30,3 +30,4 @@ apps/web/playwright/.cache/
 .vscode/*
 !.vscode/extensions.json
 .DS_Store
+.pnpm-store/

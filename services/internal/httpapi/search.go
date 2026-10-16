@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/auth"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/store"
@@ -37,16 +36,10 @@ func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	p := principal(r)
-	type hit struct {
-		EntityType string    `json:"entity_type"`
-		ID         uuid.UUID `json:"id"`
-		Title      string    `json:"title"`
-		Subtitle   string    `json:"subtitle"`
-	}
-	out := []hit{}
+	out := []SearchHit{}
 	for _, row := range rows {
 		if p.Can(searchPerms[row.EntityType]) {
-			out = append(out, hit{row.EntityType, row.ID, row.Title, row.Subtitle})
+			out = append(out, SearchHit{row.EntityType, row.ID, row.Title, row.Subtitle})
 		}
 	}
 	return ok(w, map[string]any{"items": out, "query": q})

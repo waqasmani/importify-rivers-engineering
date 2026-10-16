@@ -128,7 +128,8 @@ func Normalize(p Payload, opt Options) (Normalized, valid.Errors) {
 			w = append(w, normalize.Truncate(pw, 300))
 		}
 	}
-	n := Normalized{Identifiers: map[string]string{}, Specifications: map[string]string{}, Evidence: map[string]string{}}
+	n := Normalized{Identifiers: map[string]string{}, Specifications: map[string]string{}, Evidence: map[string]string{},
+		Images: []Image{}, Variants: []NormVariant{}, Warnings: []string{}}
 
 	n.Title = normalize.Truncate(normalize.Text(p.Title), 500)
 	v.Check(n.Title != "", "title", "is required; select the product title on the page if it was not detected")

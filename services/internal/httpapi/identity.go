@@ -451,18 +451,9 @@ func (s *Server) handleListSessions(w http.ResponseWriter, r *http.Request) erro
 	if err != nil {
 		return err
 	}
-	type sv struct {
-		ID         uuid.UUID `json:"id"`
-		IPAddress  string    `json:"ip_address"`
-		UserAgent  string    `json:"user_agent"`
-		CreatedAt  time.Time `json:"created_at"`
-		LastSeenAt time.Time `json:"last_seen_at"`
-		ExpiresAt  time.Time `json:"expires_at"`
-		Current    bool      `json:"current"`
-	}
-	out := make([]sv, 0, len(rows))
+	out := make([]SessionView, 0, len(rows))
 	for _, s := range rows {
-		out = append(out, sv{s.ID, s.IpAddress, s.UserAgent, s.CreatedAt, s.LastSeenAt, s.ExpiresAt, s.ID == p.SessionID})
+		out = append(out, SessionView{s.ID, s.IpAddress, s.UserAgent, s.CreatedAt, s.LastSeenAt, s.ExpiresAt, s.ID == p.SessionID})
 	}
 	return ok(w, map[string]any{"items": out})
 }
@@ -616,15 +607,10 @@ func (s *Server) handleUserDirectory(w http.ResponseWriter, r *http.Request) err
 	if err != nil {
 		return err
 	}
-	type entry struct {
-		ID          uuid.UUID `json:"id"`
-		DisplayName string    `json:"display_name"`
-		Email       string    `json:"email"`
-	}
-	out := []entry{}
+	out := []DirectoryUser{}
 	for _, u := range rows {
 		if u.User.IsActive {
-			out = append(out, entry{u.User.ID, u.User.DisplayName, u.User.Email})
+			out = append(out, DirectoryUser{u.User.ID, u.User.DisplayName, u.User.Email})
 		}
 	}
 	return ok(w, map[string]any{"items": out})

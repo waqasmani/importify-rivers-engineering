@@ -117,6 +117,7 @@ func (s *Server) Routes() http.Handler {
 		r.Group(func(r chi.Router) {
 			r.Use(s.rateLimit(20, 10))
 			r.Get("/setup/status", s.h(s.handleSetupStatus))
+			r.Get("/openapi.json", s.h(s.handleOpenAPI))
 			r.Post("/setup", s.h(s.handleSetup))
 			r.Post("/auth/login", s.h(s.handleLogin))
 			r.Post("/extension/pair", s.h(s.handleExtensionPair))

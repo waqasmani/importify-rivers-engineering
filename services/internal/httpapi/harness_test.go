@@ -51,7 +51,11 @@ func newEnv(t *testing.T) *env {
 	return e
 }
 
-func (e *env) client() *testutil.Client { return testutil.NewClient(e.t, e.srv) }
+func (e *env) client() *testutil.Client {
+	c := testutil.NewClient(e.t, e.srv)
+	c.Validate = contractValidator(e.t)
+	return c
+}
 
 // login signs a user in and returns a client holding the session.
 func (e *env) login(email, password string) *testutil.Client {

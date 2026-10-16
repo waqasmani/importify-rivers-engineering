@@ -393,19 +393,14 @@ func (s *Server) handleListImports(w http.ResponseWriter, r *http.Request) error
 	if err != nil {
 		return err
 	}
-	type item struct {
-		store.ProductImport
-		ProductTitle  *string `json:"product_title,omitempty"`
-		CreatedByName *string `json:"created_by_name,omitempty"`
-	}
-	out := make([]item, 0, len(rows))
+	out := make([]ImportListItem, 0, len(rows))
 	var total int64
 	for _, row := range rows {
-		row.ProductImport.Payload = nil // keep the queue light; fetch one import for the full payload
-		out = append(out, item{ProductImport: row.ProductImport, ProductTitle: row.ProductTitle, CreatedByName: row.CreatedByName})
+		row.ProductImport.Payload = json.RawMessage("{}") // keep the queue light; fetch one import for the full payload
+		out = append(out, ImportListItem{ProductImport: row.ProductImport, ProductTitle: row.ProductTitle, CreatedByName: row.CreatedByName})
 		total = row.Total
 	}
-	return ok(w, Page[item]{Items: out, Total: total, Limit: limit, Offset: offset})
+	return ok(w, Page[ImportListItem]{Items: out, Total: total, Limit: limit, Offset: offset})
 }
 
 func (s *Server) handleGetImport(w http.ResponseWriter, r *http.Request) error {

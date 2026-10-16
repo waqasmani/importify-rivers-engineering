@@ -39,6 +39,10 @@ type AiJob struct {
 	FinishedAt            *time.Time      `json:"finished_at"`
 	LockedBy              string          `json:"locked_by"`
 	LockedAt              *time.Time      `json:"locked_at"`
+	Grounding             json.RawMessage `json:"grounding"`
+	AppliedAt             *time.Time      `json:"applied_at"`
+	AppliedBy             *uuid.UUID      `json:"applied_by"`
+	ApplyResult           json.RawMessage `json:"apply_result"`
 }
 
 type AiProviderConfig struct {

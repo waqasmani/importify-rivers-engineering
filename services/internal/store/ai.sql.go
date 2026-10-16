@@ -29,7 +29,7 @@ func (q *Queries) CancelAIJob(ctx context.Context, id uuid.UUID) (int64, error) 
 const claimAIJob = `-- name: ClaimAIJob :one
 UPDATE ai_jobs SET status = 'running', started_at = now(), attempts = attempts + 1, locked_by = $1, locked_at = now()
 WHERE id = (SELECT id FROM ai_jobs WHERE status = 'queued' ORDER BY queued_at FOR UPDATE SKIP LOCKED LIMIT 1)
-RETURNING id, tool, status, provider_config_id, provider_kind, provider_name, model, entity_type, entity_id, input, evidence_refs, output, output_text, error, attempts, max_attempts, input_tokens, output_tokens, duration_ms, external_data_confirmed, requested_by, queued_at, started_at, finished_at, locked_by, locked_at
+RETURNING id, tool, status, provider_config_id, provider_kind, provider_name, model, entity_type, entity_id, input, evidence_refs, output, output_text, error, attempts, max_attempts, input_tokens, output_tokens, duration_ms, external_data_confirmed, requested_by, queued_at, started_at, finished_at, locked_by, locked_at, grounding, applied_at, applied_by, apply_result
 `
 
 func (q *Queries) ClaimAIJob(ctx context.Context, lockedBy string) (AiJob, error) {
@@ -62,6 +62,10 @@ func (q *Queries) ClaimAIJob(ctx context.Context, lockedBy string) (AiJob, error
 		&i.FinishedAt,
 		&i.LockedBy,
 		&i.LockedAt,
+		&i.Grounding,
+		&i.AppliedAt,
+		&i.AppliedBy,
+		&i.ApplyResult,
 	)
 	return i, err
 }
@@ -166,7 +170,7 @@ const enqueueAIJob = `-- name: EnqueueAIJob :one
 INSERT INTO ai_jobs (tool, provider_config_id, provider_kind, provider_name, model, entity_type, entity_id, input,
   evidence_refs, external_data_confirmed, requested_by)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-RETURNING id, tool, status, provider_config_id, provider_kind, provider_name, model, entity_type, entity_id, input, evidence_refs, output, output_text, error, attempts, max_attempts, input_tokens, output_tokens, duration_ms, external_data_confirmed, requested_by, queued_at, started_at, finished_at, locked_by, locked_at
+RETURNING id, tool, status, provider_config_id, provider_kind, provider_name, model, entity_type, entity_id, input, evidence_refs, output, output_text, error, attempts, max_attempts, input_tokens, output_tokens, duration_ms, external_data_confirmed, requested_by, queued_at, started_at, finished_at, locked_by, locked_at, grounding, applied_at, applied_by, apply_result
 `
 
 type EnqueueAIJobParams struct {
@@ -225,13 +229,18 @@ func (q *Queries) EnqueueAIJob(ctx context.Context, arg EnqueueAIJobParams) (AiJ
 		&i.FinishedAt,
 		&i.LockedBy,
 		&i.LockedAt,
+		&i.Grounding,
+		&i.AppliedAt,
+		&i.AppliedBy,
+		&i.ApplyResult,
 	)
 	return i, err
 }
 
 const finishAIJob = `-- name: FinishAIJob :exec
 UPDATE ai_jobs SET status = $2, output = $3, output_text = $4, error = $5, input_tokens = $6, output_tokens = $7,
-  duration_ms = $8, finished_at = now(), locked_by = '', locked_at = NULL
+  duration_ms = $8, grounding = $9, evidence_refs = $10, model = CASE WHEN $11::text = '' THEN model ELSE $11::text END,
+  finished_at = now(), locked_by = '', locked_at = NULL
 WHERE id = $1
 `
 
@@ -244,6 +253,9 @@ type FinishAIJobParams struct {
 	InputTokens  *int32          `json:"input_tokens"`
 	OutputTokens *int32          `json:"output_tokens"`
 	DurationMs   *int32          `json:"duration_ms"`
+	Grounding    json.RawMessage `json:"grounding"`
+	EvidenceRefs json.RawMessage `json:"evidence_refs"`
+	ServedModel  string          `json:"served_model"`
 }
 
 func (q *Queries) FinishAIJob(ctx context.Context, arg FinishAIJobParams) error {
@@ -256,12 +268,15 @@ func (q *Queries) FinishAIJob(ctx context.Context, arg FinishAIJobParams) error 
 		arg.InputTokens,
 		arg.OutputTokens,
 		arg.DurationMs,
+		arg.Grounding,
+		arg.EvidenceRefs,
+		arg.ServedModel,
 	)
 	return err
 }
 
 const getAIJob = `-- name: GetAIJob :one
-SELECT id, tool, status, provider_config_id, provider_kind, provider_name, model, entity_type, entity_id, input, evidence_refs, output, output_text, error, attempts, max_attempts, input_tokens, output_tokens, duration_ms, external_data_confirmed, requested_by, queued_at, started_at, finished_at, locked_by, locked_at FROM ai_jobs WHERE id = $1
+SELECT id, tool, status, provider_config_id, provider_kind, provider_name, model, entity_type, entity_id, input, evidence_refs, output, output_text, error, attempts, max_attempts, input_tokens, output_tokens, duration_ms, external_data_confirmed, requested_by, queued_at, started_at, finished_at, locked_by, locked_at, grounding, applied_at, applied_by, apply_result FROM ai_jobs WHERE id = $1
 `
 
 func (q *Queries) GetAIJob(ctx context.Context, id uuid.UUID) (AiJob, error) {
@@ -294,6 +309,10 @@ func (q *Queries) GetAIJob(ctx context.Context, id uuid.UUID) (AiJob, error) {
 		&i.FinishedAt,
 		&i.LockedBy,
 		&i.LockedAt,
+		&i.Grounding,
+		&i.AppliedAt,
+		&i.AppliedBy,
+		&i.ApplyResult,
 	)
 	return i, err
 }
@@ -358,23 +377,25 @@ func (q *Queries) GetDefaultAIProvider(ctx context.Context) (AiProviderConfig, e
 
 const listAIJobs = `-- name: ListAIJobs :many
 SELECT id, tool, status, provider_name, provider_kind, model, entity_type, entity_id, error, attempts, input_tokens,
-  output_tokens, duration_ms, requested_by, queued_at, started_at, finished_at, count(*) OVER () AS total
+  output_tokens, duration_ms, requested_by, queued_at, started_at, finished_at, applied_at, count(*) OVER () AS total
 FROM ai_jobs
 WHERE ($1::text IS NULL OR status = $1)
   AND ($2::text IS NULL OR tool = $2)
   AND ($3::text IS NULL OR entity_type = $3)
   AND ($4::uuid IS NULL OR entity_id = $4)
+  AND ($5::uuid IS NULL OR requested_by = $5)
 ORDER BY queued_at DESC, id
-LIMIT $6 OFFSET $5
+LIMIT $7 OFFSET $6
 `
 
 type ListAIJobsParams struct {
-	Status     *string    `json:"status"`
-	Tool       *string    `json:"tool"`
-	EntityType *string    `json:"entity_type"`
-	EntityID   *uuid.UUID `json:"entity_id"`
-	Off        int32      `json:"off"`
-	Lim        int32      `json:"lim"`
+	Status      *string    `json:"status"`
+	Tool        *string    `json:"tool"`
+	EntityType  *string    `json:"entity_type"`
+	EntityID    *uuid.UUID `json:"entity_id"`
+	RequestedBy *uuid.UUID `json:"requested_by"`
+	Off         int32      `json:"off"`
+	Lim         int32      `json:"lim"`
 }
 
 type ListAIJobsRow struct {
@@ -395,6 +416,7 @@ type ListAIJobsRow struct {
 	QueuedAt     time.Time  `json:"queued_at"`
 	StartedAt    *time.Time `json:"started_at"`
 	FinishedAt   *time.Time `json:"finished_at"`
+	AppliedAt    *time.Time `json:"applied_at"`
 	Total        int64      `json:"total"`
 }
 
@@ -404,6 +426,7 @@ func (q *Queries) ListAIJobs(ctx context.Context, arg ListAIJobsParams) ([]ListA
 		arg.Tool,
 		arg.EntityType,
 		arg.EntityID,
+		arg.RequestedBy,
 		arg.Off,
 		arg.Lim,
 	)
@@ -432,6 +455,7 @@ func (q *Queries) ListAIJobs(ctx context.Context, arg ListAIJobsParams) ([]ListA
 			&i.QueuedAt,
 			&i.StartedAt,
 			&i.FinishedAt,
+			&i.AppliedAt,
 			&i.Total,
 		); err != nil {
 			return nil, err
@@ -484,6 +508,24 @@ func (q *Queries) ListAIProviders(ctx context.Context) ([]AiProviderConfig, erro
 		return nil, err
 	}
 	return items, nil
+}
+
+const markAIJobApplied = `-- name: MarkAIJobApplied :execrows
+UPDATE ai_jobs SET applied_at = now(), applied_by = $2, apply_result = $3 WHERE id = $1 AND applied_at IS NULL AND status = 'succeeded'
+`
+
+type MarkAIJobAppliedParams struct {
+	ID          uuid.UUID       `json:"id"`
+	AppliedBy   *uuid.UUID      `json:"applied_by"`
+	ApplyResult json.RawMessage `json:"apply_result"`
+}
+
+func (q *Queries) MarkAIJobApplied(ctx context.Context, arg MarkAIJobAppliedParams) (int64, error) {
+	result, err := q.db.Exec(ctx, markAIJobApplied, arg.ID, arg.AppliedBy, arg.ApplyResult)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const requeueStaleAIJobs = `-- name: RequeueStaleAIJobs :execrows

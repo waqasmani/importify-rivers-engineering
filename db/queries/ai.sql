@@ -45,8 +45,12 @@ RETURNING *;
 
 -- name: FinishAIJob :exec
 UPDATE ai_jobs SET status = $2, output = $3, output_text = $4, error = $5, input_tokens = $6, output_tokens = $7,
-  duration_ms = $8, finished_at = now(), locked_by = '', locked_at = NULL
+  duration_ms = $8, grounding = $9, evidence_refs = $10, model = CASE WHEN sqlc.arg(served_model)::text = '' THEN model ELSE sqlc.arg(served_model)::text END,
+  finished_at = now(), locked_by = '', locked_at = NULL
 WHERE id = $1;
+
+-- name: MarkAIJobApplied :execrows
+UPDATE ai_jobs SET applied_at = now(), applied_by = $2, apply_result = $3 WHERE id = $1 AND applied_at IS NULL AND status = 'succeeded';
 
 -- name: RetryAIJob :exec
 UPDATE ai_jobs SET status = 'queued', error = $2, locked_by = '', locked_at = NULL WHERE id = $1;
@@ -62,12 +66,13 @@ SELECT * FROM ai_jobs WHERE id = $1;
 
 -- name: ListAIJobs :many
 SELECT id, tool, status, provider_name, provider_kind, model, entity_type, entity_id, error, attempts, input_tokens,
-  output_tokens, duration_ms, requested_by, queued_at, started_at, finished_at, count(*) OVER () AS total
+  output_tokens, duration_ms, requested_by, queued_at, started_at, finished_at, applied_at, count(*) OVER () AS total
 FROM ai_jobs
 WHERE (sqlc.narg('status')::text IS NULL OR status = sqlc.narg('status'))
   AND (sqlc.narg('tool')::text IS NULL OR tool = sqlc.narg('tool'))
   AND (sqlc.narg('entity_type')::text IS NULL OR entity_type = sqlc.narg('entity_type'))
   AND (sqlc.narg('entity_id')::uuid IS NULL OR entity_id = sqlc.narg('entity_id'))
+  AND (sqlc.narg('requested_by')::uuid IS NULL OR requested_by = sqlc.narg('requested_by'))
 ORDER BY queued_at DESC, id
 LIMIT sqlc.arg(lim) OFFSET sqlc.arg(off);
 

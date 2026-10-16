@@ -13,3 +13,4 @@ func sha256Hex(s string) string {
 }
 
 func sanitizeSnapshot(src string) (string, error) { return htmlx.SanitizeSnapshot(src) }
+

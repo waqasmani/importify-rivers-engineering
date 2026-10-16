@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><head><title>Sign in — Acme Portal</title>
+<script src="/_next/static/chunks/main-abc123.js"></script>
+<script src="https://js.stripe.com/v3/"></script></head>
+<body><div id="__next">
+<header><nav><a href="/features">Features</a><a href="/pricing">Pricing</a><a href="/login">Sign in</a></nav></header>
+<h1>Sign in to your account</h1>
+<form id="login" action="/api/auth/login" method="post">
+  <label for="email">Email</label><input id="email" name="email" type="email" required>
+  <label for="password">Password</label><input id="password" name="password" type="password" value="should-never-be-read" required>
+  <input type="hidden" name="csrf" value="tok123">
+  <button>Sign in</button>
+</form>
+<form action="/newsletter"><input name="email" type="email" placeholder="Your email"></form>
+</div></body></html>

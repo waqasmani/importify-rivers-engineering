@@ -166,3 +166,6 @@ INSERT INTO saved_filters (user_id, entity_type, name, filters, is_shared) VALUE
 
 -- name: DeleteSavedFilter :execrows
 DELETE FROM saved_filters WHERE id = $1 AND user_id = $2;
+
+-- name: LinkAttachment :exec
+UPDATE attachments SET entity_type = $2, entity_id = $3 WHERE id = $1;

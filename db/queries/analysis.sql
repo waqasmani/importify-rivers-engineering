@@ -144,3 +144,6 @@ FROM analysis_reports WHERE project_id = $1 ORDER BY created_at DESC LIMIT 200;
 
 -- name: DeleteReport :execrows
 DELETE FROM analysis_reports WHERE id = $1 AND project_id = $2;
+
+-- name: SetAnalysisSourceStatus :exec
+UPDATE analysis_sources SET status = $2, error = $3 WHERE id = $1;

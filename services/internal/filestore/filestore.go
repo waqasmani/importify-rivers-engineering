@@ -111,3 +111,11 @@ func (s *Store) Keys() ([]string, error) {
 	})
 	return keys, err
 }
+
+// Path returns the on-disk path of a stored file for read-only processing.
+func (s *Store) Path(key string) (string, error) {
+	if !keyRe.MatchString(key) {
+		return "", errors.New("invalid storage key")
+	}
+	return filepath.Join(s.root, filepath.FromSlash(key)), nil
+}

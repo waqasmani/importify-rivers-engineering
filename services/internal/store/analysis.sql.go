@@ -1083,6 +1083,21 @@ func (q *Queries) RequeueStaleAnalysisRuns(ctx context.Context, staleSeconds int
 	return result.RowsAffected(), nil
 }
 
+const setAnalysisSourceStatus = `-- name: SetAnalysisSourceStatus :exec
+UPDATE analysis_sources SET status = $2, error = $3 WHERE id = $1
+`
+
+type SetAnalysisSourceStatusParams struct {
+	ID     uuid.UUID `json:"id"`
+	Status string    `json:"status"`
+	Error  string    `json:"error"`
+}
+
+func (q *Queries) SetAnalysisSourceStatus(ctx context.Context, arg SetAnalysisSourceStatusParams) error {
+	_, err := q.db.Exec(ctx, setAnalysisSourceStatus, arg.ID, arg.Status, arg.Error)
+	return err
+}
+
 const touchAnalysisProject = `-- name: TouchAnalysisProject :exec
 UPDATE analysis_projects SET updated_at = now() WHERE id = $1
 `

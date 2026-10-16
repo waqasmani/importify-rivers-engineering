@@ -1,0 +1,73 @@
+openapi: 3.0.3
+info:
+  title: Warehouse Inventory API
+  version: 2.1.0
+  description: Example contract used by REA tests.
+servers:
+  - url: https://api.warehouse.example/v2
+security:
+  - bearerAuth: []
+paths:
+  /items:
+    get:
+      summary: List stock items
+      operationId: listItems
+      parameters:
+        - name: page
+          in: query
+          schema: {type: integer}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Item'}
+    post:
+      summary: Create a stock item
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/Item'}
+      responses:
+        '201': {description: Created}
+  /items/{itemId}:
+    parameters:
+      - name: itemId
+        in: path
+        required: true
+        schema: {type: string}
+    get:
+      summary: Get one item
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Item'}
+        '404': {description: Not found}
+  /health:
+    get:
+      summary: Health check
+      security: []
+      responses:
+        '200': {description: OK}
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    Item:
+      type: object
+      required: [sku, quantity]
+      properties:
+        sku: {type: string}
+        quantity: {type: integer}
+        location: {$ref: '#/components/schemas/Location'}
+    Location:
+      type: object
+      properties:
+        aisle: {type: string}
+        bin: {type: string}

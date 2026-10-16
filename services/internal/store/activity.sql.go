@@ -516,6 +516,21 @@ func (q *Queries) GetTask(ctx context.Context, id uuid.UUID) (Task, error) {
 	return i, err
 }
 
+const linkAttachment = `-- name: LinkAttachment :exec
+UPDATE attachments SET entity_type = $2, entity_id = $3 WHERE id = $1
+`
+
+type LinkAttachmentParams struct {
+	ID         uuid.UUID  `json:"id"`
+	EntityType *string    `json:"entity_type"`
+	EntityID   *uuid.UUID `json:"entity_id"`
+}
+
+func (q *Queries) LinkAttachment(ctx context.Context, arg LinkAttachmentParams) error {
+	_, err := q.db.Exec(ctx, linkAttachment, arg.ID, arg.EntityType, arg.EntityID)
+	return err
+}
+
 const listAllStorageKeys = `-- name: ListAllStorageKeys :many
 SELECT DISTINCT storage_key FROM attachments
 `

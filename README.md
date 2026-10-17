@@ -28,6 +28,10 @@ telemetry, and AI is optional.
   multiplier, fixed amounts, minimum price and margin, .99-style or step rounding, compare-at
   prices) set the selling price for products and variants. Manual prices can be locked; bulk
   reprice shows a dry run first. Exact decimal maths, no rate fetching.
+- **Catalog API and webhooks** — your storefront, ERP or scripts read approved products through
+  a REST API with keyset pagination, ETags and an ordered change feed with tombstones, or receive
+  signed webhooks, using organization-owned integration keys with scopes (costs and suppliers
+  only when granted). No store plugins: your systems pull, REA never pushes on its own.
 - **Browser extension** (Chrome, Manifest V3) — capture pages, import products with site adapters
   (JSON-LD, microdata, Open Graph, Shopify, WooCommerce, Alibaba, custom selectors, generic
   fallback), an element picker, page inspector, quick research, AI analysis and save-to-CRM,
@@ -73,6 +77,7 @@ OpenAPI 3 generated from the Go types.
 | [architecture.md](docs/architecture.md) | Components, data model, jobs, analysis engine, AI layer |
 | [api.md](docs/api.md) | Authentication, conventions, OpenAPI |
 | [pricing.md](docs/pricing.md) | Source price, cost and selling price, pricing rules with worked examples, exchange rates, pricing API |
+| [catalog-api.md](docs/catalog-api.md) | Catalog API, integration keys, change feed sync, webhooks and signature verification |
 | [extension.md](docs/extension.md) | Building, installing and pairing the extension, permissions, troubleshooting |
 | [development.md](docs/development.md) | Local development, tests, code generation |
 | [progress.md](docs/progress.md) | What was built in each phase and how it was verified |

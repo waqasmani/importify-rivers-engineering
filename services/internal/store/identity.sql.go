@@ -640,21 +640,23 @@ func (q *Queries) GetWorkspace(ctx context.Context, id uuid.UUID) (Workspace, er
 }
 
 const insertAuditLog = `-- name: InsertAuditLog :exec
-INSERT INTO audit_logs (actor_user_id, actor_device_id, actor_label, action, entity_type, entity_id, summary, changes, ip_address, request_id)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+INSERT INTO audit_logs (actor_user_id, actor_device_id, actor_label, action, entity_type, entity_id, summary, changes, ip_address, request_id,
+  actor_integration_key_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 `
 
 type InsertAuditLogParams struct {
-	ActorUserID   *uuid.UUID      `json:"actor_user_id"`
-	ActorDeviceID *uuid.UUID      `json:"actor_device_id"`
-	ActorLabel    string          `json:"actor_label"`
-	Action        string          `json:"action"`
-	EntityType    string          `json:"entity_type"`
-	EntityID      *uuid.UUID      `json:"entity_id"`
-	Summary       string          `json:"summary"`
-	Changes       json.RawMessage `json:"changes"`
-	IpAddress     string          `json:"ip_address"`
-	RequestID     string          `json:"request_id"`
+	ActorUserID           *uuid.UUID      `json:"actor_user_id"`
+	ActorDeviceID         *uuid.UUID      `json:"actor_device_id"`
+	ActorLabel            string          `json:"actor_label"`
+	Action                string          `json:"action"`
+	EntityType            string          `json:"entity_type"`
+	EntityID              *uuid.UUID      `json:"entity_id"`
+	Summary               string          `json:"summary"`
+	Changes               json.RawMessage `json:"changes"`
+	IpAddress             string          `json:"ip_address"`
+	RequestID             string          `json:"request_id"`
+	ActorIntegrationKeyID *uuid.UUID      `json:"actor_integration_key_id"`
 }
 
 func (q *Queries) InsertAuditLog(ctx context.Context, arg InsertAuditLogParams) error {
@@ -669,12 +671,13 @@ func (q *Queries) InsertAuditLog(ctx context.Context, arg InsertAuditLogParams) 
 		arg.Changes,
 		arg.IpAddress,
 		arg.RequestID,
+		arg.ActorIntegrationKeyID,
 	)
 	return err
 }
 
 const listAuditLogs = `-- name: ListAuditLogs :many
-SELECT id, occurred_at, actor_user_id, actor_device_id, actor_label, action, entity_type, entity_id, summary, changes, ip_address, request_id FROM audit_logs
+SELECT id, occurred_at, actor_user_id, actor_device_id, actor_label, action, entity_type, entity_id, summary, changes, ip_address, request_id, actor_integration_key_id FROM audit_logs
 WHERE ($1::text IS NULL OR entity_type = $1)
   AND ($2::uuid IS NULL OR entity_id = $2)
   AND ($3::uuid IS NULL OR actor_user_id = $3)
@@ -722,6 +725,7 @@ func (q *Queries) ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([
 			&i.Changes,
 			&i.IpAddress,
 			&i.RequestID,
+			&i.ActorIntegrationKeyID,
 		); err != nil {
 			return nil, err
 		}

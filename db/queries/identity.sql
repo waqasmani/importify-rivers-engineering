@@ -150,8 +150,9 @@ UPDATE workspaces SET name = $2, slug = $3, description = $4 WHERE id = $1 RETUR
 DELETE FROM workspaces w WHERE w.id = $1 AND NOT EXISTS (SELECT 1 FROM analysis_projects p WHERE p.workspace_id = w.id);
 
 -- name: InsertAuditLog :exec
-INSERT INTO audit_logs (actor_user_id, actor_device_id, actor_label, action, entity_type, entity_id, summary, changes, ip_address, request_id)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
+INSERT INTO audit_logs (actor_user_id, actor_device_id, actor_label, action, entity_type, entity_id, summary, changes, ip_address, request_id,
+  actor_integration_key_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, sqlc.narg(actor_integration_key_id));
 
 -- name: ListAuditLogs :many
 SELECT * FROM audit_logs

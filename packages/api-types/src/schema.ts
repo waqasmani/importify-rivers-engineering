@@ -842,6 +842,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/catalog/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ordered change feed with tombstones (410 when the cursor is outside the retained feed) */
+        get: operations["listCatalogChanges"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/catalog/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Published products in catalog version order (keyset pagination; cursor from next_cursor) */
+        get: operations["listCatalogProducts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/catalog/products/by-sku/{sku}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A published product by product or variant SKU (409 when several match) */
+        get: operations["getCatalogProductBySKU"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/catalog/products/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One published product */
+        get: operations["getCatalogProduct"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/companies": {
         parameters: {
             query?: never;
@@ -1337,6 +1405,180 @@ export interface paths {
         put?: never;
         /** Decide a parked duplicate */
         post: operations["resolveImport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/integrations/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Scopes, event types, API base URL and webhook delivery policy */
+        get: operations["integrationsConfig"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/integrations/deliveries/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A delivery with its payload and attempts */
+        get: operations["getWebhookDelivery"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/integrations/deliveries/{id}/redeliver": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Queue the same event again */
+        post: operations["redeliverWebhook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/integrations/keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Integration keys with usage */
+        get: operations["listIntegrationKeys"];
+        put?: never;
+        /** Create an integration key (the token is returned only once) */
+        post: operations["createIntegrationKey"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/integrations/keys/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke an integration key */
+        delete: operations["revokeIntegrationKey"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/integrations/webhooks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Webhook endpoints */
+        get: operations["listWebhooks"];
+        put?: never;
+        /** Register a webhook endpoint (the signing secret is returned only once) */
+        post: operations["createWebhook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/integrations/webhooks/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One webhook endpoint */
+        get: operations["getWebhook"];
+        /** Update, enable or disable a webhook endpoint */
+        put: operations["updateWebhook"];
+        post?: never;
+        /** Delete a webhook endpoint and its delivery log */
+        delete: operations["deleteWebhook"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/integrations/webhooks/{id}/deliveries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Delivery log of an endpoint (newest first) */
+        get: operations["listWebhookDeliveries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/integrations/webhooks/{id}/rotate-secret": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Issue a new signing secret (the previous one also signs for 24 hours) */
+        post: operations["rotateWebhookSecret"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/integrations/webhooks/{id}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send a signed webhook.test event now and return the result */
+        post: operations["testWebhook"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2994,6 +3236,8 @@ export interface components {
             action: string;
             /** Format: uuid */
             actor_device_id: string | null;
+            /** Format: uuid */
+            actor_integration_key_id: string | null;
             actor_label: string;
             /** Format: uuid */
             actor_user_id: string | null;
@@ -3093,6 +3337,151 @@ export interface components {
             title: string;
             url: string;
             warnings: string[];
+        };
+        CatalogChangePage: {
+            has_more: boolean;
+            items: components["schemas"]["CatalogEvent"][];
+            next_cursor: string;
+        };
+        CatalogEvent: {
+            changed_fields: string[];
+            cursor: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            occurred_at: string;
+            product: components["schemas"]["CatalogProduct"] | null;
+            /** Format: uuid */
+            product_id: string | null;
+            sku: string;
+            type: string;
+        };
+        CatalogImage: {
+            alt_text: string;
+            /** Format: int32 */
+            height: number | null;
+            /** Format: uuid */
+            id: string;
+            is_primary: boolean;
+            /** Format: int32 */
+            position: number;
+            url: string;
+            /** Format: int32 */
+            width: number | null;
+        };
+        CatalogPricing: {
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            compare_at_price: string | null;
+            currency: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            price: string | null;
+        };
+        CatalogProduct: {
+            availability: string;
+            brand: string;
+            category: string;
+            /** Format: date-time */
+            created_at: string;
+            custom_fields?: {
+                [key: string]: unknown;
+            };
+            description?: string | null;
+            gtin: string | null;
+            /** Format: uuid */
+            id: string;
+            identifiers: {
+                [key: string]: string;
+            };
+            images?: components["schemas"]["CatalogImage"][];
+            model: string;
+            mpn: string;
+            pricing: components["schemas"]["CatalogPricing"];
+            primary_image_url: string | null;
+            sku: string;
+            sourcing?: components["schemas"]["CatalogSourcing"] | null;
+            specifications?: {
+                [key: string]: string;
+            };
+            tags: string[];
+            title: string;
+            /** Format: date-time */
+            updated_at: string;
+            variants?: components["schemas"]["CatalogVariant"][];
+            version: string;
+        };
+        CatalogProductPage: {
+            change_cursor: string;
+            has_more: boolean;
+            items: components["schemas"]["CatalogProduct"][];
+            next_cursor: string | null;
+        };
+        CatalogSourcing: {
+            canonical_url: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            cost: string | null;
+            cost_currency: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            margin_amount: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            margin_percent: string | null;
+            source_currency: string | null;
+            source_domain: string;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            source_price: string | null;
+            source_url: string | null;
+            supplier: components["schemas"]["CatalogSupplierRef"] | null;
+        };
+        CatalogSupplierRef: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
+        CatalogVariant: {
+            availability: string;
+            /** Format: uuid */
+            id: string;
+            image_url: string | null;
+            options: {
+                [key: string]: string;
+            };
+            /** Format: int32 */
+            position: number;
+            pricing: components["schemas"]["CatalogPricing"];
+            sku: string;
+            sourcing?: components["schemas"]["CatalogVariantSourcing"] | null;
+            title: string;
+        };
+        CatalogVariantSourcing: {
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            cost: string | null;
+            cost_currency: string | null;
+            source_currency: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            source_price: string | null;
         };
         ChangePasswordInput: {
             current_password: string;
@@ -3249,6 +3638,13 @@ export interface components {
             stage_id: string | null;
             /** Format: uuid */
             supplier_id: string | null;
+        };
+        CreateIntegrationKeyInput: {
+            description: string;
+            /** Format: int32 */
+            expires_in_days: number | null;
+            name: string;
+            scopes: string[];
         };
         CreateTokenInput: {
             /** Format: int32 */
@@ -3416,7 +3812,7 @@ export interface components {
             id: string;
             label: string;
             reasons: string[];
-            record: unknown;
+            record?: unknown;
             score: number;
         };
         DuplicateCandidateItems: {
@@ -3428,6 +3824,10 @@ export interface components {
         };
         ErrorDoc: {
             error: components["schemas"]["APIError"];
+        };
+        EventType: {
+            description: string;
+            type: string;
         };
         ExtensionConfigDoc: {
             adapters: components["schemas"]["SourceAdapter"][];
@@ -3666,6 +4066,47 @@ export interface components {
             day: string;
             /** Format: int64 */
             imports: number;
+        };
+        IntegrationKeyCreatedDoc: {
+            key: components["schemas"]["IntegrationKeyView"];
+            token: string;
+        };
+        IntegrationKeyView: {
+            /** Format: date-time */
+            created_at: string;
+            created_by: string;
+            creator_removed: boolean;
+            description: string;
+            /** Format: date-time */
+            expires_at: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            last_used_at: string | null;
+            last_used_ip: string;
+            name: string;
+            prefix: string;
+            /** Format: int64 */
+            requests_30d: number;
+            /** Format: int64 */
+            requests_today: number;
+            /** Format: date-time */
+            revoked_at: string | null;
+            scopes: string[];
+            status: string;
+        };
+        IntegrationKeyViewItems: {
+            items: components["schemas"]["IntegrationKeyView"][];
+        };
+        IntegrationScope: {
+            code: string;
+            description: string;
+        };
+        IntegrationsConfigDoc: {
+            api_base_url: string;
+            events: components["schemas"]["EventType"][];
+            scopes: components["schemas"]["IntegrationScope"][];
+            webhooks: components["schemas"]["WebhookPolicyDoc"];
         };
         Lead: {
             /** Format: uuid */
@@ -6152,6 +6593,158 @@ export interface components {
             /** Format: uuid */
             variant_id: string;
         };
+        WebhookCreatedDoc: {
+            secret: string;
+            webhook: components["schemas"]["WebhookView"];
+        };
+        WebhookDeliveryAttempt: {
+            /** Format: int32 */
+            attempt: number;
+            /** Format: date-time */
+            attempted_at: string;
+            /** Format: uuid */
+            delivery_id: string;
+            error: string;
+            /** Format: int64 */
+            id: number;
+            /** Format: int32 */
+            latency_ms: number;
+            response_body: string;
+            /** Format: int32 */
+            status_code: number | null;
+        };
+        WebhookDeliveryDetail: {
+            attempt_log: components["schemas"]["WebhookDeliveryAttempt"][];
+            /** Format: int32 */
+            attempts: number;
+            /** Format: int64 */
+            change_id: number | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: uuid */
+            endpoint_id: string;
+            error: string;
+            /** Format: uuid */
+            event_id: string;
+            event_type: string;
+            /** Format: date-time */
+            finished_at: string | null;
+            /** Format: uuid */
+            id: string;
+            is_test: boolean;
+            /** Format: date-time */
+            last_attempt_at: string | null;
+            /** Format: int32 */
+            latency_ms: number | null;
+            /** Format: int32 */
+            max_attempts: number;
+            /** Format: date-time */
+            next_attempt_at: string | null;
+            payload: unknown;
+            /** Format: uuid */
+            product_id: string | null;
+            /** Format: uuid */
+            redelivery_of: string | null;
+            response_body: string;
+            /** Format: int32 */
+            response_status: number | null;
+            status: string;
+        };
+        WebhookDeliveryView: {
+            /** Format: int32 */
+            attempts: number;
+            /** Format: int64 */
+            change_id: number | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: uuid */
+            endpoint_id: string;
+            error: string;
+            /** Format: uuid */
+            event_id: string;
+            event_type: string;
+            /** Format: date-time */
+            finished_at: string | null;
+            /** Format: uuid */
+            id: string;
+            is_test: boolean;
+            /** Format: date-time */
+            last_attempt_at: string | null;
+            /** Format: int32 */
+            latency_ms: number | null;
+            /** Format: int32 */
+            max_attempts: number;
+            /** Format: date-time */
+            next_attempt_at: string | null;
+            /** Format: uuid */
+            product_id: string | null;
+            /** Format: uuid */
+            redelivery_of: string | null;
+            /** Format: int32 */
+            response_status: number | null;
+            status: string;
+        };
+        WebhookDeliveryViewPage: {
+            items: components["schemas"]["WebhookDeliveryView"][];
+            /** Format: int32 */
+            limit: number;
+            /** Format: int32 */
+            offset: number;
+            /** Format: int64 */
+            total: number;
+        };
+        WebhookInput: {
+            enabled: boolean;
+            events: string[];
+            include_costs: boolean;
+            name: string;
+            url: string;
+        };
+        WebhookPolicyDoc: {
+            allow_http_localhost: boolean;
+            allow_private_networks: boolean;
+            /** Format: int32 */
+            disable_after_failures: number;
+            event_id_header: string;
+            /** Format: int32 */
+            max_attempts: number;
+            signature_header: string;
+            /** Format: int32 */
+            timeout_seconds: number;
+            timestamp_header: string;
+        };
+        WebhookView: {
+            /** Format: int32 */
+            consecutive_failures: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            disabled_at: string | null;
+            disabled_reason: string;
+            enabled: boolean;
+            events: string[];
+            /** Format: date-time */
+            failing_since: string | null;
+            /** Format: uuid */
+            id: string;
+            include_costs: boolean;
+            /** Format: date-time */
+            last_failure_at: string | null;
+            /** Format: date-time */
+            last_success_at: string | null;
+            name: string;
+            /** Format: int64 */
+            pending_deliveries: number;
+            /** Format: date-time */
+            previous_secret_expires_at: string | null;
+            secret_prefix: string;
+            /** Format: date-time */
+            updated_at: string;
+            url: string;
+        };
+        WebhookViewItems: {
+            items: components["schemas"]["WebhookView"][];
+        };
         WorkflowStep: {
             action: string;
             actor: string;
@@ -8420,6 +9013,174 @@ export interface operations {
             };
         };
     };
+    listCatalogChanges: {
+        parameters: {
+            query?: {
+                since?: string;
+                limit?: string;
+                fields?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogChangePage"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    listCatalogProducts: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: string;
+                updated_since?: string;
+                tag?: string;
+                category?: string;
+                availability?: string;
+                source_domain?: string;
+                sku?: string;
+                fields?: string;
+            };
+            header?: {
+                /** @description ETag of a previous response; 304 Not Modified when nothing changed */
+                "If-None-Match"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogProductPage"];
+                };
+            };
+            /** @description Not modified since the ETag sent in If-None-Match */
+            304: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    getCatalogProductBySKU: {
+        parameters: {
+            query?: {
+                fields?: string;
+            };
+            header?: {
+                /** @description ETag of a previous response; 304 Not Modified when nothing changed */
+                "If-None-Match"?: string;
+            };
+            path: {
+                sku: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogProduct"];
+                };
+            };
+            /** @description Not modified since the ETag sent in If-None-Match */
+            304: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    getCatalogProduct: {
+        parameters: {
+            query?: {
+                fields?: string;
+            };
+            header?: {
+                /** @description ETag of a previous response; 304 Not Modified when nothing changed */
+                "If-None-Match"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogProduct"];
+                };
+            };
+            /** @description Not modified since the ETag sent in If-None-Match */
+            304: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
     listCompanies: {
         parameters: {
             query?: {
@@ -9653,6 +10414,442 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProductImport"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    integrationsConfig: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegrationsConfigDoc"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    getWebhookDelivery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookDeliveryDetail"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    redeliverWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookDeliveryDetail"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    listIntegrationKeys: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegrationKeyViewItems"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    createIntegrationKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateIntegrationKeyInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegrationKeyCreatedDoc"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    revokeIntegrationKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    listWebhooks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookViewItems"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    createWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WebhookInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookCreatedDoc"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    getWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    updateWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WebhookInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    deleteWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    listWebhookDeliveries: {
+        parameters: {
+            query?: {
+                status?: string;
+                limit?: string;
+                offset?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookDeliveryViewPage"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    rotateWebhookSecret: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookCreatedDoc"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    testWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookDeliveryDetail"];
                 };
             };
             /** @description Error */

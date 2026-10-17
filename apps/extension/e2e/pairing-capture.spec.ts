@@ -153,11 +153,12 @@ test('the capture and import exist on the server', async () => {
   const imports = await rea.request<{ items: { id: string; status: string; source: string; product_id: string | null; product_title: string | null; captured_page_id: string | null; device_id: string | null }[] }>('GET', '/imports?source=extension')
   const imp = imports.body.items.find((i) => i.captured_page_id === capture.id)!
   expect(imp).toMatchObject({ status: expectedStatus, source: 'extension', product_title: 'Trailblazer 2L Insulated Flask', device_id: device.id })
-  const product = await rea.request<{ status: string; review_status: string; price: string; price_currency: string; sku: string; gtin: string; source_domain: string; captured_page_id: string }>('GET', `/products/${imp.product_id}`)
+  const product = await rea.request<{ status: string; review_status: string; source_price: string; source_currency: string; sku: string; gtin: string; source_domain: string; captured_page_id: string }>('GET', `/products/${imp.product_id}`)
   expect(product.status).toBe(200)
-  expect(product.body).toMatchObject({ status: 'draft', review_status: 'pending', price_currency: 'EUR', sku: 'NW-TB-2L', gtin: '4006381333931', source_domain: '127.0.0.1', captured_page_id: capture.id })
+  // The observed marketplace price is the source price; the selling price comes from the pricing rules.
+  expect(product.body).toMatchObject({ status: 'draft', review_status: 'pending', source_currency: 'EUR', sku: 'NW-TB-2L', gtin: '4006381333931', source_domain: '127.0.0.1', captured_page_id: capture.id })
   if (expectedStatus === 'updated') expect(imp.product_id).toBeTruthy()
-  expect(Number(product.body.price)).toBe(39.95)
+  expect(Number(product.body.source_price)).toBe(39.95)
 })
 
 test('creates an analysis project from the capture', async () => {

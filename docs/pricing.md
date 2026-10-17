@@ -258,6 +258,11 @@ Product responses carry the stored values (`source_price`, `cost`, `cost_manual`
 the current rules for the product and each variant, with `changed: true` when recalculating now
 would change the stored values.
 
+The [catalog API](catalog-api.md) gives your other systems `price`, `currency` and
+`compare_at_price` under `pricing`; source prices and costs (product and variants) are in the
+`sourcing` blocks, only for keys with `catalog.read_costs`. A reprice that changes a selling or
+compare-at price emits `product.price_changed`.
+
 ## Audit trail
 
 `pricing_rule.create|update|delete|reorder`, `currency_rate.update|delete`, `product.reprice`

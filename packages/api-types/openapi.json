@@ -921,6 +921,11 @@
             "nullable": true,
             "type": "string"
           },
+          "actor_integration_key_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "actor_label": {
             "type": "string"
           },
@@ -961,6 +966,7 @@
         "required": [
           "action",
           "actor_device_id",
+          "actor_integration_key_id",
           "actor_label",
           "actor_user_id",
           "changes",
@@ -1303,6 +1309,457 @@
           "title",
           "url",
           "warnings"
+        ],
+        "type": "object"
+      },
+      "CatalogChangePage": {
+        "properties": {
+          "has_more": {
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogEvent"
+            },
+            "type": "array"
+          },
+          "next_cursor": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "has_more",
+          "items",
+          "next_cursor"
+        ],
+        "type": "object"
+      },
+      "CatalogEvent": {
+        "properties": {
+          "changed_fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "cursor": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "product": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CatalogProduct"
+              }
+            ],
+            "nullable": true
+          },
+          "product_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "changed_fields",
+          "cursor",
+          "id",
+          "occurred_at",
+          "product",
+          "product_id",
+          "sku",
+          "type"
+        ],
+        "type": "object"
+      },
+      "CatalogImage": {
+        "properties": {
+          "alt_text": {
+            "type": "string"
+          },
+          "height": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "is_primary": {
+            "type": "boolean"
+          },
+          "position": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "url": {
+            "type": "string"
+          },
+          "width": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "alt_text",
+          "height",
+          "id",
+          "is_primary",
+          "position",
+          "url",
+          "width"
+        ],
+        "type": "object"
+      },
+      "CatalogPricing": {
+        "properties": {
+          "compare_at_price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "compare_at_price",
+          "currency",
+          "price"
+        ],
+        "type": "object"
+      },
+      "CatalogProduct": {
+        "properties": {
+          "availability": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "custom_fields": {
+            "additionalProperties": {},
+            "type": "object"
+          },
+          "description": {
+            "nullable": true,
+            "type": "string"
+          },
+          "gtin": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "identifiers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "images": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogImage"
+            },
+            "type": "array"
+          },
+          "model": {
+            "type": "string"
+          },
+          "mpn": {
+            "type": "string"
+          },
+          "pricing": {
+            "$ref": "#/components/schemas/CatalogPricing"
+          },
+          "primary_image_url": {
+            "nullable": true,
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "sourcing": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CatalogSourcing"
+              }
+            ],
+            "nullable": true
+          },
+          "specifications": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "variants": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogVariant"
+            },
+            "type": "array"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "availability",
+          "brand",
+          "category",
+          "created_at",
+          "gtin",
+          "id",
+          "identifiers",
+          "model",
+          "mpn",
+          "pricing",
+          "primary_image_url",
+          "sku",
+          "tags",
+          "title",
+          "updated_at",
+          "version"
+        ],
+        "type": "object"
+      },
+      "CatalogProductPage": {
+        "properties": {
+          "change_cursor": {
+            "type": "string"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogProduct"
+            },
+            "type": "array"
+          },
+          "next_cursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "change_cursor",
+          "has_more",
+          "items",
+          "next_cursor"
+        ],
+        "type": "object"
+      },
+      "CatalogSourcing": {
+        "properties": {
+          "canonical_url": {
+            "nullable": true,
+            "type": "string"
+          },
+          "cost": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "cost_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "margin_amount": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "margin_percent": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "source_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "source_domain": {
+            "type": "string"
+          },
+          "source_price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "source_url": {
+            "nullable": true,
+            "type": "string"
+          },
+          "supplier": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CatalogSupplierRef"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "canonical_url",
+          "cost",
+          "cost_currency",
+          "margin_amount",
+          "margin_percent",
+          "source_currency",
+          "source_domain",
+          "source_price",
+          "source_url",
+          "supplier"
+        ],
+        "type": "object"
+      },
+      "CatalogSupplierRef": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "CatalogVariant": {
+        "properties": {
+          "availability": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "image_url": {
+            "nullable": true,
+            "type": "string"
+          },
+          "options": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "position": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "pricing": {
+            "$ref": "#/components/schemas/CatalogPricing"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "sourcing": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CatalogVariantSourcing"
+              }
+            ],
+            "nullable": true
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "availability",
+          "id",
+          "image_url",
+          "options",
+          "position",
+          "pricing",
+          "sku",
+          "title"
+        ],
+        "type": "object"
+      },
+      "CatalogVariantSourcing": {
+        "properties": {
+          "cost": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "cost_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "source_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "source_price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "cost",
+          "cost_currency",
+          "source_currency",
+          "source_price"
         ],
         "type": "object"
       },
@@ -1858,6 +2315,34 @@
           "opportunity_name",
           "stage_id",
           "supplier_id"
+        ],
+        "type": "object"
+      },
+      "CreateIntegrationKeyInput": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "expires_in_days": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "description",
+          "expires_in_days",
+          "name",
+          "scopes"
         ],
         "type": "object"
       },
@@ -2430,7 +2915,6 @@
           "id",
           "label",
           "reasons",
-          "record",
           "score"
         ],
         "type": "object"
@@ -2472,6 +2956,21 @@
         },
         "required": [
           "error"
+        ],
+        "type": "object"
+      },
+      "EventType": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "description",
+          "type"
         ],
         "type": "object"
       },
@@ -3301,6 +3800,159 @@
         "required": [
           "day",
           "imports"
+        ],
+        "type": "object"
+      },
+      "IntegrationKeyCreatedDoc": {
+        "properties": {
+          "key": {
+            "$ref": "#/components/schemas/IntegrationKeyView"
+          },
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "token"
+        ],
+        "type": "object"
+      },
+      "IntegrationKeyView": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "created_by": {
+            "type": "string"
+          },
+          "creator_removed": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "last_used_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "last_used_ip": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "requests_30d": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "requests_today": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "revoked_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "created_at",
+          "created_by",
+          "creator_removed",
+          "description",
+          "expires_at",
+          "id",
+          "last_used_at",
+          "last_used_ip",
+          "name",
+          "prefix",
+          "requests_30d",
+          "requests_today",
+          "revoked_at",
+          "scopes",
+          "status"
+        ],
+        "type": "object"
+      },
+      "IntegrationKeyViewItems": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/IntegrationKeyView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "IntegrationScope": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "description"
+        ],
+        "type": "object"
+      },
+      "IntegrationsConfigDoc": {
+        "properties": {
+          "api_base_url": {
+            "type": "string"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/EventType"
+            },
+            "type": "array"
+          },
+          "scopes": {
+            "items": {
+              "$ref": "#/components/schemas/IntegrationScope"
+            },
+            "type": "array"
+          },
+          "webhooks": {
+            "$ref": "#/components/schemas/WebhookPolicyDoc"
+          }
+        },
+        "required": [
+          "api_base_url",
+          "events",
+          "scopes",
+          "webhooks"
         ],
         "type": "object"
       },
@@ -10941,6 +11593,492 @@
         ],
         "type": "object"
       },
+      "WebhookCreatedDoc": {
+        "properties": {
+          "secret": {
+            "type": "string"
+          },
+          "webhook": {
+            "$ref": "#/components/schemas/WebhookView"
+          }
+        },
+        "required": [
+          "secret",
+          "webhook"
+        ],
+        "type": "object"
+      },
+      "WebhookDeliveryAttempt": {
+        "properties": {
+          "attempt": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "attempted_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "delivery_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "latency_ms": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "response_body": {
+            "type": "string"
+          },
+          "status_code": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "attempt",
+          "attempted_at",
+          "delivery_id",
+          "error",
+          "id",
+          "latency_ms",
+          "response_body",
+          "status_code"
+        ],
+        "type": "object"
+      },
+      "WebhookDeliveryDetail": {
+        "properties": {
+          "attempt_log": {
+            "items": {
+              "$ref": "#/components/schemas/WebhookDeliveryAttempt"
+            },
+            "type": "array"
+          },
+          "attempts": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "change_id": {
+            "format": "int64",
+            "nullable": true,
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endpoint_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          },
+          "event_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "event_type": {
+            "type": "string"
+          },
+          "finished_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "is_test": {
+            "type": "boolean"
+          },
+          "last_attempt_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "latency_ms": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "max_attempts": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "next_attempt_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "payload": {
+            "nullable": true
+          },
+          "product_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "redelivery_of": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "response_body": {
+            "type": "string"
+          },
+          "response_status": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "attempt_log",
+          "attempts",
+          "change_id",
+          "created_at",
+          "endpoint_id",
+          "error",
+          "event_id",
+          "event_type",
+          "finished_at",
+          "id",
+          "is_test",
+          "last_attempt_at",
+          "latency_ms",
+          "max_attempts",
+          "next_attempt_at",
+          "payload",
+          "product_id",
+          "redelivery_of",
+          "response_body",
+          "response_status",
+          "status"
+        ],
+        "type": "object"
+      },
+      "WebhookDeliveryView": {
+        "properties": {
+          "attempts": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "change_id": {
+            "format": "int64",
+            "nullable": true,
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endpoint_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          },
+          "event_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "event_type": {
+            "type": "string"
+          },
+          "finished_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "is_test": {
+            "type": "boolean"
+          },
+          "last_attempt_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "latency_ms": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "max_attempts": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "next_attempt_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "product_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "redelivery_of": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "response_status": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "attempts",
+          "change_id",
+          "created_at",
+          "endpoint_id",
+          "error",
+          "event_id",
+          "event_type",
+          "finished_at",
+          "id",
+          "is_test",
+          "last_attempt_at",
+          "latency_ms",
+          "max_attempts",
+          "next_attempt_at",
+          "product_id",
+          "redelivery_of",
+          "response_status",
+          "status"
+        ],
+        "type": "object"
+      },
+      "WebhookDeliveryViewPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/WebhookDeliveryView"
+            },
+            "type": "array"
+          },
+          "limit": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "offset": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "total": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "limit",
+          "offset",
+          "total"
+        ],
+        "type": "object"
+      },
+      "WebhookInput": {
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "events": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "include_costs": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "enabled",
+          "events",
+          "include_costs",
+          "name",
+          "url"
+        ],
+        "type": "object"
+      },
+      "WebhookPolicyDoc": {
+        "properties": {
+          "allow_http_localhost": {
+            "type": "boolean"
+          },
+          "allow_private_networks": {
+            "type": "boolean"
+          },
+          "disable_after_failures": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "event_id_header": {
+            "type": "string"
+          },
+          "max_attempts": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "signature_header": {
+            "type": "string"
+          },
+          "timeout_seconds": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "timestamp_header": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "allow_http_localhost",
+          "allow_private_networks",
+          "disable_after_failures",
+          "event_id_header",
+          "max_attempts",
+          "signature_header",
+          "timeout_seconds",
+          "timestamp_header"
+        ],
+        "type": "object"
+      },
+      "WebhookView": {
+        "properties": {
+          "consecutive_failures": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "disabled_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "disabled_reason": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "events": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "failing_since": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "include_costs": {
+            "type": "boolean"
+          },
+          "last_failure_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "last_success_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "pending_deliveries": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "previous_secret_expires_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "secret_prefix": {
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "consecutive_failures",
+          "created_at",
+          "disabled_at",
+          "disabled_reason",
+          "enabled",
+          "events",
+          "failing_since",
+          "id",
+          "include_costs",
+          "last_failure_at",
+          "last_success_at",
+          "name",
+          "pending_deliveries",
+          "previous_secret_expires_at",
+          "secret_prefix",
+          "updated_at",
+          "url"
+        ],
+        "type": "object"
+      },
+      "WebhookViewItems": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/WebhookView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
       "WorkflowStep": {
         "properties": {
           "action": {
@@ -11037,7 +12175,7 @@
     },
     "securitySchemes": {
       "bearer": {
-        "description": "Extension access tokens (reaa_...) and personal API tokens (reap_...)",
+        "description": "Extension access tokens (reaa_...), personal API tokens (reap_...) and integration keys (reai_...)",
         "scheme": "bearer",
         "type": "http"
       },
@@ -11050,7 +12188,7 @@
     }
   },
   "info": {
-    "description": "Self-hosted API for REA (Reverse Engineering Anything) and Importify CRM. Browser sessions use the session cookie plus the X-CSRF-Token header on unsafe methods; the browser extension and scripts use Bearer tokens.",
+    "description": "Self-hosted API for REA (Reverse Engineering Anything) and Importify CRM. Browser sessions use the session cookie plus the X-CSRF-Token header on unsafe methods; the browser extension and scripts use Bearer tokens; external systems use integration keys (reai_...) on the Catalog endpoints.",
     "title": "REA and Importify CRM API",
     "version": "1.0.0"
   },
@@ -14088,6 +15226,302 @@
         ]
       }
     },
+    "/api/v1/catalog/changes": {
+      "get": {
+        "operationId": "listCatalogChanges",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogChangePage"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Ordered change feed with tombstones (410 when the cursor is outside the retained feed)",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/v1/catalog/products": {
+      "get": {
+        "operationId": "listCatalogProducts",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "updated_since",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tag",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "availability",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source_domain",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sku",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "ETag of a previous response; 304 Not Modified when nothing changed",
+            "in": "header",
+            "name": "If-None-Match",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogProductPage"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "304": {
+            "description": "Not modified since the ETag sent in If-None-Match"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Published products in catalog version order (keyset pagination; cursor from next_cursor)",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/v1/catalog/products/by-sku/{sku}": {
+      "get": {
+        "operationId": "getCatalogProductBySKU",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sku",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "ETag of a previous response; 304 Not Modified when nothing changed",
+            "in": "header",
+            "name": "If-None-Match",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogProduct"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "304": {
+            "description": "Not modified since the ETag sent in If-None-Match"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "A published product by product or variant SKU (409 when several match)",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/v1/catalog/products/{id}": {
+      "get": {
+        "operationId": "getCatalogProduct",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "ETag of a previous response; 304 Not Modified when nothing changed",
+            "in": "header",
+            "name": "If-None-Match",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogProduct"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "304": {
+            "description": "Not modified since the ETag sent in If-None-Match"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "One published product",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
     "/api/v1/companies": {
       "get": {
         "operationId": "listCompanies",
@@ -16031,6 +17465,567 @@
         "summary": "Decide a parked duplicate",
         "tags": [
           "Products"
+        ]
+      }
+    },
+    "/api/v1/integrations/config": {
+      "get": {
+        "operationId": "integrationsConfig",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationsConfigDoc"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Scopes, event types, API base URL and webhook delivery policy",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/v1/integrations/deliveries/{id}": {
+      "get": {
+        "operationId": "getWebhookDelivery",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDeliveryDetail"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "A delivery with its payload and attempts",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/v1/integrations/deliveries/{id}/redeliver": {
+      "post": {
+        "operationId": "redeliverWebhook",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDeliveryDetail"
+                }
+              }
+            },
+            "description": "Accepted"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Queue the same event again",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/v1/integrations/keys": {
+      "get": {
+        "operationId": "listIntegrationKeys",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationKeyViewItems"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Integration keys with usage",
+        "tags": [
+          "Catalog"
+        ]
+      },
+      "post": {
+        "operationId": "createIntegrationKey",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateIntegrationKeyInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationKeyCreatedDoc"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Create an integration key (the token is returned only once)",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/v1/integrations/keys/{id}": {
+      "delete": {
+        "operationId": "revokeIntegrationKey",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Revoke an integration key",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/v1/integrations/webhooks": {
+      "get": {
+        "operationId": "listWebhooks",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookViewItems"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Webhook endpoints",
+        "tags": [
+          "Catalog"
+        ]
+      },
+      "post": {
+        "operationId": "createWebhook",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookCreatedDoc"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Register a webhook endpoint (the signing secret is returned only once)",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/v1/integrations/webhooks/{id}": {
+      "delete": {
+        "operationId": "deleteWebhook",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete a webhook endpoint and its delivery log",
+        "tags": [
+          "Catalog"
+        ]
+      },
+      "get": {
+        "operationId": "getWebhook",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookView"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "One webhook endpoint",
+        "tags": [
+          "Catalog"
+        ]
+      },
+      "put": {
+        "operationId": "updateWebhook",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookView"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Update, enable or disable a webhook endpoint",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/v1/integrations/webhooks/{id}/deliveries": {
+      "get": {
+        "operationId": "listWebhookDeliveries",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDeliveryViewPage"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delivery log of an endpoint (newest first)",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/v1/integrations/webhooks/{id}/rotate-secret": {
+      "post": {
+        "operationId": "rotateWebhookSecret",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookCreatedDoc"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Issue a new signing secret (the previous one also signs for 24 hours)",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/v1/integrations/webhooks/{id}/test": {
+      "post": {
+        "operationId": "testWebhook",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDeliveryDetail"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Send a signed webhook.test event now and return the result",
+        "tags": [
+          "Catalog"
         ]
       }
     },
@@ -21719,5 +23714,75 @@
     {
       "url": "/"
     }
-  ]
+  ],
+  "x-webhooks": {
+    "catalogEvent": {
+      "post": {
+        "description": "POSTed as JSON for every subscribed event (product.published, product.updated, product.price_changed, product.availability_changed, product.unpublished, product.deleted, webhook.test). Verify X-REA-Signature: v1=hex(HMAC-SHA256(secret, timestamp + \".\" + raw body)); during a secret rotation two v1 values are sent. Answer 2xx within the timeout; anything else is retried with exponential backoff. Deduplicate on the event id.",
+        "parameters": [
+          {
+            "description": "Event ID, identical across retries and redeliveries",
+            "in": "header",
+            "name": "X-REA-Event-Id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Event type",
+            "in": "header",
+            "name": "X-REA-Event-Type",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Delivery ID (a redelivery has a new one)",
+            "in": "header",
+            "name": "X-REA-Delivery-Id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Unix seconds when the request was signed; reject old timestamps",
+            "in": "header",
+            "name": "X-REA-Timestamp",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Comma-separated v1=\u003chex HMAC-SHA256\u003e signatures",
+            "in": "header",
+            "name": "X-REA-Signature",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogEvent"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Any 2xx status acknowledges the delivery"
+          }
+        },
+        "summary": "Catalog event delivered to a registered endpoint"
+      }
+    }
+  }
 }

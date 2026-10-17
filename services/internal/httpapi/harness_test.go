@@ -26,10 +26,16 @@ type env struct {
 }
 
 // newEnv starts an API server on a fresh database and completes first-run setup.
-func newEnv(t *testing.T) *env {
+func newEnv(t *testing.T) *env { return newEnvWith(t, nil) }
+
+// newEnvWith is newEnv with configuration changes applied before the server starts.
+func newEnvWith(t *testing.T, configure func(*config.Config)) *env {
 	t.Helper()
 	d, url := testutil.OpenDB(t)
 	cfg := testutil.Config(t, url)
+	if configure != nil {
+		configure(cfg)
+	}
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
 	api, err := httpapi.New(cfg, d, log, httpapi.Deps{})
 	if err != nil {

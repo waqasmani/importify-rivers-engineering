@@ -190,7 +190,7 @@ func (q *Queries) ImportsPerDay(ctx context.Context, days int32) ([]ImportsPerDa
 }
 
 const recentActivity = `-- name: RecentActivity :many
-SELECT id, occurred_at, actor_user_id, actor_device_id, actor_label, action, entity_type, entity_id, summary, changes, ip_address, request_id FROM audit_logs ORDER BY id DESC LIMIT $1
+SELECT id, occurred_at, actor_user_id, actor_device_id, actor_label, action, entity_type, entity_id, summary, changes, ip_address, request_id, actor_integration_key_id FROM audit_logs ORDER BY id DESC LIMIT $1
 `
 
 func (q *Queries) RecentActivity(ctx context.Context, limit int32) ([]AuditLog, error) {
@@ -215,6 +215,7 @@ func (q *Queries) RecentActivity(ctx context.Context, limit int32) ([]AuditLog, 
 			&i.Changes,
 			&i.IpAddress,
 			&i.RequestID,
+			&i.ActorIntegrationKeyID,
 		); err != nil {
 			return nil, err
 		}

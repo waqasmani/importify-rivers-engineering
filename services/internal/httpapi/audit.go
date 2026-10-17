@@ -31,7 +31,7 @@ var sensitiveKeys = map[string]bool{
 	"password": true, "password_hash": true, "new_password": true, "current_password": true, "token": true,
 	"token_hash": true, "api_key": true, "api_key_ciphertext": true, "secret": true, "csrf_token": true,
 	"code_hash": true, "refresh_token": true, "access_token": true, "html_snapshot": true, "content_text": true,
-	"content_markdown": true,
+	"content_markdown": true, "secret_ciphertext": true, "previous_secret_ciphertext": true, "signing_secret": true,
 }
 
 var ignoredDiffKeys = map[string]bool{"updated_at": true, "created_at": true, "normalized_name": true, "normalized_title": true}
@@ -125,7 +125,11 @@ func (s *Server) audit(ctx context.Context, q *store.Queries, r *http.Request, e
 	if r != nil {
 		params.IpAddress = clientIP(r)
 		params.RequestID = requestID(r)
-		if p := principal(r); p != nil {
+		if p := principal(r); p != nil && p.Integration != nil {
+			id := p.Integration.ID
+			params.ActorIntegrationKeyID = &id
+			params.ActorLabel = p.Integration.Label()
+		} else if p != nil {
 			id := p.User.ID
 			params.ActorUserID = &id
 			params.ActorDeviceID = p.DeviceID

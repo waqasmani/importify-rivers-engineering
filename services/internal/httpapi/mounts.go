@@ -7,5 +7,6 @@ func (s *Server) mounts() []func(chi.Router) {
 	return []func(chi.Router){
 		s.mountCompanies, s.mountContacts, s.mountSuppliers, s.mountDeals, s.mountActivity, s.mountSearch,
 		s.mountProducts, s.mountImports, s.mountCaptures, s.mountPricing, s.mountAnalysis, s.mountAI, s.mountAdmin,
+		s.mountCatalog, s.mountIntegrations,
 	}
 }

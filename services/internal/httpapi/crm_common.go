@@ -381,5 +381,6 @@ type duplicateCandidate struct {
 	Label   string    `json:"label"`
 	Score   float64   `json:"score"`
 	Reasons []string  `json:"reasons"`
-	Record  any       `json:"record"`
+	// Record is the stored record; omitted for integration keys, which only learn that a match exists.
+	Record any `json:"record,omitempty"`
 }

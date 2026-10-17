@@ -119,7 +119,9 @@ func (s *Server) logRequests(next http.Handler) http.Handler {
 			slog.Int("bytes", sr.bytes), slog.Int64("duration_ms", time.Since(start).Milliseconds()),
 			slog.String("request_id", requestID(r)), slog.String("ip", clientIP(r)),
 		}
-		if p := principal(r); p != nil {
+		if p := principal(r); p != nil && p.Integration != nil {
+			attrs = append(attrs, slog.String("integration_key_id", p.Integration.ID.String()), slog.String("auth", p.Method))
+		} else if p != nil {
 			attrs = append(attrs, slog.String("user_id", p.User.ID.String()), slog.String("auth", p.Method))
 		}
 		level := slog.LevelInfo
@@ -187,10 +189,10 @@ func (s *Server) cors(next http.Handler) http.Handler {
 			}
 			if allowed {
 				h.Set("Access-Control-Allow-Origin", origin)
-				h.Set("Access-Control-Expose-Headers", "X-Request-ID, Content-Disposition")
+				h.Set("Access-Control-Expose-Headers", "X-Request-ID, Content-Disposition, ETag")
 				if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
 					h.Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE")
-					h.Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-CSRF-Token, X-Request-ID, X-REA-Extension-Version")
+					h.Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-CSRF-Token, X-Request-ID, X-REA-Extension-Version, If-None-Match")
 					h.Set("Access-Control-Max-Age", "600")
 					w.WriteHeader(http.StatusNoContent)
 					return
@@ -226,6 +228,9 @@ func (s *Server) authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		p, err := s.resolvePrincipal(r)
 		if err != nil {
+			if ae, isAPI := err.(*APIError); isAPI && ae.Status == http.StatusTooManyRequests {
+				w.Header().Set("Retry-After", "60")
+			}
 			s.writeError(w, r, err)
 			return
 		}
@@ -240,6 +245,9 @@ func (s *Server) resolvePrincipal(r *http.Request) (*Principal, error) {
 	ctx := r.Context()
 	if authz := r.Header.Get("Authorization"); authz != "" {
 		token, found := strings.CutPrefix(authz, "Bearer ")
+		if found && strings.HasPrefix(token, auth.PrefixIntegration) {
+			return s.resolveIntegrationKey(r, token)
+		}
 		if !found || !(strings.HasPrefix(token, auth.PrefixAccess) || strings.HasPrefix(token, auth.PrefixPAT)) {
 			return nil, errUnauthorized("The access token is invalid.")
 		}
@@ -267,6 +275,7 @@ func (s *Server) resolvePrincipal(r *http.Request) (*Principal, error) {
 				perms[code] = true
 			}
 		}
+		auth.AddCatalogPermissions(perms)
 		c := row.ApiCredential
 		if c.LastUsedAt == nil || time.Since(*c.LastUsedAt) > time.Minute {
 			_ = s.db.TouchCredential(ctx, c.ID)
@@ -308,7 +317,63 @@ func (s *Server) resolvePrincipal(r *http.Request) (*Principal, error) {
 	for _, code := range rolePerms {
 		perms[code] = true
 	}
+	auth.AddCatalogPermissions(perms)
 	return &Principal{User: row.User, Perms: perms, Method: "session", SessionID: sess.ID, CSRFToken: sess.CsrfToken}, nil
+}
+
+// resolveIntegrationKey authenticates an organization-owned integration key. Its permissions are
+// exactly its scopes; no user role is involved. Each key is rate limited on its own, every request
+// is counted per day, and the first use in each hour (or from a new address) is audited.
+func (s *Server) resolveIntegrationKey(r *http.Request, token string) (*Principal, error) {
+	ctx := r.Context()
+	k, err := s.db.GetActiveIntegrationKeyByHash(ctx, auth.HashToken(token))
+	if store.IsNotFound(err) {
+		return nil, &APIError{Status: http.StatusUnauthorized, Code: "token_expired",
+			Message: "The integration key is invalid, expired or revoked."}
+	}
+	if err != nil {
+		return nil, err
+	}
+	if !s.integrationLimiter.Allow(k.ID.String()) {
+		return nil, &APIError{Status: http.StatusTooManyRequests, Code: "rate_limited",
+			Message: "This integration key sent too many requests. Wait a minute and try again."}
+	}
+	perms := map[string]bool{}
+	for _, sc := range k.Scopes {
+		if auth.IsIntegrationScope(sc) {
+			perms[sc] = true
+		}
+	}
+	p := &Principal{Perms: perms, Method: "integration", Integration: &IntegrationActor{ID: k.ID, Name: k.Name, Prefix: k.TokenPrefix}}
+	if err := s.db.CountIntegrationKeyRequest(ctx, k.ID); err != nil {
+		return nil, err
+	}
+	ip := clientIP(r)
+	if k.LastUsedAt == nil || time.Since(*k.LastUsedAt) > time.Minute || k.LastUsedIp != ip || k.LastUsedAt.Hour() != time.Now().Hour() {
+		first, err := s.db.TouchIntegrationKey(ctx, store.TouchIntegrationKeyParams{ID: k.ID, Ip: ip})
+		if err != nil {
+			return nil, err
+		}
+		if first {
+			ar := r.WithContext(withPrincipal(ctx, p))
+			_ = s.audit(ctx, nil, ar, auditEvent{Action: "integration_key.use", EntityType: "integration_key", EntityID: &k.ID,
+				Summary: "Integration key " + k.Name + " used from " + ip, Extra: map[string]any{"method": r.Method, "path": r.URL.Path}})
+		}
+	}
+	return p, nil
+}
+
+// integrationRouteAllowed lists the only endpoints integration keys may call: the catalog and
+// product import submission. Everything else (CRM, administration, settings, profile, analysis,
+// AI) is refused before routing, in addition to the per-route permission checks.
+func integrationRouteAllowed(method, path string) bool {
+	switch {
+	case method == http.MethodGet || method == http.MethodHead:
+		return strings.HasPrefix(path, "/api/v1/catalog/")
+	case method == http.MethodPost:
+		return path == "/api/v1/imports/products" || path == "/api/v1/imports/products/check"
+	}
+	return false
 }
 
 func truncateHeader(v string, n int) string {
@@ -324,6 +389,10 @@ func (s *Server) requireAuth(next http.Handler) http.Handler {
 		p := principal(r)
 		if p == nil {
 			s.writeError(w, r, errUnauthorized("Sign in to continue."))
+			return
+		}
+		if p.Integration != nil && !integrationRouteAllowed(r.Method, r.URL.Path) {
+			s.writeError(w, r, errForbidden("Integration keys can only call the catalog (/api/v1/catalog) and product import endpoints."))
 			return
 		}
 		if p.Method == "session" && !isSafeMethod(r.Method) {

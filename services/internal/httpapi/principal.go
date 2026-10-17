@@ -11,13 +11,27 @@ import (
 
 // Principal is the authenticated caller.
 type Principal struct {
-	User         store.User
+	User         store.User // zero for integration keys
 	Perms        map[string]bool
-	Method       string // "session" or "token"
+	Method       string // "session", "token" or "integration"
 	SessionID    uuid.UUID
 	CSRFToken    string
 	CredentialID uuid.UUID
 	DeviceID     *uuid.UUID
+	// Integration is set for integration keys, which act for the organization, not for a user.
+	Integration *IntegrationActor
+}
+
+// IntegrationActor identifies the integration key behind a request.
+type IntegrationActor struct {
+	ID     uuid.UUID
+	Name   string
+	Prefix string
+}
+
+// Label is how the key appears in the audit log.
+func (a *IntegrationActor) Label() string {
+	return "integration key " + a.Name + " (" + a.Prefix + "…)"
 }
 
 // Can reports whether the principal holds a permission.
@@ -63,7 +77,7 @@ func clientIP(r *http.Request) string {
 
 func userIDPtr(r *http.Request) *uuid.UUID {
 	p := principal(r)
-	if p == nil {
+	if p == nil || p.Integration != nil {
 		return nil
 	}
 	id := p.User.ID

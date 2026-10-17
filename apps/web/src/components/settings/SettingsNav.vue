@@ -23,6 +23,7 @@ const links: Link[] = [
   { to: '/settings/pricing', label: 'Pricing', perm: 'settings.manage' },
   { to: '/settings/adapters', label: 'Source adapters', perm: 'products.read' },
   { to: '/settings/ai', label: 'AI providers', perm: 'ai.configure' },
+  { to: '/settings/integrations', label: 'Integrations', perm: 'settings.manage' },
   { to: '/settings/extension', label: 'Browser extension' },
   { to: '/settings/users', label: 'Users', perm: 'users.manage' },
   { to: '/settings/roles', label: 'Roles', perm: 'users.manage' },

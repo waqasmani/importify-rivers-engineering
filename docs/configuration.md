@@ -9,7 +9,7 @@ from the commented template `.env.example`). Without Docker, export them before 
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `REA_DATABASE_URL` | required | PostgreSQL connection URL, e.g. `postgres://rea:PASSWORD@db:5432/rea?sslmode=disable`. |
-| `REA_SECRET_KEY` | required | 32 random bytes, base64 (`openssl rand -base64 32`). Encrypts stored AI provider keys (AES-256-GCM). Keep it with your backups. |
+| `REA_SECRET_KEY` | required | 32 random bytes, base64 (`openssl rand -base64 32`). Encrypts stored AI provider keys and webhook signing secrets (AES-256-GCM). Keep it with your backups. |
 | `REA_PUBLIC_URL` | `http://localhost:8080` | URL users and the extension use. Its origin is allowed for cookie requests; `https` turns on secure cookies and HSTS. |
 | `REA_HTTP_ADDR` | `:8080` | Listen address. The container image sets `0.0.0.0:8080`. |
 | `REA_DATA_DIR` | `./data` | Attachments, snapshots, uploaded sources, API-created backups and the setup token file. |
@@ -28,6 +28,18 @@ from the commented template `.env.example`). Without Docker, export them before 
 | `REA_SERVER_FETCH_ENABLED` | `false` | Allow website analysis to fetch public URLs from the server (robots.txt honoured, rate limited). |
 | `REA_FETCH_ALLOW_PRIVATE_NETWORKS` | `false` | Allow server fetches to private, loopback and link-local addresses. Leave off unless you analyze your own intranet sites. |
 | `REA_REPO_ROOTS` | empty | Comma-separated directories that may be analyzed as repository paths. Empty disables repository-path sources. |
+| `REA_INTEGRATION_RATE_LIMIT` | `600` | Requests per minute allowed for each integration key (catalog API), on top of the per-IP limit. |
+| `REA_CATALOG_CHANGES_RETENTION_DAYS` | `90` | How long catalog change-feed entries are kept. Clients with an older cursor get `410` and reload the catalog. |
+| `REA_WEBHOOK_ALLOW_PRIVATE_NETWORKS` | `false` | Allow webhook targets on private, loopback, link-local and other reserved addresses (cloud metadata addresses stay blocked). Only for receivers on your own network. |
+| `REA_WEBHOOK_ALLOW_HTTP_LOCALHOST` | `false` | Allow plain `http://` webhook URLs to `localhost` (and loopback connections for them). Development only. |
+| `REA_WEBHOOK_TIMEOUT` | `10s` | Time limit for one delivery attempt (at most `2m`). |
+| `REA_WEBHOOK_MAX_ATTEMPTS` | `10` | Attempts per delivery before it is marked failed (at most 50). |
+| `REA_WEBHOOK_RETRY_BASE` | `1m` | Delay before the first retry; it doubles per attempt (±20 % jitter). |
+| `REA_WEBHOOK_RETRY_MAX` | `6h` | Longest delay between two attempts. |
+| `REA_WEBHOOK_DISABLE_AFTER_FAILURES` | `20` | Consecutive failed attempts after which an endpoint is disabled automatically... |
+| `REA_WEBHOOK_DISABLE_FAILING_FOR` | `1h` | ...provided it has been failing for at least this long. The reason is shown on the endpoint. |
+| `REA_WEBHOOK_CONCURRENCY` | `2` | Parallel webhook senders per worker (separate from analysis and AI jobs). |
+| `REA_WEBHOOK_LOG_RETENTION_DAYS` | `30` | How long finished webhook deliveries (the delivery log) are kept. |
 | `REA_WORKER_MODE` | `embedded` | `embedded` runs analysis and AI jobs inside the API. `off` leaves them to `rea-worker`. |
 | `REA_WORKER_CONCURRENCY` | `2` | Parallel jobs per worker. |
 | `REA_AUTO_MIGRATE` | `true` | Apply pending migrations at API start-up. Set `false` to run `rea-api migrate up` yourself. |
@@ -57,3 +69,5 @@ Organization name, CRM labels (for example renaming "Suppliers" to "Vendors"), i
 snapshot size, retention) and the AI on/off switch are edited by administrators under
 **Settings** in the dashboard and stored in `app_settings`. AI providers are configured under
 **AI providers**; their API keys are encrypted with `REA_SECRET_KEY` and never returned by the API.
+Integration keys and webhook endpoints are managed under **Settings → Integrations**; webhook
+signing secrets are encrypted with `REA_SECRET_KEY` as well (see [catalog-api.md](catalog-api.md)).

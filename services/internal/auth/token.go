@@ -13,6 +13,8 @@ const (
 	PrefixAccess  = "reaa_"
 	PrefixRefresh = "rear_"
 	PrefixPAT     = "reap_"
+	// PrefixIntegration marks organization-owned integration keys for machine clients.
+	PrefixIntegration = "reai_"
 )
 
 // NewToken returns a random 256-bit token with the given prefix.

@@ -16,17 +16,20 @@ import (
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/filestore"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/secretbox"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/store"
+	"github.com/waqasmani/importify-rivers-engineering/services/internal/webhooks"
 )
 
 // Worker claims and executes jobs.
 type Worker struct {
-	cfg   *config.Config
-	db    *store.DB
-	log   *slog.Logger
-	box   *secretbox.Box
-	files *filestore.Store
-	id    string
-	wake  chan struct{}
+	cfg      *config.Config
+	db       *store.DB
+	log      *slog.Logger
+	box      *secretbox.Box
+	files    *filestore.Store
+	id       string
+	wake     chan struct{}
+	hooks    *webhooks.Dispatcher
+	hookWake chan struct{}
 }
 
 // New creates a worker with a unique identifier used for job locks.
@@ -34,17 +37,23 @@ func New(cfg *config.Config, db *store.DB, log *slog.Logger, box *secretbox.Box,
 	host, _ := os.Hostname()
 	b := make([]byte, 4)
 	_, _ = rand.Read(b)
+	id := host + "-" + hex.EncodeToString(b)
 	return &Worker{cfg: cfg, db: db, log: log.With(slog.String("component", "worker")), box: box, files: files,
-		id: host + "-" + hex.EncodeToString(b), wake: make(chan struct{}, 1)}
+		id: id, wake: make(chan struct{}, 1), hooks: webhooks.New(cfg, db, box, log, id), hookWake: make(chan struct{}, 1)}
 }
 
-// Wake asks idle loops to check the queue immediately.
+// Wake asks idle loops to check the queues immediately.
 func (w *Worker) Wake() {
-	select {
-	case w.wake <- struct{}{}:
-	default:
+	for _, ch := range []chan struct{}{w.wake, w.hookWake} {
+		select {
+		case ch <- struct{}{}:
+		default:
+		}
 	}
 }
+
+// webhookPoll is how often idle webhook loops look for new catalog changes and due retries.
+const webhookPoll = 2 * time.Second
 
 // staleAfter is how long a claimed job may run before another worker may requeue it.
 const staleAfter = 30 * time.Minute
@@ -60,6 +69,15 @@ func (w *Worker) Run(ctx context.Context) {
 			w.loop(ctx)
 		}()
 	}
+	// Webhook deliveries wait on remote servers, so they get their own loops and never hold up
+	// analysis runs or AI jobs.
+	for i := 0; i < w.cfg.WebhookConcurrency; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			w.webhookLoop(ctx)
+		}()
+	}
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -67,6 +85,30 @@ func (w *Worker) Run(ctx context.Context) {
 	}()
 	wg.Wait()
 	w.log.Info("worker stopped")
+}
+
+func (w *Worker) webhookLoop(ctx context.Context) {
+	for {
+		if ctx.Err() != nil {
+			return
+		}
+		if w.hooks.RunOnce(ctx) {
+			continue
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-w.hookWake:
+		case <-time.After(webhookPoll):
+		}
+	}
+}
+
+// DrainWebhooks sequences catalog changes, fans them out and sends every delivery that is due,
+// until nothing is left (used by tests and the CLI).
+func (w *Worker) DrainWebhooks(ctx context.Context) {
+	for w.hooks.RunOnce(ctx) {
+	}
 }
 
 func (w *Worker) loop(ctx context.Context) {
@@ -132,5 +174,8 @@ func (w *Worker) requeueStale(ctx context.Context) {
 	}
 	if n, err := w.db.RequeueStaleAIJobs(ctx, int32(staleAfter.Seconds())); err == nil && n > 0 {
 		w.log.Warn("requeued stale ai jobs", slog.Int64("count", n))
+	}
+	if n, err := w.db.RequeueStaleWebhookDeliveries(ctx, int32(webhooks.StaleAfter.Seconds())); err == nil && n > 0 {
+		w.log.Warn("requeued stale webhook deliveries", slog.Int64("count", n))
 	}
 }

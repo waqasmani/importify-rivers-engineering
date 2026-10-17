@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/waqasmani/importify-rivers-engineering/services/internal/catalog"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/store"
 )
 
@@ -60,12 +61,32 @@ func (w *Worker) applyRetention(ctx context.Context) {
 			}
 		}
 	}
+	w.pruneIntegrations(ctx)
 	if time.Since(lastFileScan) < 24*time.Hour {
 		return
 	}
 	lastFileScan = time.Now()
 	w.collectOrphanFiles(ctx)
 }
+
+// pruneIntegrations removes change feed entries older than REA_CATALOG_CHANGES_RETENTION_DAYS,
+// finished webhook deliveries older than REA_WEBHOOK_LOG_RETENTION_DAYS and old key usage counters.
+func (w *Worker) pruneIntegrations(ctx context.Context) {
+	if n, err := catalog.Prune(ctx, w.db, time.Now().Add(-w.cfg.CatalogChangeRetention)); err != nil {
+		w.log.Error("prune catalog changes", slog.String("error", err.Error()))
+	} else if n > 0 {
+		w.log.Info("pruned catalog changes past retention", slog.Int64("count", n))
+	}
+	if n, err := w.db.PruneWebhookDeliveries(ctx, time.Now().Add(-w.cfg.WebhookLogRetention)); err != nil {
+		w.log.Error("prune webhook deliveries", slog.String("error", err.Error()))
+	} else if n > 0 {
+		w.log.Info("pruned webhook deliveries past retention", slog.Int64("count", n))
+	}
+	_, _ = w.db.PruneIntegrationKeyUsage(ctx, time.Now().AddDate(0, 0, -400))
+}
+
+// PruneIntegrations is exported for tests and operator commands.
+func (w *Worker) PruneIntegrations(ctx context.Context) { w.pruneIntegrations(ctx) }
 
 func (w *Worker) collectOrphanFiles(ctx context.Context) {
 	keys, err := w.files.Keys()

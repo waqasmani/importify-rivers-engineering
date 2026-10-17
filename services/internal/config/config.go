@@ -46,6 +46,20 @@ type Config struct {
 	SetupToken        string
 	PgDumpPath        string
 	Version           string
+
+	// Catalog API and webhooks.
+	IntegrationRateLimit        int           // requests per minute per integration key
+	CatalogChangeRetention      time.Duration // how long change feed entries are kept
+	WebhookAllowPrivate         bool          // allow webhook targets on private, loopback and link-local addresses
+	WebhookAllowHTTPLocalhost   bool          // allow plain http:// webhook URLs to localhost
+	WebhookTimeout              time.Duration // per delivery attempt, connect to last byte
+	WebhookMaxAttempts          int
+	WebhookRetryBase            time.Duration // first retry delay; doubles per attempt
+	WebhookRetryMax             time.Duration // upper bound of one retry delay
+	WebhookDisableAfterFailures int           // consecutive failed attempts before an endpoint is disabled
+	WebhookDisableFailingFor    time.Duration // ...and for at least this long
+	WebhookConcurrency          int
+	WebhookLogRetention         time.Duration // finished deliveries are kept this long
 }
 
 // DefaultExtensionID is the ID Chrome derives from the public key pinned in the extension manifest.
@@ -113,6 +127,24 @@ func Load() (*Config, error) {
 	c.ServerFetch = boolv("REA_SERVER_FETCH_ENABLED", false)
 	c.FetchAllowPrivate = boolv("REA_FETCH_ALLOW_PRIVATE_NETWORKS", false)
 	c.AutoMigrate = boolv("REA_AUTO_MIGRATE", true)
+	c.IntegrationRateLimit = intv("REA_INTEGRATION_RATE_LIMIT", 600, &errs)
+	c.CatalogChangeRetention = time.Duration(intv("REA_CATALOG_CHANGES_RETENTION_DAYS", 90, &errs)) * 24 * time.Hour
+	c.WebhookAllowPrivate = boolv("REA_WEBHOOK_ALLOW_PRIVATE_NETWORKS", false)
+	c.WebhookAllowHTTPLocalhost = boolv("REA_WEBHOOK_ALLOW_HTTP_LOCALHOST", false)
+	c.WebhookTimeout = dur("REA_WEBHOOK_TIMEOUT", 10*time.Second, &errs)
+	c.WebhookMaxAttempts = intv("REA_WEBHOOK_MAX_ATTEMPTS", 10, &errs)
+	c.WebhookRetryBase = dur("REA_WEBHOOK_RETRY_BASE", time.Minute, &errs)
+	c.WebhookRetryMax = dur("REA_WEBHOOK_RETRY_MAX", 6*time.Hour, &errs)
+	c.WebhookDisableAfterFailures = intv("REA_WEBHOOK_DISABLE_AFTER_FAILURES", 20, &errs)
+	c.WebhookDisableFailingFor = dur("REA_WEBHOOK_DISABLE_FAILING_FOR", time.Hour, &errs)
+	c.WebhookConcurrency = intv("REA_WEBHOOK_CONCURRENCY", 2, &errs)
+	c.WebhookLogRetention = time.Duration(intv("REA_WEBHOOK_LOG_RETENTION_DAYS", 30, &errs)) * 24 * time.Hour
+	if c.WebhookMaxAttempts > 50 {
+		errs = append(errs, errors.New("REA_WEBHOOK_MAX_ATTEMPTS must be at most 50"))
+	}
+	if c.WebhookTimeout > 2*time.Minute {
+		errs = append(errs, errors.New("REA_WEBHOOK_TIMEOUT must be at most 2m"))
+	}
 	if c.WorkerMode != "embedded" && c.WorkerMode != "off" {
 		errs = append(errs, errors.New("REA_WORKER_MODE must be embedded or off"))
 	}

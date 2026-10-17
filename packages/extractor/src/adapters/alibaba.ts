@@ -1,9 +1,9 @@
 // Alibaba.com product pages. Marketplace markup changes often, so this adapter is best effort
 // and its confidence is deliberately modest.
 import { absUrl, collapse, imageSrc, meta, text } from '../dom'
-import { parsePrice } from '../../shared/price'
-import type { PayloadImage } from '../../shared/types'
-import { emptyOutput, fv, type Adapter, type PageContext } from './types'
+import { parsePrice } from '../price'
+import type { PayloadImage } from '../types'
+import { emptyOutput, fv, type Adapter, type PageContext } from '../adapter'
 
 export const alibabaAdapter: Adapter = {
   key: 'alibaba',

@@ -1,0 +1,103 @@
+{
+  "comment": "Rule documents checked by both validators (packages/extractor/src/rules/schema.ts and services/internal/marketplaces/rules.go). Each case states whether it must be accepted.",
+  "cases": [
+    {
+      "name": "minimal document",
+      "valid": true,
+      "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#product" }] }, "fields": { "title": [{ "css": "h1" }] } }
+    },
+    {
+      "name": "every source kind, transform and variant option",
+      "valid": true,
+      "doc": {
+        "schema": 1,
+        "currency": "USD",
+        "currency_by_host": { "shop.co.uk": "GBP" },
+        "confidence": 0.9,
+        "product_signal": { "all": [{ "url_path": "/item/" }], "any": [{ "source": "state", "path": "item.title" }, { "meta": "og:type", "equals": "product" }] },
+        "sources": {
+          "ld": { "kind": "json_ld", "types": ["Product", "ProductGroup"] },
+          "next": { "kind": "script_json", "selector": "script#__NEXT_DATA__" },
+          "state": { "kind": "script_marker", "marker": "window.__INITIAL_STATE__", "selector": "script:not([src])" },
+          "gallery": { "kind": "attr_json", "selector": "#gallery", "attr": "data-images" }
+        },
+        "fields": {
+          "title": [{ "source": "state", "path": "item.title", "transforms": ["trim"] }, { "meta": "og:title" }, { "css": "h1" }],
+          "description": [{ "source": "ld", "path": "description", "transforms": ["strip_html"] }, { "css": "#desc", "multiline": true }],
+          "price": [{ "source": "state", "path": "item.priceCents", "transforms": ["cents"] }],
+          "list_price": [{ "css": ".was", "confidence": 0.8 }],
+          "images": [{ "source": "gallery", "path": "[*].url", "transforms": ["protocol_fix", "image_original", { "prefix": "https://img.shop.example/" }] }, { "css": ".thumb img", "attr": "data-zoom", "all": true }],
+          "category": [{ "source": "next", "path": "props.crumbs[*].name", "transforms": [{ "join": " > " }] }, { "css": ".crumbs a", "all": true }],
+          "specifications": [{ "source": "state", "path": "item.attrs", "entry": { "name": "name", "value": "value" } }, { "css": "#specs", "table": true }, { "css": ".spec", "pairs": { "name": ".k", "value": ".v" } }],
+          "gtin": [{ "source": "ld", "path": "gtin13", "transforms": ["digits"] }],
+          "availability": [{ "source": "state", "path": "item.stock", "transforms": ["stock"] }],
+          "rating_count": [{ "source": "state", "path": "item.reviews", "transforms": ["number"] }],
+          "brand": [{ "source": "state", "path": "item.tags", "transforms": [{ "split": "," }, "first", "uppercase"] }],
+          "supplier_url": [{ "css": ".seller a", "attr": "href", "transforms": ["absolute_url"] }],
+          "sku": [{ "source": "gallery", "path": "", "transforms": ["keys", "last", "lowercase"] }]
+        },
+        "variants": {
+          "mode": "property_join",
+          "properties": { "source": "state", "path": "item.props", "id": "pid", "name": "name", "values": "values", "value_id": "vid", "value_name": { "path": "label", "transforms": ["trim"] }, "value_image": "img" },
+          "skus": { "source": "state", "path": "item.skus", "ids": "path", "separator": ";", "match": "id", "sku": "skuId", "price": "price", "stock": "qty" },
+          "offers": { "source": "state", "path": "item.offers", "key": "skuId", "match": "id", "price": "amount", "currency": "currency" }
+        }
+      }
+    },
+    {
+      "name": "list variants with option lists, positions and rest",
+      "valid": true,
+      "doc": {
+        "schema": 1,
+        "product_signal": { "any": [{ "source": "s" }] },
+        "sources": { "s": { "kind": "script_json", "selector": "#data" } },
+        "fields": { "title": [{ "source": "s", "path": "['product name']" }] },
+        "variants": {
+          "mode": "list", "source": "s", "path": "skus.*", "title": "name", "sku": "$key", "price": "price", "image": "img",
+          "options": { "Color": "color" }, "option_list": { "path": "attrs", "name": "k", "value": "v" },
+          "option_positions": { "values": "dims", "names": { "source": "s", "path": "dimNames" } },
+          "options_rest": { "exclude": ["price", "img"] }
+        }
+      }
+    },
+    { "name": "unknown schema version", "valid": false, "doc": { "schema": 2, "product_signal": { "any": [{ "css": "#p" }] }, "fields": { "title": [{ "css": "h1" }] } } },
+    { "name": "missing title", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "fields": { "price": [{ "css": ".price" }] } } },
+    { "name": "missing product signal", "valid": false, "doc": { "schema": 1, "fields": { "title": [{ "css": "h1" }] } } },
+    { "name": "empty product signal", "valid": false, "doc": { "schema": 1, "product_signal": {}, "fields": { "title": [{ "css": "h1" }] } } },
+    { "name": "unknown top-level key (regular expressions are not supported)", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "fields": { "title": [{ "css": "h1" }] }, "regex": "(a+)+$" } },
+    { "name": "unknown candidate key", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "fields": { "title": [{ "css": "h1", "pattern": "(.*)" }] } } },
+    { "name": "unknown field", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "fields": { "title": [{ "css": "h1" }], "password": [{ "css": "#pw" }] } } },
+    { "name": "unknown transform", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "fields": { "title": [{ "css": "h1", "transforms": ["eval"] }] } } },
+    { "name": "transform object with two keys", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "fields": { "title": [{ "css": "h1", "transforms": [{ "join": ",", "split": "," }] }] } } },
+    { "name": "javascript prefix", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "fields": { "title": [{ "css": "h1" }], "images": [{ "css": "img", "transforms": [{ "prefix": "javascript:alert(1)//" }] }] } } },
+    { "name": "candidate with two readers", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "fields": { "title": [{ "css": "h1", "meta": "og:title" }] } } },
+    { "name": "candidate without a reader", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "fields": { "title": [{ "transforms": ["trim"] }] } } },
+    { "name": "path without source", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "fields": { "title": [{ "css": "h1", "path": "a.b" }] } } },
+    { "name": "attr without css", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "sources": { "s": { "kind": "script_json", "selector": "#d" } }, "fields": { "title": [{ "source": "s", "attr": "title" }] } } },
+    { "name": "undeclared source", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "fields": { "title": [{ "source": "state", "path": "title" }] } } },
+    { "name": "undeclared source in signal", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "source": "state" }] }, "fields": { "title": [{ "css": "h1" }] } } },
+    { "name": "undeclared variant source", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "fields": { "title": [{ "css": "h1" }] }, "variants": { "mode": "list", "source": "x", "path": "skus" } } },
+    { "name": "bad source name", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "sources": { "Bad-Name": { "kind": "script_json", "selector": "#d" } }, "fields": { "title": [{ "css": "h1" }] } } },
+    { "name": "unknown source kind", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "sources": { "s": { "kind": "fetch", "url": "https://x.example/api" } }, "fields": { "title": [{ "css": "h1" }] } } },
+    { "name": "storage source kind", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "sources": { "s": { "kind": "local_storage", "key": "cart" } }, "fields": { "title": [{ "css": "h1" }] } } },
+    { "name": "short marker", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "sources": { "s": { "kind": "script_marker", "marker": "ab" } }, "fields": { "title": [{ "css": "h1" }] } } },
+    { "name": "empty path segment", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "sources": { "s": { "kind": "script_json", "selector": "#d" } }, "fields": { "title": [{ "source": "s", "path": "a..b" }] } } },
+    { "name": "path with a call", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "sources": { "s": { "kind": "script_json", "selector": "#d" } }, "fields": { "title": [{ "source": "s", "path": "a.toString()" }] } } },
+    { "name": "prototype path", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "sources": { "s": { "kind": "script_json", "selector": "#d" } }, "fields": { "title": [{ "source": "s", "path": "a.__proto__.b" }] } } },
+    { "name": "token path", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "sources": { "s": { "kind": "script_marker", "marker": "window.runParams" } }, "fields": { "title": [{ "source": "s", "path": "csrfToken" }] } } },
+    { "name": "quoted session path", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "sources": { "s": { "kind": "script_json", "selector": "#d" } }, "fields": { "title": [{ "source": "s", "path": "user['session_id']" }] } } },
+    { "name": "form value attribute", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "fields": { "title": [{ "css": "input#title", "attr": "value" }] } } },
+    { "name": "event handler attribute", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "fields": { "title": [{ "css": "h1", "attr": "onclick" }] } } },
+    { "name": "token attribute", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "fields": { "title": [{ "css": "h1", "attr": "data-csrf-token" }] } } },
+    { "name": "token meta", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "fields": { "title": [{ "meta": "csrf-token" }] } } },
+    { "name": "selector with markup", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "fields": { "title": [{ "css": "<script>" }] } } },
+    { "name": "unknown currency", "valid": false, "doc": { "schema": 1, "currency": "XYZ", "product_signal": { "any": [{ "css": "#p" }] }, "fields": { "title": [{ "css": "h1" }] } } },
+    { "name": "bad host in currency map", "valid": false, "doc": { "schema": 1, "currency_by_host": { "https://shop.example": "USD" }, "product_signal": { "any": [{ "css": "#p" }] }, "fields": { "title": [{ "css": "h1" }] } } },
+    { "name": "confidence out of range", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "fields": { "title": [{ "css": "h1", "confidence": 1.5 }] } } },
+    { "name": "condition with two checks", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p", "url_path": "/p/" }] }, "fields": { "title": [{ "css": "h1" }] } } },
+    { "name": "equals on a css condition", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p", "equals": "x" }] }, "fields": { "title": [{ "css": "h1" }] } } },
+    { "name": "unknown variant mode", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "sources": { "s": { "kind": "script_json", "selector": "#d" } }, "fields": { "title": [{ "css": "h1" }] }, "variants": { "mode": "script", "source": "s", "path": "x" } } },
+    { "name": "property join without skus", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "sources": { "s": { "kind": "script_json", "selector": "#d" } }, "fields": { "title": [{ "css": "h1" }] }, "variants": { "mode": "property_join", "properties": { "source": "s", "path": "p", "name": "n", "values": "v", "value_id": "i", "value_name": "n" } } } },
+    { "name": "too many candidates", "valid": false, "doc": { "schema": 1, "product_signal": { "any": [{ "css": "#p" }] }, "fields": { "title": [{ "css": "h1" }, { "css": "h1" }, { "css": "h1" }, { "css": "h1" }, { "css": "h1" }, { "css": "h1" }, { "css": "h1" }, { "css": "h1" }, { "css": "h1" }, { "css": "h1" }, { "css": "h1" }] } } }
+  ]
+}

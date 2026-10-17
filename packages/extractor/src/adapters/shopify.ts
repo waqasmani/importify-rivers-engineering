@@ -1,9 +1,9 @@
 // Shopify storefronts: DOM markers plus the product JSON that themes embed in
 // <script type="application/json"> tags. No network requests are made from the page.
 import { absUrl, htmlToText, meta, text, truncate } from '../dom'
-import { amountFromStructured, parsePrice, trimAmount, validCurrency } from '../../shared/price'
-import type { PayloadImage, PayloadVariant } from '../../shared/types'
-import { emptyOutput, fv, type Adapter, type PageContext } from './types'
+import { amountFromStructured, parsePrice, trimAmount, validCurrency } from '../price'
+import type { PayloadImage, PayloadVariant } from '../types'
+import { emptyOutput, fv, type Adapter, type PageContext } from '../adapter'
 
 type Json = Record<string, unknown>
 

@@ -1,9 +1,9 @@
 // Generic heuristics used when no structured data or platform adapter applies: headings,
 // visible price patterns, prominent images and specification tables. Lowest confidence.
 import { absUrl, collapse, imageSrc, meta, multilineText, rowsToSpecs, tableRows, text, truncate } from '../dom'
-import { PRICE_PATTERN, parsePrice } from '../../shared/price'
-import type { PayloadImage } from '../../shared/types'
-import { emptyOutput, fv, type Adapter, type PageContext } from './types'
+import { PRICE_PATTERN, parsePrice } from '../price'
+import type { PayloadImage } from '../types'
+import { emptyOutput, fv, type Adapter, type PageContext } from '../adapter'
 
 const CHROME = 'header, nav, footer, aside, [role="navigation"], [role="banner"], [role="contentinfo"]'
 const STRUCK = 'del, s, strike, [class*="old-price"], [class*="was-price"], [class*="compare"], [class*="crossed"], [class*="strike"], [class*="list-price"], [class*="rrp"], [class*="msrp"]'

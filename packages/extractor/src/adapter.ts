@@ -1,4 +1,6 @@
-import type { AdapterConfig, PayloadImage, PayloadVariant } from '../../shared/types'
+// Adapter contract: what every adapter receives (the page context) and returns (fields with
+// per-field confidence and evidence).
+import type { AdapterConfig, PayloadImage, PayloadVariant } from './types'
 
 export interface FieldValue<T> {
   value: T
@@ -34,6 +36,11 @@ export interface AdapterFields {
   supplier_url?: FieldValue<string>
   canonical_url?: FieldValue<string>
   identifiers?: FieldValue<Record<string, string>>
+  // Metadata (see METADATA_KEYS): kept with the capture, never imported as product fields.
+  list_price?: FieldValue<PriceValue>
+  shipping?: FieldValue<string>
+  rating?: FieldValue<string>
+  rating_count?: FieldValue<string>
 }
 
 export interface AdapterOutput {

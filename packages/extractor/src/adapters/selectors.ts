@@ -1,8 +1,8 @@
 // Server-defined selector adapters: CSS selectors configured by an administrator in REA.
 import { imageSrc, multilineText, rowsToSpecs, tableRows, text } from '../dom'
-import { parsePrice, validCurrency } from '../../shared/price'
-import type { AdapterConfig, PayloadImage } from '../../shared/types'
-import { emptyOutput, fv, type AdapterOutput, type PageContext } from './types'
+import { parsePrice, validCurrency } from '../price'
+import type { AdapterConfig, PayloadImage } from '../types'
+import { emptyOutput, fv, type AdapterOutput, type PageContext } from '../adapter'
 
 function query(doc: Document, sel: string): Element[] {
   try {

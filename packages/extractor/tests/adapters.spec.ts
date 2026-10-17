@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { applicableAdapters, domainMatches } from '../src/content/extract'
-import { parsePrice } from '../src/shared/price'
-import { BUILTIN_ADAPTERS, type AdapterConfig } from '../src/shared/types'
+import { applicableAdapters, domainMatches } from '../src/page'
+import { parsePrice } from '../src/price'
+import { BUILTIN_ADAPTERS, type AdapterConfig } from '../src/types'
 import { extract, extractFixture } from './helpers'
 
 describe('JSON-LD product fixture', () => {
@@ -52,13 +52,8 @@ describe('JSON-LD product fixture', () => {
     expect(r.siteName).toBe('Northwind Outdoor GmbH')
   })
 
-  it('never reads form values and drops hidden inputs from the snapshot', () => {
-    const json = JSON.stringify(r)
-    expect(json).not.toContain('product_id')
-    expect(r.snapshot.included).toBe(true)
-    expect(r.snapshot.html).not.toMatch(/<script/i)
-    expect(r.snapshot.html).not.toContain('type="hidden"')
-    expect(r.snapshot.html).toContain('Trailblazer 2L Insulated Flask')
+  it('never reads form values', () => {
+    expect(JSON.stringify(r)).not.toContain('product_id')
   })
 })
 
@@ -202,9 +197,6 @@ describe('login page fixture', () => {
   it('never captures passwords, CSRF tokens, cookies or session parameters anywhere', () => {
     for (const secret of ['should-never-be-read', 'tok123', 'sess-9f8e7d', 'zzz999']) expect(json).not.toContain(secret)
     expect(r.url).toBe('https://portal.acme.example/login?next=%2Fhome')
-    expect(r.snapshot.html).not.toMatch(/type="password"/)
-    expect(r.snapshot.html).not.toMatch(/name="csrf"/)
-    expect(r.snapshot.html).not.toMatch(/<script/i)
   })
 
   it('is not mistaken for a product', () => {

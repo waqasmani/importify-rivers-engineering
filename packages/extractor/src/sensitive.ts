@@ -45,7 +45,8 @@ export function redactJson(value: unknown, depth = 0): unknown {
   if (value && typeof value === 'object') {
     const out: Record<string, unknown> = {}
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-      if (isSensitiveName(k)) continue
+      // "__proto__" would replace the copy's prototype instead of adding a key.
+      if (isSensitiveName(k) || k === '__proto__') continue
       out[k] = redactJson(v, depth + 1)
     }
     return out

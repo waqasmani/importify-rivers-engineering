@@ -1,8 +1,8 @@
 // WooCommerce stores: body classes, product summary markup and variations_form data.
 import { absUrl, imageSrc, multilineText, rowsToSpecs, tableRows, text } from '../dom'
-import { amountFromStructured, parsePrice } from '../../shared/price'
-import type { PayloadImage, PayloadVariant } from '../../shared/types'
-import { emptyOutput, fv, type Adapter, type PageContext } from './types'
+import { amountFromStructured, parsePrice } from '../price'
+import type { PayloadImage, PayloadVariant } from '../types'
+import { emptyOutput, fv, type Adapter, type PageContext } from '../adapter'
 
 export function wooMarkers(doc: Document): string[] {
   const ev: string[] = []

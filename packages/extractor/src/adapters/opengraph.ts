@@ -1,6 +1,6 @@
 import { absUrl, meta, metaAll } from '../dom'
-import { amountFromStructured, validCurrency } from '../../shared/price'
-import { emptyOutput, fv, type Adapter, type PageContext } from './types'
+import { amountFromStructured, validCurrency } from '../price'
+import { emptyOutput, fv, type Adapter, type PageContext } from '../adapter'
 
 /** Open Graph (og:*), product:* and Twitter card tags. */
 export function readOpenGraph(doc: Document): Record<string, string> {

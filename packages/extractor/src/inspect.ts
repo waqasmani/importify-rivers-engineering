@@ -1,13 +1,13 @@
 // Local page inspector: platform, technologies, headings and metadata. Nothing here is sent to
 // REA unless the user saves a capture.
-import { absUrl, collapse, hostOf, meta, publicMeta, text, truncate } from '../dom'
-import type { InspectorData, PageType } from '../../shared/types'
-import { readOpenGraph } from './opengraph'
-import { microdataSummary, readMicrodata } from './microdata'
-import { flattenNodes, hasType, organizationName, typesOf, websiteName, type Node } from './schemaorg'
-import { shopifyMarkers } from './shopify'
-import { wooMarkers } from './woocommerce'
-import type { PageContext } from './types'
+import { absUrl, collapse, hostOf, meta, publicMeta, text, truncate } from './dom'
+import type { InspectorData, PageType } from './types'
+import { readOpenGraph } from './adapters/opengraph'
+import { microdataSummary, readMicrodata } from './adapters/microdata'
+import { flattenNodes, hasType, organizationName, typesOf, websiteName, type Node } from './adapters/schemaorg'
+import { shopifyMarkers } from './adapters/shopify'
+import { wooMarkers } from './adapters/woocommerce'
+import type { PageContext } from './adapter'
 
 const HOST_TECH: [RegExp, string][] = [
   [/(^|\.)cdn\.shopify\.com$/, 'Shopify'], [/(^|\.)googletagmanager\.com$/, 'Google Tag Manager'],

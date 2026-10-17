@@ -1,9 +1,9 @@
 // Reads schema.org microdata (itemscope/itemprop) into plain objects.
 import { absUrl, collapse, text, truncate } from '../dom'
-import { isSensitiveName } from '../../shared/sensitive'
-import type { MicrodataItem } from '../../shared/types'
+import { isSensitiveName } from '../sensitive'
+import type { MicrodataItem } from '../types'
 import { mapProduct, type Node } from './schemaorg'
-import { emptyOutput, type Adapter, type PageContext } from './types'
+import { emptyOutput, type Adapter, type PageContext } from '../adapter'
 
 function propValue(el: Element, base: string): unknown {
   if (el.hasAttribute('itemscope')) return itemToNode(el, base, 0)

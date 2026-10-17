@@ -181,6 +181,7 @@ export function captureInputFrom(x: ExtractionResult, selections: Selection[], p
     extracted: {
       product: x.product.payload,
       product_detected: x.product.detected,
+      metadata: Object.fromEntries(Object.entries(x.product.metadata).map(([k, v]) => [k, { value: v.value, evidence: v.evidence, adapter: v.adapter }])),
       adapters: x.product.adapters.map((a) => ({ key: a.key, matched: a.matched, fields: a.fields })),
       page: {
         site_name: x.siteName,

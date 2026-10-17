@@ -1,8 +1,8 @@
 // Maps schema.org Product data (from JSON-LD or microdata) to extractor fields.
 import { absUrl, collapse, firstString, htmlToText, truncate } from '../dom'
-import { amountFromStructured, validCurrency } from '../../shared/price'
-import type { PayloadImage, PayloadVariant } from '../../shared/types'
-import { fv, type AdapterFields, type PageContext } from './types'
+import { amountFromStructured, validCurrency } from '../price'
+import type { PayloadImage, PayloadVariant } from '../types'
+import { fv, type AdapterFields, type PageContext } from '../adapter'
 
 export type Node = Record<string, unknown>
 

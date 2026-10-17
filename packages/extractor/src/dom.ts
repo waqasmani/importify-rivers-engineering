@@ -1,6 +1,6 @@
 // DOM helpers for the content script. They read visible text and public attributes only:
 // form field values, password and hidden inputs, scripts and cookies are never read.
-import { isSensitiveName, scrubUrl } from '../shared/sensitive'
+import { isSensitiveName, scrubUrl } from './sensitive'
 
 const SKIP_TEXT = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE', 'TEXTAREA', 'SELECT', 'OPTION', 'INPUT', 'OBJECT', 'EMBED', 'IFRAME', 'SVG', 'CANVAS'])
 const BLOCK = new Set(['P', 'DIV', 'LI', 'BR', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'TR', 'SECTION', 'ARTICLE', 'TD', 'TH', 'DT', 'DD', 'UL', 'OL', 'TABLE', 'HEADER', 'FOOTER', 'BLOCKQUOTE', 'PRE'])

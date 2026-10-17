@@ -13,6 +13,9 @@ importers:
       '@rea/api-types':
         specifier: workspace:*
         version: link:../../packages/api-types
+      '@rea/extractor':
+        specifier: workspace:*
+        version: link:../../packages/extractor
       lucide-vue-next:
         specifier: 1.0.0
         version: 1.0.0(vue@3.5.44(typescript@6.0.3))
@@ -62,6 +65,9 @@ importers:
       '@rea/api-types':
         specifier: workspace:*
         version: link:../../packages/api-types
+      '@rea/extractor':
+        specifier: workspace:*
+        version: link:../../packages/extractor
       '@tanstack/vue-query':
         specifier: 5.104.3
         version: 5.104.3(vue@3.5.44(typescript@6.0.3))
@@ -132,6 +138,28 @@ importers:
       typescript:
         specifier: 6.0.3
         version: 6.0.3
+
+  packages/extractor:
+    dependencies:
+      '@rea/api-types':
+        specifier: workspace:*
+        version: link:../api-types
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@types/node':
+        specifier: 22.20.5
+        version: 22.20.5
+      happy-dom:
+        specifier: 21.0.3
+        version: 21.0.3
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 5.0.5
+        version: 5.0.5(@types/node@22.20.5)(happy-dom@21.0.3)(vite@8.3.4(@types/node@22.20.5)(jiti@2.7.0))
 
 packages:
 

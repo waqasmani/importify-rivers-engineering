@@ -1,7 +1,7 @@
 // Merges adapter outputs into one Payload with per-field confidence and evidence.
-import { scrubUrl } from '../../shared/sensitive'
-import type { AdapterConfig, AdapterRun, FieldInfo, FieldKey, Payload, ProductExtraction } from '../../shared/types'
-import type { AdapterFields, AdapterOutput, FieldValue, PriceValue } from './types'
+import { scrubUrl } from './sensitive'
+import { METADATA_KEYS, type AdapterConfig, type AdapterRun, type FieldInfo, type FieldKey, type Payload, type ProductExtraction } from './types'
+import type { AdapterFields, AdapterOutput, FieldValue, PriceValue } from './adapter'
 
 export interface AdapterResult {
   cfg: AdapterConfig
@@ -76,6 +76,16 @@ export function mergeResults(results: AdapterResult[], pageUrl: string): Product
   note('images', images)
   const variants = pick(results, 'variants')
   note('variants', variants)
+
+  // Offer metadata (list price, shipping, ratings) is reported separately from product fields.
+  const metadata: ProductExtraction['metadata'] = {}
+  for (const key of METADATA_KEYS) {
+    const c = pick(results, key) as Candidate<string | PriceValue> | null
+    if (!c) continue
+    const v = c.fv.value
+    const value = typeof v === 'string' ? v : v.text || (v.amount ? `${v.amount}${v.currency ? ' ' + v.currency : ''}` : '')
+    if (value) metadata[key] = { value: value.slice(0, 300), confidence: round(c.fv.confidence), evidence: c.fv.evidence.slice(0, 1000), adapter: c.adapter.key }
+  }
 
   // Specifications are combined: structured sources first, then visible tables.
   const specs: Record<string, string> = {}
@@ -171,5 +181,5 @@ export function mergeResults(results: AdapterResult[], pageUrl: string): Product
     warnings: r.output.warnings,
   }))
   const detected = results.some((r) => r.output.productSignal)
-  return { payload, fields, adapters, detected }
+  return { payload, fields, metadata, adapters, detected }
 }

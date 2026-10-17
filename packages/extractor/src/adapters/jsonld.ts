@@ -1,6 +1,6 @@
-import { redactJson } from '../../shared/sensitive'
+import { redactJson } from '../sensitive'
 import { flattenNodes, mapProduct, organizationName, productNodes, type Node } from './schemaorg'
-import { emptyOutput, fv, type Adapter, type PageContext } from './types'
+import { emptyOutput, fv, type Adapter, type PageContext } from '../adapter'
 
 const MAX_BLOCK = 1_000_000
 

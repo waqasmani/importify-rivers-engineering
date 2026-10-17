@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { contentMessageSchema, extractOptionsSchema, uiEventSchema, uiRequestSchema } from '../src/shared/messages'
 import { classifySender } from '../src/shared/sender'
-import { isSensitiveName, redactJson, scrubUrl } from '../src/shared/sensitive'
+import { isSensitiveName, redactJson, scrubUrl } from '@rea/extractor'
 
 const ID = 'olceibeplclcegianhjffambadoakkno'
 const EXT = `chrome-extension://${ID}`

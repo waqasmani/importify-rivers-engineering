@@ -65,10 +65,10 @@ func (s *Server) mountAnalysis(r chi.Router) {
 
 func (s *Server) handleListAnalyzers(w http.ResponseWriter, r *http.Request) error {
 	return ok(w, map[string]any{
-		"analyzers":    []string{"website", "codebase", "openapi", "api_examples", "document", "screenshot", "workflow"},
-		"report_kinds": analysis.ReportKinds,
-		"source_kinds": []string{"url", "captured_page", "html", "repository_archive", "repository_path", "openapi", "api_examples", "document", "screenshot", "text", "workflow"},
-		"server_fetch": s.cfg.ServerFetch,
+		"analyzers":        []string{"website", "codebase", "openapi", "api_examples", "document", "screenshot", "workflow"},
+		"report_kinds":     analysis.ReportKinds,
+		"source_kinds":     []string{"url", "captured_page", "html", "repository_archive", "repository_path", "openapi", "api_examples", "document", "screenshot", "text", "workflow"},
+		"server_fetch":     s.cfg.ServerFetch,
 		"repository_paths": len(s.cfg.RepoRoots) > 0,
 	})
 }

@@ -57,17 +57,17 @@ func checkValid(v *valid.V) error {
 
 // constraintMessages turn database constraint names into user-facing messages.
 var constraintMessages = map[string]string{
-	"users_email_key":                  "A user with this e-mail address already exists.",
-	"roles_key_key":                    "A role with this key already exists.",
-	"workspaces_slug_key":              "A workspace with this slug already exists.",
-	"tags_name_key":                    "A tag with this name already exists.",
-	"pipelines_entity_type_name_key":   "A pipeline with this name already exists.",
-	"pipeline_stages_pipeline_id_name_key": "A stage with this name already exists in the pipeline.",
+	"users_email_key":                              "A user with this e-mail address already exists.",
+	"roles_key_key":                                "A role with this key already exists.",
+	"workspaces_slug_key":                          "A workspace with this slug already exists.",
+	"tags_name_key":                                "A tag with this name already exists.",
+	"pipelines_entity_type_name_key":               "A pipeline with this name already exists.",
+	"pipeline_stages_pipeline_id_name_key":         "A stage with this name already exists in the pipeline.",
 	"custom_field_definitions_entity_type_key_key": "A custom field with this key already exists.",
-	"source_adapters_key_key":          "An adapter with this key already exists.",
-	"ai_provider_configs_name_key":     "A provider with this name already exists.",
-	"product_images_product_id_url_key": "This image is already attached to the product.",
-	"users_single_owner":               "There can only be one owner.",
+	"source_adapters_key_key":                      "An adapter with this key already exists.",
+	"ai_provider_configs_name_key":                 "A provider with this name already exists.",
+	"product_images_product_id_url_key":            "This image is already attached to the product.",
+	"users_single_owner":                           "There can only be one owner.",
 }
 
 // toAPIError maps arbitrary errors to API errors.

@@ -24,7 +24,9 @@ import (
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/valid"
 )
 
-func contextWith(ctx context.Context, k ctxKey, v any) context.Context { return context.WithValue(ctx, k, v) }
+func contextWith(ctx context.Context, k ctxKey, v any) context.Context {
+	return context.WithValue(ctx, k, v)
+}
 
 func (s *Server) mountIdentity(r chi.Router) {
 	r.Post("/auth/logout", s.h(s.handleLogout))
@@ -579,16 +581,16 @@ func (s *Server) handleSystemInfo(w http.ResponseWriter, r *http.Request) error 
 		return err
 	}
 	return ok(w, map[string]any{
-		"version":         s.cfg.Version,
-		"schema_version":  st.Current,
-		"public_url":      s.cfg.PublicURL.String(),
-		"worker_mode":     s.cfg.WorkerMode,
-		"server_fetch":    s.cfg.ServerFetch,
+		"version":                  s.cfg.Version,
+		"schema_version":           st.Current,
+		"public_url":               s.cfg.PublicURL.String(),
+		"worker_mode":              s.cfg.WorkerMode,
+		"server_fetch":             s.cfg.ServerFetch,
 		"repository_paths_enabled": len(s.cfg.RepoRoots) > 0,
-		"ai_providers":    providers,
-		"max_upload_mb":   s.cfg.MaxUploadBytes >> 20,
-		"extension_origins": s.cfg.ExtensionOrigins,
-		"telemetry":       "none",
+		"ai_providers":             providers,
+		"max_upload_mb":            s.cfg.MaxUploadBytes >> 20,
+		"extension_origins":        s.cfg.ExtensionOrigins,
+		"telemetry":                "none",
 	})
 }
 
@@ -1136,4 +1138,3 @@ func (s *Server) handleRecordActivity(w http.ResponseWriter, r *http.Request) er
 	}
 	return ok(w, map[string]any{"items": rows})
 }
-

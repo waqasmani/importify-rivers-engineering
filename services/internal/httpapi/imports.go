@@ -165,12 +165,12 @@ type importRequest struct {
 }
 
 type checkResponse struct {
-	Normalized products.Normalized   `json:"normalized"`
-	Warnings   []string              `json:"warnings"`
-	Errors     valid.Errors          `json:"errors"`
-	Duplicates []duplicateCandidate  `json:"duplicates"`
-	Definite   bool                  `json:"definite_duplicate"`
-	Supplier   *duplicateCandidate   `json:"suggested_supplier"`
+	Normalized products.Normalized  `json:"normalized"`
+	Warnings   []string             `json:"warnings"`
+	Errors     valid.Errors         `json:"errors"`
+	Duplicates []duplicateCandidate `json:"duplicates"`
+	Definite   bool                 `json:"definite_duplicate"`
+	Supplier   *duplicateCandidate  `json:"suggested_supplier"`
 }
 
 func (s *Server) normalizeImport(ctx context.Context, in *importRequest) (products.Normalized, valid.Errors) {

@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
+	pgxdecimal "github.com/jackc/pgx-shopspring-decimal"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	pgxdecimal "github.com/jackc/pgx-shopspring-decimal"
 )
 
 // DB wraps the connection pool and the generated queries.

@@ -114,10 +114,10 @@ func TestCodebaseArchiveAnalysis(t *testing.T) {
 	var buf bytes.Buffer
 	zw := zip.NewWriter(&buf)
 	for name, content := range map[string]string{
-		"app/go.mod":            "module example.com/app\n\nrequire github.com/go-chi/chi/v5 v5.2.0\n",
-		"app/main.go":           "package main\nfunc main(){ r.Get(\"/widgets\", h); _ = os.Getenv(\"APP_SECRET\") }\n",
-		"app/.env":              "APP_SECRET=supersecretvalue\n",
-		"app/db/001_init.sql":   "CREATE TABLE widgets (id serial primary key, name text);\n",
+		"app/go.mod":          "module example.com/app\n\nrequire github.com/go-chi/chi/v5 v5.2.0\n",
+		"app/main.go":         "package main\nfunc main(){ r.Get(\"/widgets\", h); _ = os.Getenv(\"APP_SECRET\") }\n",
+		"app/.env":            "APP_SECRET=supersecretvalue\n",
+		"app/db/001_init.sql": "CREATE TABLE widgets (id serial primary key, name text);\n",
 	} {
 		w, _ := zw.Create(name)
 		_, _ = w.Write([]byte(content))

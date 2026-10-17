@@ -115,7 +115,9 @@ var settingSpecs = map[string]settingSpec{
 		},
 	},
 	"imports": {
-		def: func() any { return ImportSettings{DefaultCurrency: "USD", AutoLinkSupplierByDomain: true, TitleSimilarityThreshold: 0.55} },
+		def: func() any {
+			return ImportSettings{DefaultCurrency: "USD", AutoLinkSupplierByDomain: true, TitleSimilarityThreshold: 0.55}
+		},
 		validate: func(raw json.RawMessage) (any, error) {
 			var v ImportSettings
 			if err := strictUnmarshal(raw, &v); err != nil {

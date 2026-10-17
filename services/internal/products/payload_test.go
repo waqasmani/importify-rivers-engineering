@@ -15,8 +15,8 @@ func TestNormalizeCompletePayload(t *testing.T) {
 		Title: "  Wireless   Earbuds Pro  ", URL: "https://Shop.Example.com/p/earbuds?utm_source=x&id=7#reviews",
 		CanonicalURL: "https://shop.example.com/p/earbuds?id=7", Brand: "Acme", SKU: "EB-100", GTIN: "4006381333931",
 		Price: strp("$1,299.00"), Currency: "", Availability: "https://schema.org/InStock",
-		Images: []Image{{URL: "https://cdn.example.com/a.jpg"}, {URL: "https://cdn.example.com/a.jpg"}, {URL: "javascript:alert(1)"}, {URL: "data:image/png;base64,AAA"}},
-		Variants: []Variant{{Options: map[string]string{"Color": "Black", "Size": "M"}, Price: strp("€10,50")}, {}},
+		Images:         []Image{{URL: "https://cdn.example.com/a.jpg"}, {URL: "https://cdn.example.com/a.jpg"}, {URL: "javascript:alert(1)"}, {URL: "data:image/png;base64,AAA"}},
+		Variants:       []Variant{{Options: map[string]string{"Color": "Black", "Size": "M"}, Price: strp("€10,50")}, {}},
 		Specifications: map[string]string{"Battery": "30h", "": "ignored"}, ExtractionMethod: "JSON LD", Confidence: &conf,
 	}
 	n, errs := Normalize(p, Options{DefaultCurrency: "EUR", RequireURL: true})

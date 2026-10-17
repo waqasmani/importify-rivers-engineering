@@ -41,19 +41,40 @@ func toAnySlice[T any](in []T) []any {
 func (s *Server) exportSpecs() map[string]exportSpec {
 	return map[string]exportSpec{
 		"company": {strings.Fields("id name domain website industry company_type status country city address phone email description employee_count owner_name tags custom_fields created_at updated_at"),
-			func(r *http.Request, l, o int32) ([]any, error) { v, _, err := s.listCompanies(r, l, o); return toAnySlice(v), err }},
+			func(r *http.Request, l, o int32) ([]any, error) {
+				v, _, err := s.listCompanies(r, l, o)
+				return toAnySlice(v), err
+			}},
 		"contact": {strings.Fields("id first_name last_name email phone job_title company_name supplier_name is_decision_maker linkedin_url country status tags custom_fields created_at updated_at"),
-			func(r *http.Request, l, o int32) ([]any, error) { v, _, err := s.listContacts(r, l, o); return toAnySlice(v), err }},
+			func(r *http.Request, l, o int32) ([]any, error) {
+				v, _, err := s.listContacts(r, l, o)
+				return toAnySlice(v), err
+			}},
 		"supplier": {strings.Fields("id name supplier_type website domain country city address email phone primary_contact_name stage_name rating payment_terms lead_time_days moq_notes certifications description company_name product_count tags custom_fields created_at updated_at"),
-			func(r *http.Request, l, o int32) ([]any, error) { v, _, err := s.listSuppliers(r, l, o); return toAnySlice(v), err }},
+			func(r *http.Request, l, o int32) ([]any, error) {
+				v, _, err := s.listSuppliers(r, l, o)
+				return toAnySlice(v), err
+			}},
 		"lead": {strings.Fields("id title company_name contact_name source stage_name estimated_value currency description owner_name converted_at tags custom_fields created_at updated_at"),
-			func(r *http.Request, l, o int32) ([]any, error) { v, _, err := s.listLeads(r, l, o); return toAnySlice(v), err }},
+			func(r *http.Request, l, o int32) ([]any, error) {
+				v, _, err := s.listLeads(r, l, o)
+				return toAnySlice(v), err
+			}},
 		"opportunity": {strings.Fields("id name company_name supplier_name contact_name stage_name status amount currency expected_close_date probability closed_at outcome_reason owner_name tags custom_fields created_at updated_at"),
-			func(r *http.Request, l, o int32) ([]any, error) { v, _, err := s.listOpportunities(r, l, o); return toAnySlice(v), err }},
+			func(r *http.Request, l, o int32) ([]any, error) {
+				v, _, err := s.listOpportunities(r, l, o)
+				return toAnySlice(v), err
+			}},
 		"task": {strings.Fields("id title description status priority task_type due_at remind_at completed_at assignee_name entity_type entity_id created_at"),
-			func(r *http.Request, l, o int32) ([]any, error) { v, _, err := s.listTasks(r, l, o); return toAnySlice(v), err }},
+			func(r *http.Request, l, o int32) ([]any, error) {
+				v, _, err := s.listTasks(r, l, o)
+				return toAnySlice(v), err
+			}},
 		"product": {strings.Fields("id title original_title brand sku model mpn gtin category source_url source_domain supplier_name cost cost_currency price price_currency margin_amount margin_percent availability status review_status extraction_method extraction_confidence variant_count primary_image_url description specifications tags first_seen_at last_checked_at"),
-			func(r *http.Request, l, o int32) ([]any, error) { v, _, err := s.listProducts(r, l, o); return toAnySlice(v), err }},
+			func(r *http.Request, l, o int32) ([]any, error) {
+				v, _, err := s.listProducts(r, l, o)
+				return toAnySlice(v), err
+			}},
 	}
 }
 

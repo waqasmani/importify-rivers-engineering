@@ -25,9 +25,9 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	}
 }
 
-func ok(w http.ResponseWriter, v any) error { writeJSON(w, http.StatusOK, v); return nil }
+func ok(w http.ResponseWriter, v any) error      { writeJSON(w, http.StatusOK, v); return nil }
 func created(w http.ResponseWriter, v any) error { writeJSON(w, http.StatusCreated, v); return nil }
-func noContent(w http.ResponseWriter) error { w.WriteHeader(http.StatusNoContent); return nil }
+func noContent(w http.ResponseWriter) error      { w.WriteHeader(http.StatusNoContent); return nil }
 
 // Page is the envelope for paginated lists.
 type Page[T any] struct {

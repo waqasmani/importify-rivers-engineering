@@ -34,9 +34,9 @@ func fakeOllama(t *testing.T, fail *atomic.Int32) *httptest.Server {
 		switch {
 		case props["specifications"] != nil:
 			out = map[string]any{"title": map[string]any{"value": "Insulated Flask 2 L", "citations": []string{"E1"}},
-				"category": map[string]any{"value": "Outdoor > Drinkware", "citations": []string{"E1"}},
-				"brand": map[string]any{"value": "Northwind", "citations": []string{"E1"}},
-				"description": map[string]any{"value": "A 2 litre stainless steel flask.", "citations": []string{"E1", "E99"}},
+				"category":       map[string]any{"value": "Outdoor > Drinkware", "citations": []string{"E1"}},
+				"brand":          map[string]any{"value": "Northwind", "citations": []string{"E1"}},
+				"description":    map[string]any{"value": "A 2 litre stainless steel flask.", "citations": []string{"E1", "E99"}},
 				"specifications": []any{map[string]any{"name": "Capacity", "value": "2 L", "citations": []string{"E1"}}}}
 		case props["subject"] != nil:
 			out = map[string]any{"subject": "Samples for order", "message": "Hello, could you confirm the MOQ? [E1]", "questions": []any{},

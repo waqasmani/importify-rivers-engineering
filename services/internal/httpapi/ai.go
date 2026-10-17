@@ -375,7 +375,7 @@ func (s *Server) handleCreateAIJob(w http.ResponseWriter, r *http.Request) error
 		if !in.ConfirmExternal {
 			writeJSON(w, http.StatusConflict, map[string]any{"error": &APIError{Code: "external_confirmation_required",
 				Message: fmt.Sprintf("This will send %s to %s (%s). Confirm to continue.", strings.Join(dataCategories(in.EntityType, in.Tool), ", "), prov.Name, host)},
-				"provider": map[string]any{"name": prov.Name, "host": host, "kind": prov.Kind, "model": prov.Model},
+				"provider":        map[string]any{"name": prov.Name, "host": host, "kind": prov.Kind, "model": prov.Model},
 				"data_categories": dataCategories(in.EntityType, in.Tool)})
 			return nil
 		}
@@ -546,7 +546,6 @@ type applyInput struct {
 	Categories []string `json:"categories"`
 	Title      string   `json:"title"`
 }
-
 
 // handleApplyAIJob turns reviewed AI output into data. It runs only on an explicit request and
 // never sends messages, publishes or purchases anything.
@@ -892,4 +891,3 @@ func citeList(v any) string {
 func mdEscapeCell(s string) string {
 	return strings.NewReplacer("|", "\\|", "\n", " ").Replace(normalize.Truncate(s, 140))
 }
-

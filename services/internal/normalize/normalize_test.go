@@ -34,9 +34,9 @@ func TestDomain(t *testing.T) {
 func TestCanonicalURL(t *testing.T) {
 	cases := map[string]string{
 		"HTTPS://Shop.Example.com:443/p/widget/?utm_source=x&b=2&a=1#reviews": "https://shop.example.com/p/widget?a=1&b=2",
-		"http://example.com/":                     "http://example.com",
-		"https://example.com/item?fbclid=abc":     "https://example.com/item",
-		"https://example.com:8443/x":              "https://example.com:8443/x",
+		"http://example.com/":                 "http://example.com",
+		"https://example.com/item?fbclid=abc": "https://example.com/item",
+		"https://example.com:8443/x":          "https://example.com:8443/x",
 	}
 	for in, want := range cases {
 		got, err := CanonicalURL(in)

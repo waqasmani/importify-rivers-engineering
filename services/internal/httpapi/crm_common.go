@@ -275,7 +275,7 @@ func (s *Server) handleBulk(entityType string, actions map[string]bulkAction) fu
 			}
 			return s.audit(r.Context(), q, r, auditEvent{Action: entityType + ".bulk_" + in.Action, EntityType: entityType,
 				Summary: fmt.Sprintf("Bulk %s on %d records", strings.ReplaceAll(in.Action, "_", " "), len(in.IDs)),
-				Extra: map[string]any{"ids": in.IDs, "value": in.Value}})
+				Extra:   map[string]any{"ids": in.IDs, "value": in.Value}})
 		})
 		if err != nil {
 			return err

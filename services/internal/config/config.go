@@ -18,34 +18,34 @@ import (
 // Config is the complete runtime configuration. Every value comes from the environment so that
 // secrets stay out of source control and images.
 type Config struct {
-	DatabaseURL     string
-	HTTPAddr        string
-	PublicURL       *url.URL
-	AllowedOrigins  []string // origins allowed to make credentialed (cookie) requests
-	ExtensionOrigins []string // chrome-extension:// origins allowed to make bearer-token requests
-	SecretKey       []byte
-	DataDir         string
-	WebDir          string
-	CookieSecure    bool
-	SessionTTL      time.Duration
-	SessionIdle     time.Duration
-	AccessTokenTTL  time.Duration
-	RefreshTokenTTL time.Duration
-	MaxUploadBytes  int64
-	MaxArchiveBytes int64
-	MaxArchiveFiles int
-	ServerFetch     bool
+	DatabaseURL       string
+	HTTPAddr          string
+	PublicURL         *url.URL
+	AllowedOrigins    []string // origins allowed to make credentialed (cookie) requests
+	ExtensionOrigins  []string // chrome-extension:// origins allowed to make bearer-token requests
+	SecretKey         []byte
+	DataDir           string
+	WebDir            string
+	CookieSecure      bool
+	SessionTTL        time.Duration
+	SessionIdle       time.Duration
+	AccessTokenTTL    time.Duration
+	RefreshTokenTTL   time.Duration
+	MaxUploadBytes    int64
+	MaxArchiveBytes   int64
+	MaxArchiveFiles   int
+	ServerFetch       bool
 	FetchAllowPrivate bool
-	WorkerMode      string // embedded | off
+	WorkerMode        string // embedded | off
 	WorkerConcurrency int
-	LogLevel        string
-	LogFormat       string
-	AutoMigrate     bool
-	TrustedProxies  []netip.Prefix
-	RepoRoots       []string
-	SetupToken      string
-	PgDumpPath      string
-	Version         string
+	LogLevel          string
+	LogFormat         string
+	AutoMigrate       bool
+	TrustedProxies    []netip.Prefix
+	RepoRoots         []string
+	SetupToken        string
+	PgDumpPath        string
+	Version           string
 }
 
 // DefaultExtensionID is the ID Chrome derives from the public key pinned in the extension manifest.
@@ -54,16 +54,16 @@ const DefaultExtensionID = "olceibeplclcegianhjffambadoakkno"
 // Load reads configuration from the environment.
 func Load() (*Config, error) {
 	c := &Config{
-		DatabaseURL:       env("REA_DATABASE_URL", ""),
-		HTTPAddr:          env("REA_HTTP_ADDR", ":8080"),
-		DataDir:           env("REA_DATA_DIR", "./data"),
-		WebDir:            env("REA_WEB_DIR", ""),
-		LogLevel:          env("REA_LOG_LEVEL", "info"),
-		LogFormat:         env("REA_LOG_FORMAT", "json"),
-		WorkerMode:        env("REA_WORKER_MODE", "embedded"),
-		SetupToken:        env("REA_SETUP_TOKEN", ""),
-		PgDumpPath:        env("REA_PG_DUMP", "pg_dump"),
-		Version:           env("REA_VERSION", "dev"),
+		DatabaseURL: env("REA_DATABASE_URL", ""),
+		HTTPAddr:    env("REA_HTTP_ADDR", ":8080"),
+		DataDir:     env("REA_DATA_DIR", "./data"),
+		WebDir:      env("REA_WEB_DIR", ""),
+		LogLevel:    env("REA_LOG_LEVEL", "info"),
+		LogFormat:   env("REA_LOG_FORMAT", "json"),
+		WorkerMode:  env("REA_WORKER_MODE", "embedded"),
+		SetupToken:  env("REA_SETUP_TOKEN", ""),
+		PgDumpPath:  env("REA_PG_DUMP", "pg_dump"),
+		Version:     env("REA_VERSION", "dev"),
 	}
 	var errs []error
 	if c.DatabaseURL == "" {

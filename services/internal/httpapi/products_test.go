@@ -10,8 +10,8 @@ func productPayload(sku string) map[string]any {
 		"title": "Stainless Steel Water Bottle 750ml", "url": "https://shop.example.com/products/bottle-750?utm_source=newsletter",
 		"brand": "HydroCo", "sku": sku, "price": "$24.99", "availability": "https://schema.org/InStock",
 		"description": "Double-wall insulated bottle.", "images": []map[string]any{{"url": "https://cdn.shop.example.com/b1.jpg", "alt": "Front"}},
-		"variants": []map[string]any{{"options": map[string]string{"Color": "Black"}, "price": "$24.99"}, {"options": map[string]string{"Color": "Silver"}, "price": "$26.99"}},
-		"specifications": map[string]string{"Capacity": "750 ml", "Material": "18/8 stainless steel"},
+		"variants":          []map[string]any{{"options": map[string]string{"Color": "Black"}, "price": "$24.99"}, {"options": map[string]string{"Color": "Silver"}, "price": "$26.99"}},
+		"specifications":    map[string]string{"Capacity": "750 ml", "Material": "18/8 stainless steel"},
 		"extraction_method": "json-ld", "adapter_key": "json-ld", "confidence": 0.9,
 		"evidence": map[string]string{"price": "script[type=application/ld+json] offers.price"},
 	}

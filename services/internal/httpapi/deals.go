@@ -859,7 +859,6 @@ type pipelineInput struct {
 	Stages     []stageDef `json:"stages"`
 }
 
-
 func (in *pipelineInput) validate(creating bool) error {
 	in.Name = normalize.Text(in.Name)
 	v := valid.New()

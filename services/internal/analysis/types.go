@@ -33,7 +33,7 @@ type Finding struct {
 
 // Result is the output of one analyzer run.
 type Result struct {
-	Findings []Finding     `json:"findings"`
+	Findings []Finding      `json:"findings"`
 	Stats    map[string]any `json:"stats"`
 }
 

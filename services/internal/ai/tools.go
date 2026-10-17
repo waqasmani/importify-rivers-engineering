@@ -54,10 +54,10 @@ func obj(props map[string]any) map[string]any {
 	return map[string]any{"type": "object", "properties": props, "required": req, "additionalProperties": false}
 }
 func arr(items map[string]any) map[string]any { return map[string]any{"type": "array", "items": items} }
-func str() map[string]any                    { return map[string]any{"type": "string"} }
-func num() map[string]any                    { return map[string]any{"type": "number"} }
-func enum(vals ...string) map[string]any     { return map[string]any{"type": "string", "enum": vals} }
-func cites() map[string]any                  { return arr(str()) }
+func str() map[string]any                     { return map[string]any{"type": "string"} }
+func num() map[string]any                     { return map[string]any{"type": "number"} }
+func enum(vals ...string) map[string]any      { return map[string]any{"type": "string", "enum": vals} }
+func cites() map[string]any                   { return arr(str()) }
 
 func citedText() map[string]any { return obj(map[string]any{"text": str(), "citations": cites()}) }
 func citedValue() map[string]any {

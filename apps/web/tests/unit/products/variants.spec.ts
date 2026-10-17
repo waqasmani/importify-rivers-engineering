@@ -55,6 +55,9 @@ describe('VariantsEditor', () => {
     await settle()
     const d = dialog()
     setInput(labelled(d, 'Title'), 'Midnight')
+    expect((labelled(d, 'Price') as HTMLInputElement).disabled).toBe(true)
+    ;(d.querySelector('[data-testid="variant-lock"]') as HTMLInputElement).click()
+    await settle()
     setInput(labelled(d, 'Price'), '41')
     expect((labelled(d, 'Currency') as HTMLInputElement).value).toBe('EUR')
     ;[...d.querySelectorAll('button')].find((b) => b.textContent?.includes('Add option'))!.click()
@@ -64,7 +67,10 @@ describe('VariantsEditor', () => {
     d.querySelector('form')!.dispatchEvent(new Event('submit'))
     await settle()
     const post = api.calls.find((c) => c.method === 'POST')!
-    expect(post.body).toEqual({ title: 'Midnight', sku: '', options: { Color: 'Midnight' }, price: '41', currency: 'EUR', availability: 'unknown', image_url: null, position: 1 })
+    expect(post.body).toEqual({
+      title: 'Midnight', sku: '', options: { Color: 'Midnight' }, price: '41', currency: 'EUR', availability: 'unknown', image_url: null, position: 1,
+      price_locked: true, compare_at_price: null, cost: null, cost_currency: null,
+    })
     expect(t.reloads()).toBe(1)
   })
 
@@ -84,6 +90,8 @@ describe('VariantsEditor', () => {
     const d = dialog()
     expect((labelled(d, 'Title') as HTMLInputElement).value).toBe('Forest')
     expect((d.querySelector('input[aria-label="Option 1"]') as HTMLInputElement).value).toBe('Color')
+    ;(d.querySelector('[data-testid="variant-lock"]') as HTMLInputElement).click()
+    await settle()
     setInput(labelled(d, 'Price'), '35.50')
     setInput(labelled(d, 'Image URL'), 'ftp://img.example/f.jpg')
     d.querySelector('form')!.dispatchEvent(new Event('submit'))
@@ -95,7 +103,7 @@ describe('VariantsEditor', () => {
     await settle()
     const puts = api.calls.filter((c) => c.method === 'PUT')
     expect(puts).toHaveLength(2)
-    expect(puts[1]!.body).toMatchObject({ title: 'Forest', price: '35.5', currency: 'EUR', options: { Color: 'Forest' }, image_url: 'https://img.example/f.jpg', position: 0 })
+    expect(puts[1]!.body).toMatchObject({ title: 'Forest', price: '35.5', currency: 'EUR', options: { Color: 'Forest' }, image_url: 'https://img.example/f.jpg', position: 0, price_locked: true, cost: '14', cost_currency: 'EUR' })
     expect(t.reloads()).toBe(1)
   })
 

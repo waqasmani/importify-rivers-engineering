@@ -12,6 +12,7 @@ import JsonView from '@/components/products/JsonView.vue'
 import PayloadComparison from '@/components/products/PayloadComparison.vue'
 import DuplicateList from '@/components/products/DuplicateList.vue'
 import ImportResolveForm from '@/components/products/ImportResolveForm.vue'
+import ImportPricingSummary from '@/components/products/ImportPricingSummary.vue'
 import { useAuth } from '@/stores/auth'
 import { useDeviceNames } from '@/components/products/useDeviceNames'
 import { asRecord, dupSummaries, needsDecision, safeHref, str, DECISION_LABELS, IMPORT_STATUS_LABELS } from '@/components/products/product-utils'
@@ -24,7 +25,7 @@ const { deviceName } = useDeviceNames()
 
 const q = useQuery({
   queryKey: computed(() => ['import', props.id]),
-  queryFn: ({ signal }) => api.get<Schemas['ProductImport']>(`/imports/${props.id}`, undefined, signal),
+  queryFn: ({ signal }) => api.get<Schemas['ImportDetail']>(`/imports/${props.id}`, undefined, signal),
 })
 const imp = computed(() => q.data.value)
 const candidates = computed(() => dupSummaries(imp.value?.duplicate_candidates))
@@ -37,7 +38,8 @@ const sourceUrl = computed(() => str(asRecord(imp.value?.normalized).source_url)
 const canResolve = computed(() => !!imp.value && needsDecision(imp.value.status) && auth.can('products.write'))
 
 function onResolved(updated: Schemas['ProductImport']) {
-  qc.setQueryData(['import', props.id], updated)
+  // Keep the pricing preview; the resolve response is the import record itself.
+  qc.setQueryData(['import', props.id], { ...imp.value, ...updated })
   void qc.invalidateQueries({ queryKey: ['imports'] })
   void qc.invalidateQueries({ queryKey: ['products'] })
 }
@@ -96,6 +98,14 @@ function onResolved(updated: Schemas['ProductImport']) {
             <JsonView :value="imp.payload" summary="Raw payload (JSON)" />
             <JsonView :value="imp.normalized" summary="Normalized (JSON)" />
           </div>
+        </section>
+
+        <section v-if="imp.pricing" class="card p-4 sm:p-5" aria-label="Pricing">
+          <ImportPricingSummary
+            :pricing="imp.pricing"
+            title="Selling price with the current rules"
+            :note="imp.product_id ? 'Recalculated now from the captured source price. The stored product may differ if its price is locked or its cost was entered by hand; open the product for its actual price.' : 'What the product would cost and sell for if it were imported now.'"
+          />
         </section>
 
         <section class="card space-y-3 p-4 sm:p-5" aria-labelledby="dups-heading">

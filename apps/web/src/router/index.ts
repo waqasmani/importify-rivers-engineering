@@ -68,6 +68,7 @@ const appRoutes: RouteRecordRaw[] = [
   { path: 'settings/pipelines', name: 'settings-pipelines', component: v('settings/PipelinesSettingsView'), meta: { perm: 'settings.manage', title: 'Pipelines' } },
   { path: 'settings/fields', name: 'settings-fields', component: v('settings/CustomFieldsView'), meta: { perm: 'settings.manage', title: 'Custom fields' } },
   { path: 'settings/tags', name: 'settings-tags', component: v('settings/TagsView'), meta: { perm: 'crm.write', title: 'Tags' } },
+  { path: 'settings/pricing', name: 'settings-pricing', component: v('settings/PricingSettingsView'), meta: { perm: 'settings.manage', title: 'Pricing' } },
   { path: 'settings/adapters', name: 'settings-adapters', component: v('settings/AdaptersView'), meta: { perm: 'products.read', title: 'Source adapters' } },
   { path: 'settings/ai', name: 'settings-ai', component: v('settings/AiProvidersView'), meta: { perm: 'ai.configure', title: 'AI providers' } },
   { path: 'settings/extension', name: 'settings-extension', component: v('settings/ExtensionView'), meta: { title: 'Browser extension' } },

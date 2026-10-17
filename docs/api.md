@@ -34,3 +34,22 @@ curl -fsS -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' 
   -d '{"payload":{"url":"https://shop.example/p/1","title":"Steel bottle 750 ml","price":"19.90","currency":"EUR"},"source":"api","decision":"","create_supplier":false,"tag_names":[]}' \
   "$BASE/api/v1/imports/products/check"
 ```
+
+## Product prices
+
+Products imported from marketplaces carry three prices: `source_price` (the supplier's price
+observed at import), `cost` (derived from it in the base currency unless `cost_manual`) and the
+selling `price` with `compare_at_price`, set by the first matching pricing rule
+(`pricing_rule_id`, `pricing_rule_name`, `priced_at`) unless `price_locked`. Systems that consume
+the catalog should read `price`/`price_currency` as the selling price. `GET /api/v1/products/{id}`
+adds `pricing`, the step-by-step breakdown under the current rules.
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET/POST /api/v1/pricing/rules`, `GET/PUT/DELETE /api/v1/pricing/rules/{id}`, `POST /api/v1/pricing/rules/reorder` | Pricing rules (`settings.manage`) |
+| `GET/PUT /api/v1/pricing/rates`, `PUT/DELETE /api/v1/pricing/rates/{currency}` | Manually maintained exchange rates (`settings.manage`) |
+| `POST /api/v1/pricing/preview` | Evaluate the rules or a draft rule for a sample, without saving (`settings.manage`) |
+| `POST /api/v1/products/reprice` | Recalculate by ids or filter; `dry_run` returns before/after (`products.write`) |
+| `PUT /api/v1/products/{id}/pricing` | Lock a manual price or unlock it (`products.write`) |
+
+Rule semantics, rounding, worked examples and rate maintenance scripts: [pricing.md](pricing.md).

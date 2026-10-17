@@ -3,7 +3,7 @@ import { computed, ref, watch, type Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import {
-  Bell, Building2, CopyCheck, Globe, Handshake, LayoutDashboard, LogOut, Menu, Package, PackageSearch, Puzzle, ScanSearch,
+  BadgeDollarSign, Bell, Building2, CopyCheck, Globe, Handshake, LayoutDashboard, LogOut, Menu, Package, PackageSearch, Puzzle, ScanSearch,
   ScrollText, Server, Settings, Shield, SlidersHorizontal, Sparkles, SquareCheckBig, SquareKanban, Tags, Target, Truck, UserCog, Users, X, Plug, FolderTree, Bot,
 } from 'lucide-vue-next'
 import GlobalSearch from '@/components/GlobalSearch.vue'
@@ -71,6 +71,7 @@ const sections = computed<{ title: string; items: NavItem[] }[]>(() => [
       { to: '/settings/pipelines', label: 'Pipeline setup', icon: FolderTree, perm: 'settings.manage' },
       { to: '/settings/fields', label: 'Custom fields', icon: SlidersHorizontal, perm: 'settings.manage' },
       { to: '/settings/tags', label: 'Tags', icon: Tags, perm: 'crm.write' },
+      { to: '/settings/pricing', label: 'Pricing', icon: BadgeDollarSign, perm: 'settings.manage' },
       { to: '/settings/adapters', label: 'Source adapters', icon: Plug, perm: 'products.read' },
       { to: '/settings/ai', label: 'AI providers', icon: Bot, perm: 'ai.configure' },
       { to: '/settings/extension', label: 'Browser extension', icon: Puzzle },

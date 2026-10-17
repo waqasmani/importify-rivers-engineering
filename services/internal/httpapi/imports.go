@@ -37,8 +37,12 @@ type productExtras struct {
 	SupplierContactID *uuid.UUID
 	CompanyID         *uuid.UUID
 	CapturedPageID    *uuid.UUID
-	Cost              *decimal.Decimal
-	CostCurrency      *string
+	// Cost is a cost the person supplied; without one the cost is derived from the source price.
+	Cost         *decimal.Decimal
+	CostCurrency *string
+	// ManualPrice is a selling price the person supplied; it is stored locked.
+	ManualPrice         *decimal.Decimal
+	ManualPriceCurrency *string
 }
 
 func jsonOf(v any) json.RawMessage {
@@ -50,13 +54,16 @@ func jsonOf(v any) json.RawMessage {
 }
 
 // createProductFromNormalized stores a draft product with its variants, images and supplier link.
+// The observed marketplace price becomes the source price; callers then run the pricing rules
+// (priceStoredProduct) once tags are attached, which derives the cost and sets the selling price.
 func (s *Server) createProductFromNormalized(r *http.Request, q *store.Queries, n products.Normalized, x productExtras) (store.Product, error) {
 	ctx := r.Context()
 	p, err := q.CreateProduct(ctx, store.CreateProductParams{OriginalTitle: n.Title, Title: n.Title, NormalizedTitle: n.NormalizedTitle,
 		SourceUrl: n.SourceURL, CanonicalUrl: n.CanonicalURL, SourceDomain: n.SourceDomain, SupplierID: x.SupplierID,
 		SupplierContactID: x.SupplierContactID, CompanyID: x.CompanyID, Brand: n.Brand, Sku: n.SKU, Model: n.Model, Mpn: n.MPN,
 		Gtin: n.GTIN, Identifiers: jsonOf(n.Identifiers), Description: n.Description, Specifications: jsonOf(n.Specifications),
-		Cost: x.Cost, CostCurrency: x.CostCurrency, Price: n.Price, PriceCurrency: n.PriceCurrency, Availability: n.Availability,
+		Cost: x.Cost, CostCurrency: x.CostCurrency, CostManual: x.Cost != nil, Price: x.ManualPrice, PriceCurrency: x.ManualPriceCurrency,
+		PriceLocked: x.ManualPrice != nil, SourcePrice: n.Price, SourceCurrency: n.PriceCurrency, Availability: n.Availability,
 		Category: n.Category, Status: "draft", ReviewStatus: "pending", ExtractionMethod: n.ExtractionMethod,
 		ExtractionConfidence: n.Confidence, CapturedPageID: x.CapturedPageID, SourceEvidence: jsonOf(n.Evidence),
 		CustomFields: json.RawMessage("{}"), CreatedBy: userIDPtr(r)})
@@ -103,15 +110,16 @@ func (s *Server) storeVariantsAndImages(ctx context.Context, q *store.Queries, p
 			}
 		}
 		if match != nil {
-			if _, err := q.UpdateVariant(ctx, store.UpdateVariantParams{ID: match.ID, ProductID: p.ID, Title: nv.Title, Sku: nv.SKU,
-				Options: opts, Price: nv.Price, Currency: nv.Currency, Availability: nv.Availability, ImageUrl: nv.ImageURL,
-				Position: match.Position}); err != nil {
+			if _, err := q.RefreshVariantFromCapture(ctx, store.RefreshVariantFromCaptureParams{ID: match.ID, ProductID: p.ID, Title: nv.Title,
+				Sku: nv.SKU, Options: opts, SourcePrice: nv.Price, SourceCurrency: nv.Currency, Availability: nv.Availability,
+				ImageUrl: nv.ImageURL}); err != nil {
 				return err
 			}
 			continue
 		}
 		if _, err := q.CreateVariant(ctx, store.CreateVariantParams{ProductID: p.ID, Title: nv.Title, Sku: nv.SKU, Options: opts,
-			Price: nv.Price, Currency: nv.Currency, Availability: nv.Availability, ImageUrl: nv.ImageURL, Position: int32(len(current) + i)}); err != nil {
+			SourcePrice: nv.Price, SourceCurrency: nv.Currency, Availability: nv.Availability, ImageUrl: nv.ImageURL,
+			Position: int32(len(current) + i)}); err != nil {
 			return err
 		}
 	}
@@ -127,9 +135,9 @@ func jsonEqual(a, b json.RawMessage) bool {
 	return bytes.Equal(xb, yb)
 }
 
-// refreshProduct applies a new observation to an existing product. Observable facts (price,
-// availability, specifications, images, variants) are updated; fields a user curated (title,
-// category, notes, supplier) are kept.
+// refreshProduct applies a new observation to an existing product. Observable facts (source
+// price, availability, specifications, images, variants) are updated; fields a user curated
+// (title, category, notes, supplier, manual cost, locked price) are kept. Callers reprice after.
 func (s *Server) refreshProduct(r *http.Request, q *store.Queries, id uuid.UUID, n products.Normalized, capturedPage *uuid.UUID) (store.Product, error) {
 	ctx := r.Context()
 	before, err := q.GetProduct(ctx, id)
@@ -138,7 +146,7 @@ func (s *Server) refreshProduct(r *http.Request, q *store.Queries, id uuid.UUID,
 	}
 	conf := n.Confidence
 	p, err := q.RefreshProductFromCapture(ctx, store.RefreshProductFromCaptureParams{ID: id, OriginalTitle: n.Title,
-		Description: n.Description, Specifications: jsonOf(n.Specifications), Price: n.Price, PriceCurrency: n.PriceCurrency,
+		Description: n.Description, Specifications: jsonOf(n.Specifications), SourcePrice: n.Price, SourceCurrency: n.PriceCurrency,
 		Availability: n.Availability, ExtractionMethod: n.ExtractionMethod, ExtractionConfidence: conf,
 		CapturedPageID: capturedPage, SourceEvidence: jsonOf(n.Evidence), Brand: n.Brand, Sku: n.SKU, Gtin: n.GTIN, Mpn: n.MPN,
 		Identifiers: jsonOf(n.Identifiers)})
@@ -173,6 +181,8 @@ type checkResponse struct {
 	Duplicates []duplicateCandidate `json:"duplicates"`
 	Definite   bool                 `json:"definite_duplicate"`
 	Supplier   *duplicateCandidate  `json:"suggested_supplier"`
+	// Pricing is the selling price the current pricing rules give this capture as a new product.
+	Pricing *ImportPricing `json:"pricing,omitempty"`
 }
 
 func (s *Server) normalizeImport(ctx context.Context, in *importRequest) (products.Normalized, valid.Errors) {
@@ -216,6 +226,14 @@ func (s *Server) handleCheckProductImport(w http.ResponseWriter, r *http.Request
 		}
 		resp.Definite = definiteDuplicate(resp.Duplicates)
 		resp.Supplier = s.suggestSupplier(r.Context(), s.db.Queries, n)
+		supplierID := in.SupplierID
+		if supplierID == nil && resp.Supplier != nil && !in.SkipSupplierLink {
+			supplierID = &resp.Supplier.ID
+		}
+		resp.Pricing, err = s.importPricing(r.Context(), s.db.Queries, n, supplierID, tagIDsByName(r.Context(), s.db.Queries, in.TagNames))
+		if err != nil {
+			return err
+		}
 	}
 	return ok(w, resp)
 }
@@ -311,8 +329,8 @@ func (s *Server) handleSubmitProductImport(w http.ResponseWriter, r *http.Reques
 		if err != nil {
 			return err
 		}
-		out.Duplicates, out.Warnings = dups, n.Warnings
-		params := store.CreateProductImportParams{Source: in.Source, Payload: payloadRaw, Normalized: jsonOf(n), Warnings: n.Warnings,
+		out.Duplicates, out.Warnings = dups, append([]string{}, n.Warnings...)
+		params := store.CreateProductImportParams{Source: in.Source, Payload: payloadRaw, Normalized: jsonOf(n),
 			DuplicateCandidates: jsonOf(dupSummaries(dups)), CapturedPageID: in.CapturedPageID, DeviceID: p.DeviceID, CreatedBy: userIDPtr(r)}
 		if len(dups) > 0 {
 			params.DuplicateOfID = &dups[0].ID
@@ -343,16 +361,25 @@ func (s *Server) handleSubmitProductImport(w http.ResponseWriter, r *http.Reques
 			params.Status, params.Decision, params.ProductID, params.ProcessedAt = "imported", strPtr("create_new"), &pr.ID, nowPtr()
 			out.Product, out.Status = &pr, "imported"
 		}
+		if out.Product != nil {
+			if len(in.TagNames) > 0 {
+				if err := s.addTagNames(ctx, q, "product", out.Product.ID, strings.Join(in.TagNames, ";")); err != nil {
+					return err
+				}
+			}
+			priced, warnings, err := s.priceStoredProduct(r, q, out.Product.ID, "import")
+			if err != nil {
+				return err
+			}
+			out.Product = &priced
+			out.Warnings = append(out.Warnings, warnings...)
+		}
+		params.Warnings = out.Warnings
 		imp, err := q.CreateProductImport(ctx, params)
 		if err != nil {
 			return err
 		}
 		out.Import = imp
-		if out.Product != nil && len(in.TagNames) > 0 {
-			if err := s.addTagNames(ctx, q, "product", out.Product.ID, strings.Join(in.TagNames, ";")); err != nil {
-				return err
-			}
-		}
 		return s.audit(ctx, q, r, auditEvent{Action: "import.submit", EntityType: "product_import", EntityID: &imp.ID,
 			Summary: "Product import from " + n.SourceDomain + ": " + out.Status, Extra: map[string]any{"title": n.Title, "status": out.Status}})
 	})
@@ -409,16 +436,44 @@ func (s *Server) handleListImports(w http.ResponseWriter, r *http.Request) error
 	return ok(w, Page[ImportListItem]{Items: out, Total: total, Limit: limit, Offset: offset})
 }
 
+// ImportDetail is one import with the selling price its capture gets under the current rules.
+type ImportDetail struct {
+	store.ProductImport
+	Pricing *ImportPricing `json:"pricing,omitempty"`
+}
+
 func (s *Server) handleGetImport(w http.ResponseWriter, r *http.Request) error {
 	id, err := pathUUID(r, "id")
 	if err != nil {
 		return err
 	}
-	imp, err := s.db.GetProductImport(r.Context(), id)
+	ctx := r.Context()
+	imp, err := s.db.GetProductImport(ctx, id)
 	if err != nil {
 		return err
 	}
-	return ok(w, imp)
+	out := ImportDetail{ProductImport: imp}
+	var n products.Normalized
+	if len(imp.Normalized) > 0 && json.Unmarshal(imp.Normalized, &n) == nil && n.Title != "" {
+		var supplierID *uuid.UUID
+		var tags []uuid.UUID
+		if imp.ProductID != nil {
+			if p, err := s.db.GetProduct(ctx, *imp.ProductID); err == nil {
+				supplierID, n.Category = p.SupplierID, p.Category
+				refs, err := s.recordTags(ctx, "product", p.ID)
+				if err != nil {
+					return err
+				}
+				tags = tagIDs(refs)
+			}
+		} else if sug := s.suggestSupplier(ctx, s.db.Queries, n); sug != nil {
+			supplierID = &sug.ID
+		}
+		if out.Pricing, err = s.importPricing(ctx, s.db.Queries, n, supplierID, tags); err != nil {
+			return err
+		}
+	}
+	return ok(w, out)
 }
 
 type resolveInput struct {
@@ -478,6 +533,9 @@ func (s *Server) handleResolveImport(w http.ResponseWriter, r *http.Request) err
 				return err
 			}
 			params.Status, params.ProductID = "updated", &pr.ID
+			if _, _, err := s.priceStoredProduct(r, q, pr.ID, "import"); err != nil {
+				return err
+			}
 		case "create_new":
 			var supplierID *uuid.UUID
 			if sug := s.suggestSupplier(ctx, q, n); sug != nil {
@@ -488,6 +546,9 @@ func (s *Server) handleResolveImport(w http.ResponseWriter, r *http.Request) err
 				return err
 			}
 			params.Status, params.ProductID = "imported", &pr.ID
+			if _, _, err := s.priceStoredProduct(r, q, pr.ID, "import"); err != nil {
+				return err
+			}
 		}
 		if out, err = q.ResolveProductImport(ctx, params); err != nil {
 			return err

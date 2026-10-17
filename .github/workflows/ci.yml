@@ -1,0 +1,140 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REA_TEST_DATABASE_URL: postgres://rea:rea@127.0.0.1:5432/rea?sslmode=disable
+  REA_REQUIRE_DB_TESTS: "1"
+
+jobs:
+  go:
+    name: Go (lint, unit, database, contract, migrations)
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:18.6-alpine3.24
+        env:
+          POSTGRES_USER: rea
+          POSTGRES_PASSWORD: rea
+          POSTGRES_DB: rea
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U rea" --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: PostgreSQL 18 client tools (pg_dump must not be older than the server)
+        run: |
+          sudo apt-get install -y -qq postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y -qq postgresql-client-18
+          /usr/lib/postgresql/18/bin/pg_dump --version
+      - name: gofmt
+        run: test -z "$(gofmt -l services db)" || (gofmt -l services db && exit 1)
+      - name: go vet
+        run: go vet ./...
+      - name: sqlc generated code is current
+        run: go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1 diff
+      - name: Tests (unit, integration, OpenAPI contract, migration lint and rollback, security regressions)
+        run: go test -count=1 ./...
+        env:
+          REA_PG_DUMP: /usr/lib/postgresql/18/bin/pg_dump
+
+  web-and-extension:
+    name: Dashboard and extension (typecheck, unit, build)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: API types match the committed OpenAPI document
+        run: pnpm api-types && git diff --exit-code packages/api-types
+      - run: pnpm -r typecheck
+      - run: pnpm --filter @rea/web test
+      - run: pnpm --filter @rea/extension test
+      - run: pnpm --filter @rea/web build
+      - run: pnpm --filter @rea/extension build
+      - name: No pending placeholder screens
+        run: "! grep -R --line-number 'REA_VIEW_PENDING' apps/web/src"
+
+  e2e:
+    name: End-to-end (Playwright, real API and database)
+    runs-on: ubuntu-24.04
+    needs: [go, web-and-extension]
+    services:
+      postgres:
+        image: postgres:18.6-alpine3.24
+        env:
+          POSTGRES_USER: rea
+          POSTGRES_PASSWORD: rea
+          POSTGRES_DB: rea
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U rea" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      PGHOST: 127.0.0.1
+      PGUSER: rea
+      PGPASSWORD: rea
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: make build-go build-web build-extension
+      - run: pnpm --filter @rea/web exec playwright install --with-deps chromium
+      - name: Dashboard end-to-end tests
+        run: pnpm --filter @rea/web test:e2e
+        env:
+          REA_API_BIN: ${{ github.workspace }}/bin/rea-api
+      - name: Extension load, pairing, capture and import test
+        run: pnpm --filter @rea/extension test:e2e
+        env:
+          REA_API_BIN: ${{ github.workspace }}/bin/rea-api
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            apps/web/playwright-report
+            apps/extension/playwright-report
+
+  docker:
+    name: Docker images and backup/restore verification
+    runs-on: ubuntu-24.04
+    needs: [go, web-and-extension]
+    steps:
+      - uses: actions/checkout@v5
+      - name: Create environment
+        run: deploy/scripts/init-env.sh
+      - name: Build and start the stack
+        run: docker compose -f deploy/docker-compose.yml up -d --build --wait --wait-timeout 300
+      - name: Smoke test, backup and verify
+        run: deploy/scripts/smoke-test.sh
+      - name: Logs on failure
+        if: failure()
+        run: docker compose -f deploy/docker-compose.yml logs --tail=200
+      - name: Tear down
+        if: always()
+        run: docker compose -f deploy/docker-compose.yml down -v

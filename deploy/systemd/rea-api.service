@@ -1,0 +1,33 @@
+# systemd unit for running REA without Docker (see docs/deployment.md, "Without Docker").
+# Install: sudo cp deploy/systemd/rea-api.service /etc/systemd/system/ && sudo systemctl daemon-reload
+[Unit]
+Description=REA Importify API
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=rea
+Group=rea
+EnvironmentFile=/etc/rea/rea.env
+ExecStart=/opt/rea/bin/rea-api serve
+Restart=on-failure
+RestartSec=5
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+ReadWritePaths=/var/lib/rea
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

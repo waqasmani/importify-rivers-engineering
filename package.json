@@ -1,0 +1,16 @@
+{
+  "name": "rea-importify",
+  "private": true,
+  "version": "1.0.0",
+  "description": "REA (Reverse Engineering Anything) with Importify CRM and the REA browser extension",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "api-types": "pnpm --filter @rea/api-types generate",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck"
+  }
+}

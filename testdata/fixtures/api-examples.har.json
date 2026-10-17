@@ -1,0 +1,10 @@
+{"log": {"version": "1.2", "entries": [
+  {"request": {"method": "GET", "url": "https://portal.example/api/orders/1001?expand=lines",
+     "headers": [{"name": "Authorization", "value": "Bearer secret-token-never-stored"}, {"name": "Cookie", "value": "sid=abc"}]},
+   "response": {"status": 200, "content": {"mimeType": "application/json",
+     "text": "{\"id\": 1001, \"status\": \"shipped\", \"customer\": {\"email\": \"buyer@example.com\"}, \"lines\": [{\"sku\": \"A1\", \"qty\": 2}]}"}}},
+  {"request": {"method": "GET", "url": "https://portal.example/api/orders/1002"},
+   "response": {"status": 404, "content": {"mimeType": "application/json", "text": "{\"error\": \"not found\"}"}}},
+  {"request": {"method": "POST", "url": "https://portal.example/api/orders", "postData": {"mimeType": "application/json", "text": "{\"lines\": [{\"sku\": \"A1\", \"qty\": 1}]}"}},
+   "response": {"status": 201, "content": {"mimeType": "application/json", "text": "{\"id\": 1003}"}}}
+]}}

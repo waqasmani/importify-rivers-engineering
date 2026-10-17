@@ -1,0 +1,61 @@
+# REA Importify web server: serves the dashboard and proxies the API.
+#
+# REA_SITE_ADDRESS decides how Caddy listens:
+#   rea.example.com     public domain, automatic HTTPS with Let's Encrypt (ports 80 and 443 reachable)
+#   https://localhost   local HTTPS with Caddy's own CA (trust its root to avoid browser warnings)
+#   http://localhost    plain HTTP on this machine only (development and quick trials)
+#   :80                 plain HTTP, when another reverse proxy terminates TLS in front of this one
+{
+	admin localhost:2019
+	# Optional options such as the ACME e-mail, written by caddy-entrypoint.sh.
+	import /config/rea-global*.caddy
+	servers {
+		trusted_proxies static {$REA_UPSTREAM_TRUSTED_PROXIES:private_ranges}
+	}
+}
+
+{$REA_SITE_ADDRESS:http://localhost} {
+	encode zstd gzip
+
+	header {
+		-Server
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	}
+
+	@api path /api/* /healthz /readyz
+	handle @api {
+		request_body {
+			max_size {$REA_PROXY_MAX_BODY:600MB}
+		}
+		reverse_proxy {$REA_API_UPSTREAM:api:8080} {
+			header_up X-Forwarded-Proto {scheme}
+			transport http {
+				read_timeout 10m
+				write_timeout 10m
+			}
+		}
+	}
+
+	handle {
+		root * /srv/rea
+		header {
+			X-Content-Type-Options nosniff
+			X-Frame-Options DENY
+			Referrer-Policy strict-origin-when-cross-origin
+			Cross-Origin-Opener-Policy same-origin
+			Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+			Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http:; font-src 'self' data:; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+		}
+		@assets path /assets/*
+		header @assets Cache-Control "public, max-age=31536000, immutable"
+		@html not path /assets/*
+		header @html Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

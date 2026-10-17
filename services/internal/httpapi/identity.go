@@ -52,6 +52,7 @@ func (s *Server) mountIdentity(r chi.Router) {
 		r.Delete("/users/{id}", s.h(s.handleDeleteUser))
 		r.Post("/users/{id}/password", s.h(s.handleResetUserPassword))
 		r.Post("/users/{id}/transfer-ownership", s.h(s.handleTransferOwnership))
+		r.Post("/users/{id}/unlock", s.h(s.handleUnlockUser))
 		r.Get("/roles", s.h(s.handleListRoles))
 		r.Post("/roles", s.h(s.handleCreateRole))
 		r.Put("/roles/{id}", s.h(s.handleUpdateRole))
@@ -605,7 +606,7 @@ func (s *Server) handleListPermissions(w http.ResponseWriter, r *http.Request) e
 // handleUserDirectory lists active users with minimal fields so any signed-in user can pick an
 // owner or assignee.
 func (s *Server) handleUserDirectory(w http.ResponseWriter, r *http.Request) error {
-	rows, err := s.db.ListUsers(r.Context(), store.ListUsersParams{Limit: 1000, Offset: 0})
+	rows, err := s.db.ListUsers(r.Context(), store.ListUsersParams{Lim: 1000, Off: 0})
 	if err != nil {
 		return err
 	}
@@ -622,11 +623,16 @@ func (s *Server) handleUserDirectory(w http.ResponseWriter, r *http.Request) err
 
 func (s *Server) handleListUsers(w http.ResponseWriter, r *http.Request) error {
 	limit, offset := pagination(r)
-	rows, err := s.db.ListUsers(r.Context(), store.ListUsersParams{Limit: limit, Offset: offset})
+	q := qText(r, "q")
+	if q != nil {
+		esc := strings.NewReplacer(`\`, `\\`, "%", `\%`, "_", `\_`).Replace(*q)
+		q = &esc
+	}
+	rows, err := s.db.ListUsers(r.Context(), store.ListUsersParams{Q: q, Lim: limit, Off: offset})
 	if err != nil {
 		return err
 	}
-	total, err := s.db.CountUsers(r.Context())
+	total, err := s.db.CountUsersMatching(r.Context(), q)
 	if err != nil {
 		return err
 	}
@@ -700,6 +706,7 @@ func (s *Server) handleCreateUser(w http.ResponseWriter, r *http.Request) error 
 
 type updateUserInput struct {
 	DisplayName string    `json:"display_name"`
+	Email       string    `json:"email,omitempty"` // empty keeps the current address
 	RoleID      uuid.UUID `json:"role_id"`
 	IsActive    bool      `json:"is_active"`
 }
@@ -714,14 +721,19 @@ func (s *Server) handleUpdateUser(w http.ResponseWriter, r *http.Request) error 
 		return err
 	}
 	in.DisplayName = normalize.Text(in.DisplayName)
-	v := valid.New()
-	v.Len("display_name", in.DisplayName, 1, 120)
-	if err := checkValid(v); err != nil {
-		return err
-	}
+	in.Email = strings.ToLower(strings.TrimSpace(in.Email))
 	p := principal(r)
 	before, err := s.db.GetUserByID(r.Context(), id)
 	if err != nil {
+		return err
+	}
+	if in.Email == "" {
+		in.Email = before.Email
+	}
+	v := valid.New()
+	v.Len("display_name", in.DisplayName, 1, 120)
+	v.Email("email", in.Email)
+	if err := checkValid(v); err != nil {
 		return err
 	}
 	role, err := s.db.GetRole(r.Context(), in.RoleID)
@@ -741,7 +753,7 @@ func (s *Server) handleUpdateUser(w http.ResponseWriter, r *http.Request) error 
 	}
 	var u store.User
 	err = s.db.Tx(r.Context(), func(q *store.Queries, _ pgx.Tx) error {
-		u, err = q.UpdateUserAdmin(r.Context(), store.UpdateUserAdminParams{ID: id, DisplayName: in.DisplayName, RoleID: in.RoleID, IsActive: in.IsActive})
+		u, err = q.UpdateUserAdmin(r.Context(), store.UpdateUserAdminParams{ID: id, DisplayName: in.DisplayName, RoleID: in.RoleID, IsActive: in.IsActive, Email: in.Email})
 		if err != nil {
 			return err
 		}
@@ -757,6 +769,26 @@ func (s *Server) handleUpdateUser(w http.ResponseWriter, r *http.Request) error 
 		return err
 	}
 	return ok(w, userView(u))
+}
+
+// handleUnlockUser clears a sign-in lockout caused by repeated failed passwords.
+func (s *Server) handleUnlockUser(w http.ResponseWriter, r *http.Request) error {
+	id, err := pathUUID(r, "id")
+	if err != nil {
+		return err
+	}
+	u, err := s.db.GetUserByID(r.Context(), id)
+	if err != nil {
+		return err
+	}
+	if u.IsOwner && !principal(r).User.IsOwner {
+		return errForbidden("Only the owner can change the owner account.")
+	}
+	if _, err := s.db.UnlockUser(r.Context(), id); err != nil {
+		return err
+	}
+	_ = s.audit(r.Context(), nil, r, auditEvent{Action: "user.unlock", EntityType: "user", EntityID: &id, Summary: "Cleared the sign-in lockout of " + u.Email})
+	return noContent(w)
 }
 
 func (s *Server) handleDeleteUser(w http.ResponseWriter, r *http.Request) error {

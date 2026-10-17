@@ -431,7 +431,7 @@ func (q *Queries) ListSupplierProducts(ctx context.Context, supplierID uuid.UUID
 
 const listSuppliers = `-- name: ListSuppliers :many
 SELECT s.id, s.name, s.normalized_name, s.company_id, s.supplier_type, s.website, s.domain, s.country, s.city, s.address, s.email, s.phone, s.primary_contact_id, s.pipeline_stage_id, s.rating, s.payment_terms, s.lead_time_days, s.moq_notes, s.certifications, s.description, s.owner_id, s.custom_fields, s.created_by, s.created_at, s.updated_at, co.name AS company_name, ps.name AS stage_name, ps.color AS stage_color,
-  (pc.first_name || ' ' || pc.last_name)::text AS primary_contact_name,
+  concat_ws(' ', pc.first_name, pc.last_name)::text AS primary_contact_name,
   (SELECT count(*) FROM supplier_products sp WHERE sp.supplier_id = s.id) AS product_count,
   count(*) OVER () AS total
 FROM suppliers s
@@ -442,25 +442,27 @@ WHERE ($1::text IS NULL
        OR rea_search_doc(s.name, s.domain, s.country, s.description) @@ websearch_to_tsquery('simple', $1)
        OR s.normalized_name % lower($1) OR s.name ILIKE '%' || $1 || '%')
   AND ($2::text IS NULL OR s.supplier_type = $2)
-  AND ($3::uuid IS NULL OR s.pipeline_stage_id = $3)
-  AND ($4::text IS NULL OR s.country ILIKE $4)
-  AND ($5::int IS NULL OR s.rating >= $5)
-  AND ($6::uuid IS NULL OR s.owner_id = $6)
-  AND ($7::uuid IS NULL OR EXISTS (
-        SELECT 1 FROM record_tags rt WHERE rt.entity_type = 'supplier' AND rt.entity_id = s.id AND rt.tag_id = $7))
+  AND ($3::uuid IS NULL OR s.company_id = $3)
+  AND ($4::uuid IS NULL OR s.pipeline_stage_id = $4)
+  AND ($5::text IS NULL OR s.country ILIKE $5)
+  AND ($6::int IS NULL OR s.rating >= $6)
+  AND ($7::uuid IS NULL OR s.owner_id = $7)
+  AND ($8::uuid IS NULL OR EXISTS (
+        SELECT 1 FROM record_tags rt WHERE rt.entity_type = 'supplier' AND rt.entity_id = s.id AND rt.tag_id = $8))
 ORDER BY
-  CASE WHEN $8::text = 'name' THEN s.name END ASC,
-  CASE WHEN $8::text = '-name' THEN s.name END DESC,
-  CASE WHEN $8::text = '-rating' THEN s.rating END DESC NULLS LAST,
-  CASE WHEN $8::text = 'created' THEN s.created_at END ASC,
-  CASE WHEN $8::text = '-created' THEN s.created_at END DESC,
+  CASE WHEN $9::text = 'name' THEN s.name END ASC,
+  CASE WHEN $9::text = '-name' THEN s.name END DESC,
+  CASE WHEN $9::text = '-rating' THEN s.rating END DESC NULLS LAST,
+  CASE WHEN $9::text = 'created' THEN s.created_at END ASC,
+  CASE WHEN $9::text = '-created' THEN s.created_at END DESC,
   s.updated_at DESC, s.id
-LIMIT $10 OFFSET $9
+LIMIT $11 OFFSET $10
 `
 
 type ListSuppliersParams struct {
 	Q            *string    `json:"q"`
 	SupplierType *string    `json:"supplier_type"`
+	CompanyID    *uuid.UUID `json:"company_id"`
 	StageID      *uuid.UUID `json:"stage_id"`
 	Country      *string    `json:"country"`
 	MinRating    *int32     `json:"min_rating"`
@@ -485,6 +487,7 @@ func (q *Queries) ListSuppliers(ctx context.Context, arg ListSuppliersParams) ([
 	rows, err := q.db.Query(ctx, listSuppliers,
 		arg.Q,
 		arg.SupplierType,
+		arg.CompanyID,
 		arg.StageID,
 		arg.Country,
 		arg.MinRating,

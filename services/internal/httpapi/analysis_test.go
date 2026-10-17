@@ -140,6 +140,14 @@ func TestCodebaseArchiveAnalysis(t *testing.T) {
 	if strings.Contains(body, "supersecretvalue") {
 		t.Fatal("secret value leaked into findings")
 	}
+	// The source records its file listing (names and sizes only) for the codebase viewer.
+	src := e.owner.Do("GET", "/api/v1/analysis/sources/"+up.Str("source.id"), nil).Must(t, 200)
+	if src.Get("metadata.file_count") != float64(4) || len(src.Get("metadata.files").([]any)) != 4 {
+		t.Fatalf("file listing missing: %s", src.Body)
+	}
+	if strings.Contains(string(src.Body), "supersecretvalue") || !strings.Contains(string(src.Body), "app/db/001_init.sql") {
+		t.Fatalf("file listing must name files without their contents: %s", src.Body)
+	}
 	// A zip-slip archive is rejected by the worker with a clear error.
 	var evil bytes.Buffer
 	zw = zip.NewWriter(&evil)

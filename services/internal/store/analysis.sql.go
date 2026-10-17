@@ -1083,6 +1083,24 @@ func (q *Queries) RequeueStaleAnalysisRuns(ctx context.Context, staleSeconds int
 	return result.RowsAffected(), nil
 }
 
+const setAnalysisSourceFiles = `-- name: SetAnalysisSourceFiles :exec
+UPDATE analysis_sources
+SET metadata = coalesce(metadata, '{}'::jsonb) || jsonb_build_object('files', $1::jsonb, 'file_count', $2::int)
+WHERE id = $3
+`
+
+type SetAnalysisSourceFilesParams struct {
+	Files     json.RawMessage `json:"files"`
+	FileCount int32           `json:"file_count"`
+	ID        uuid.UUID       `json:"id"`
+}
+
+// Records the file listing (paths, sizes, skip reasons; never contents) of a codebase source.
+func (q *Queries) SetAnalysisSourceFiles(ctx context.Context, arg SetAnalysisSourceFilesParams) error {
+	_, err := q.db.Exec(ctx, setAnalysisSourceFiles, arg.Files, arg.FileCount, arg.ID)
+	return err
+}
+
 const setAnalysisSourceStatus = `-- name: SetAnalysisSourceStatus :exec
 UPDATE analysis_sources SET status = $2, error = $3 WHERE id = $1
 `

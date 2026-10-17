@@ -163,7 +163,7 @@ func (q *Queries) GetOpportunity(ctx context.Context, id uuid.UUID) (Opportunity
 
 const listOpportunities = `-- name: ListOpportunities :many
 SELECT o.id, o.name, o.company_id, o.supplier_id, o.contact_id, o.lead_id, o.pipeline_stage_id, o.amount, o.currency, o.expected_close_date, o.probability, o.status, o.closed_at, o.outcome_reason, o.description, o.owner_id, o.custom_fields, o.created_by, o.created_at, o.updated_at, co.name AS company_name, s.name AS supplier_name,
-  (ct.first_name || ' ' || ct.last_name)::text AS contact_name,
+  concat_ws(' ', ct.first_name, ct.last_name)::text AS contact_name,
   ps.name AS stage_name, ps.category AS stage_category, ps.color AS stage_color, u.display_name AS owner_name,
   count(*) OVER () AS total
 FROM opportunities o
@@ -329,11 +329,14 @@ func (q *Queries) ListOpportunityProducts(ctx context.Context, opportunityID uui
 
 const pipelineSummary = `-- name: PipelineSummary :many
 SELECT ps.id AS stage_id, ps.name AS stage_name, ps.category, ps.color, ps.position,
-  count(o.id) AS deal_count, coalesce(sum(o.amount), 0)::numeric AS total_amount
+  ((SELECT count(*) FROM opportunities o WHERE o.pipeline_stage_id = ps.id)
+   + (SELECT count(*) FROM leads l WHERE l.pipeline_stage_id = ps.id)
+   + (SELECT count(*) FROM suppliers su WHERE su.pipeline_stage_id = ps.id))::bigint AS deal_count,
+  (coalesce((SELECT sum(o.amount) FROM opportunities o WHERE o.pipeline_stage_id = ps.id), 0)
+   + coalesce((SELECT sum(l.estimated_value) FROM leads l WHERE l.pipeline_stage_id = ps.id), 0))::numeric AS total_amount
 FROM pipeline_stages ps
-LEFT JOIN opportunities o ON o.pipeline_stage_id = ps.id
 WHERE ps.pipeline_id = $1
-GROUP BY ps.id ORDER BY ps.position
+ORDER BY ps.position
 `
 
 type PipelineSummaryRow struct {
@@ -346,6 +349,8 @@ type PipelineSummaryRow struct {
 	TotalAmount decimal.Decimal `json:"total_amount"`
 }
 
+// A stage belongs to one pipeline of one record type, so at most one of the counts is non-zero.
+// total_amount is the opportunity amount or the lead's estimated value; suppliers have none.
 func (q *Queries) PipelineSummary(ctx context.Context, pipelineID uuid.UUID) ([]PipelineSummaryRow, error) {
 	rows, err := q.db.Query(ctx, pipelineSummary, pipelineID)
 	if err != nil {

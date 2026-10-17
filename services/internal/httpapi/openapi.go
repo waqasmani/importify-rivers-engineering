@@ -86,10 +86,11 @@ func Operations() []opDoc {
 		op("GET", "/api/v1/system/info", "systemInfo", "System", "Server version and features", nil, systemInfoDoc{}, 200),
 		op("GET", "/api/v1/permissions", "listPermissions", "Admin", "All permission codes", nil, Items[store.Permission]{}, 200),
 		op("GET", "/api/v1/users/directory", "userDirectory", "Admin", "Active users for pickers", nil, Items[DirectoryUser]{}, 200),
-		op("GET", "/api/v1/users", "listUsers", "Admin", "List users", nil, Page[UserView]{}, 200, "limit", "offset"),
+		op("GET", "/api/v1/users", "listUsers", "Admin", "List users (q matches name or e-mail)", nil, Page[UserView]{}, 200, "q", "limit", "offset"),
 		op("POST", "/api/v1/users", "createUser", "Admin", "Create a user", createUserInput{}, UserView{}, 201),
 		op("GET", "/api/v1/users/{id}", "getUser", "Admin", "Get a user", nil, UserView{}, 200),
-		op("PUT", "/api/v1/users/{id}", "updateUser", "Admin", "Update a user's name, role and status", updateUserInput{}, UserView{}, 200),
+		op("PUT", "/api/v1/users/{id}", "updateUser", "Admin", "Update a user's name, e-mail, role and status", updateUserInput{}, UserView{}, 200),
+		op("POST", "/api/v1/users/{id}/unlock", "unlockUser", "Admin", "Clear a sign-in lockout", nil, nil, 204),
 		op("DELETE", "/api/v1/users/{id}", "deleteUser", "Admin", "Delete a user", nil, nil, 204),
 		op("POST", "/api/v1/users/{id}/password", "resetUserPassword", "Admin", "Set a user's password and sign them out", resetPasswordInput{}, nil, 204),
 		op("POST", "/api/v1/users/{id}/transfer-ownership", "transferOwnership", "Admin", "Make another administrator the owner", nil, nil, 204),
@@ -236,7 +237,7 @@ func Operations() []opDoc {
 	}
 	ops = append(ops, crud("/api/v1/companies", "companies", "company", "CRM", companyView{}, Page[companyView]{}, companyInput{}, "company_type", "status", "owner_id", "country", "tag_id")...)
 	ops = append(ops, crud("/api/v1/contacts", "contacts", "contact", "CRM", contactView{}, Page[contactView]{}, contactInput{}, "company_id", "supplier_id", "status", "owner_id", "decision_maker", "tag_id")...)
-	ops = append(ops, crud("/api/v1/suppliers", "suppliers", "supplier", "CRM", supplierView{}, Page[supplierView]{}, supplierInput{}, "supplier_type", "stage_id", "country", "min_rating", "owner_id", "tag_id")...)
+	ops = append(ops, crud("/api/v1/suppliers", "suppliers", "supplier", "CRM", supplierView{}, Page[supplierView]{}, supplierInput{}, "supplier_type", "company_id", "stage_id", "country", "min_rating", "owner_id", "tag_id")...)
 	ops = append(ops, crud("/api/v1/leads", "leads", "lead", "CRM", leadView{}, Page[leadView]{}, leadInput{}, "stage_id", "pipeline_id", "source", "owner_id", "company_id", "tag_id")...)
 	ops = append(ops, crud("/api/v1/opportunities", "opportunities", "opportunity", "CRM", opportunityView{}, Page[opportunityView]{}, opportunityInput{}, "stage_id", "pipeline_id", "status", "owner_id", "company_id", "supplier_id", "tag_id")...)
 	ops = append(ops, crud("/api/v1/tasks", "tasks", "task", "CRM", taskView{}, Page[taskView]{}, taskInput{}, "status", "open_only", "assignee_id", "entity_type", "entity_id", "due_before", "task_type")...)

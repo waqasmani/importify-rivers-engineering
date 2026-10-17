@@ -3,6 +3,7 @@ package httpapi_test
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"os/exec"
 	"strings"
 	"testing"
@@ -69,4 +70,50 @@ func TestBackupsWithPgDump(t *testing.T) {
 	}
 	e.owner.Do("GET", "/api/v1/admin/backups/..%2F..%2Fetc%2Fpasswd", nil).Must(t, 404)
 	e.owner.Do("DELETE", "/api/v1/admin/backups/"+name, nil).Must(t, 204)
+}
+
+func TestUserAdminSearchEmailAndUnlock(t *testing.T) {
+	e := newEnv(t)
+	member := e.userWithRole("member", "member@example.com")
+	var id string
+	for _, u := range e.owner.Do("GET", "/api/v1/users?q=MEMBER@exa", nil).Must(t, 200).Items() {
+		id = u["id"].(string)
+	}
+	if id == "" {
+		t.Fatal("search by e-mail did not find the member")
+	}
+	if n := e.owner.Do("GET", "/api/v1/users?q=%25", nil).Must(t, 200).Get("total"); n != float64(0) {
+		t.Fatalf("a literal %% must not act as a wildcard, got %v users", n)
+	}
+	roleID := e.owner.Do("GET", "/api/v1/users/"+id, nil).Must(t, 200).Str("role_id")
+
+	// E-mail can be changed by an administrator; omitting it keeps the current address.
+	upd := map[string]any{"display_name": "Member", "role_id": roleID, "is_active": true, "email": "renamed@example.com"}
+	if got := e.owner.Do("PUT", "/api/v1/users/"+id, upd).Must(t, 200).Str("email"); got != "renamed@example.com" {
+		t.Fatalf("email not updated: %s", got)
+	}
+	delete(upd, "email")
+	if got := e.owner.Do("PUT", "/api/v1/users/"+id, upd).Must(t, 200).Str("email"); got != "renamed@example.com" {
+		t.Fatalf("omitted email should be kept, got %s", got)
+	}
+	upd["email"] = "owner@example.com"
+	e.owner.Do("PUT", "/api/v1/users/"+id, upd).Must(t, 409)
+
+	// Lock the account the way repeated failed sign-ins do (the per-IP sign-in rate limit would
+	// stop a test client before the lockout threshold), then unlock it.
+	if _, err := e.db.Pool.Exec(context.Background(), "UPDATE users SET failed_login_count = 10, locked_until = now() + interval '15 minutes' WHERE id = $1", id); err != nil {
+		t.Fatal(err)
+	}
+	if res := e.client().Do("POST", "/api/v1/auth/login", map[string]any{"email": "renamed@example.com", "password": ownerPassword}); res.Status == 200 {
+		t.Fatal("a locked account must not sign in")
+	}
+	if e.owner.Do("GET", "/api/v1/users/"+id, nil).Must(t, 200).Get("locked_until") == nil {
+		t.Fatal("account should be locked after repeated failures")
+	}
+	member.Do("POST", "/api/v1/users/"+id+"/unlock", map[string]any{}).Must(t, 403)
+	e.owner.Do("POST", "/api/v1/users/"+id+"/unlock", map[string]any{}).Must(t, 204)
+	if e.owner.Do("GET", "/api/v1/users/"+id, nil).Must(t, 200).Get("locked_until") != nil {
+		t.Fatal("unlock did not clear the lockout")
+	}
+	e.login("renamed@example.com", ownerPassword)
 }

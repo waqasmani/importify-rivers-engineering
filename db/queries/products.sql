@@ -1,6 +1,6 @@
 -- name: ListProducts :many
 SELECT sqlc.embed(p), s.name AS supplier_name,
-  (SELECT pi.url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.position LIMIT 1) AS primary_image_url,
+  coalesce((SELECT pi.url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.position LIMIT 1), '')::text AS primary_image_url,
   (SELECT count(*) FROM product_variants pv WHERE pv.product_id = p.id) AS variant_count,
   count(*) OVER () AS total
 FROM products p LEFT JOIN suppliers s ON s.id = p.supplier_id

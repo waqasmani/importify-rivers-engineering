@@ -154,7 +154,11 @@ func (s *Server) listSuppliers(r *http.Request, limit, offset int32) ([]supplier
 	if err != nil {
 		return nil, 0, err
 	}
-	rows, err := s.db.ListSuppliers(r.Context(), store.ListSuppliersParams{Q: qText(r, "q"), SupplierType: qText(r, "supplier_type"),
+	company, err := qUUID(r, "company_id")
+	if err != nil {
+		return nil, 0, err
+	}
+	rows, err := s.db.ListSuppliers(r.Context(), store.ListSuppliersParams{Q: qText(r, "q"), SupplierType: qText(r, "supplier_type"), CompanyID: company,
 		StageID: stage, Country: qText(r, "country"), MinRating: qInt(r, "min_rating"), OwnerID: owner, TagID: tag,
 		Sort: qSort(r, "name", "-name", "-rating", "created", "-created"), Lim: limit, Off: offset})
 	if err != nil {

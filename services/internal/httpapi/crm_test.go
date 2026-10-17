@@ -358,3 +358,35 @@ func TestGlobalSearchRespectsPermissions(t *testing.T) {
 		t.Fatal("search leaked CRM records")
 	}
 }
+
+// TestListsWithMinimalRecords is a regression test: list and export endpoints must work for
+// records that have none of their optional links (no contact, no primary contact, no image,
+// no owner, no stage, no assignee).
+func TestListsWithMinimalRecords(t *testing.T) {
+	e := newEnv(t)
+	c := e.owner
+	c.Do("POST", "/api/v1/companies", map[string]any{"name": "Bare Co"}).Must(t, 201)
+	c.Do("POST", "/api/v1/contacts", map[string]any{"first_name": "Solo"}).Must(t, 201)
+	c.Do("POST", "/api/v1/suppliers", map[string]any{"name": "Bare Supplier"}).Must(t, 201)
+	c.Do("POST", "/api/v1/leads", map[string]any{"title": "Bare lead"}).Must(t, 201)
+	c.Do("POST", "/api/v1/opportunities", map[string]any{"name": "Bare deal"}).Must(t, 201)
+	c.Do("POST", "/api/v1/products", map[string]any{"title": "Bare product"}).Must(t, 201)
+	c.Do("POST", "/api/v1/tasks", map[string]any{"title": "Bare task"}).Must(t, 201)
+	for _, path := range []string{"companies", "contacts", "suppliers", "leads", "opportunities", "products", "tasks"} {
+		items := c.Do("GET", "/api/v1/"+path, nil).Must(t, 200).Items()
+		if len(items) != 1 {
+			t.Fatalf("%s: expected 1 item, got %d", path, len(items))
+		}
+		for _, k := range []string{"contact_name", "primary_contact_name", "primary_image_url"} {
+			if v, ok := items[0][k]; ok && v != nil {
+				t.Errorf("%s: %s should be absent or null for a record without it, got %v", path, k, v)
+			}
+		}
+		for _, format := range []string{"csv", "json"} {
+			c.Do("GET", "/api/v1/"+path+"/export?format="+format, nil).Must(t, 200)
+		}
+	}
+	c.Do("GET", "/api/v1/products/facets", nil).Must(t, 200)
+	c.Do("GET", "/api/v1/dashboard", nil).Must(t, 200)
+	c.Do("GET", "/api/v1/search?q=Bare", nil).Must(t, 200)
+}

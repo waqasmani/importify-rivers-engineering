@@ -1,6 +1,7 @@
 package httpapi_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -228,4 +229,52 @@ func TestSelectorAdapters(t *testing.T) {
 	}
 	c.Do("DELETE", "/api/v1/adapters/"+builtin, nil).Must(t, 409)
 	c.Do("DELETE", "/api/v1/adapters/"+ad.Str("id"), nil).Must(t, 204)
+
+	// Every built-in adapter can be toggled, including wildcard ones such as json-ld, and keeps
+	// its domains and extraction definition.
+	for _, a := range c.Do("GET", "/api/v1/adapters", nil).Must(t, 200).Items() {
+		if a["kind"] != "builtin" {
+			continue
+		}
+		id := a["id"].(string)
+		upd := c.Do("PUT", "/api/v1/adapters/"+id, map[string]any{"key": a["key"], "name": "Renamed", "domain_patterns": []string{"evil.example"},
+			"enabled": false, "priority": 7, "selectors": map[string]string{"title": "h1"}, "description": "off for now"}).Must(t, 200)
+		if upd.Get("enabled") != false || upd.Get("priority") != float64(7) || upd.Str("description") != "off for now" {
+			t.Fatalf("%s: toggle not applied: %v", a["key"], upd.Body)
+		}
+		if upd.Str("name") != a["name"] || fmt.Sprint(upd.Get("domain_patterns")) != fmt.Sprint(a["domain_patterns"]) || fmt.Sprint(upd.Get("selectors")) != fmt.Sprint(a["selectors"]) {
+			t.Fatalf("%s: built-in definition changed: before %v after %v", a["key"], a, upd.Body)
+		}
+	}
+}
+
+func TestImportCanSkipSuggestedSupplier(t *testing.T) {
+	e := newEnv(t)
+	e.owner.Do("POST", "/api/v1/suppliers", map[string]any{"name": "Shop Example", "website": "https://shop.example.com"}).Must(t, 201)
+	res := e.owner.Do("POST", "/api/v1/imports/products", map[string]any{"payload": productPayload("SKIP-1"), "source": "manual",
+		"skip_supplier_link": true}).Must(t, 201)
+	if res.Get("product.supplier_id") != nil {
+		t.Fatalf("supplier was linked although the user chose none: %s", res.Body)
+	}
+	e.owner.Do("POST", "/api/v1/imports/products", map[string]any{"payload": productPayload("SKIP-2"), "source": "manual",
+		"skip_supplier_link": true, "create_supplier": true}).Must(t, 422)
+
+	// Pipeline summaries count leads and suppliers on their own pipelines, not only opportunities.
+	checked := false
+	for _, pl := range e.owner.Do("GET", "/api/v1/pipelines", nil).Must(t, 200).Items() {
+		if pl["entity_type"] != "lead" || pl["is_default"] != true {
+			continue
+		}
+		stage := pl["stages"].([]any)[0].(map[string]any)["id"].(string)
+		e.owner.Do("POST", "/api/v1/leads", map[string]any{"title": "Counted lead", "pipeline_stage_id": stage, "estimated_value": "150.00", "currency": "EUR"}).Must(t, 201)
+		sum := e.owner.Do("GET", "/api/v1/pipelines/"+pl["id"].(string)+"/summary", nil).Must(t, 200)
+		first := sum.Get("stages").([]any)[0].(map[string]any)
+		if first["deal_count"] != float64(1) || first["total_amount"] != "150" {
+			t.Fatalf("lead pipeline summary wrong: %v", first)
+		}
+		checked = true
+	}
+	if !checked {
+		t.Fatal("no default lead pipeline found")
+	}
 }

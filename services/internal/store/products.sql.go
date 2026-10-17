@@ -726,7 +726,7 @@ func (q *Queries) ListImages(ctx context.Context, productID uuid.UUID) ([]Produc
 
 const listProducts = `-- name: ListProducts :many
 SELECT p.id, p.original_title, p.title, p.normalized_title, p.source_url, p.canonical_url, p.source_domain, p.supplier_id, p.supplier_contact_id, p.company_id, p.brand, p.sku, p.model, p.mpn, p.gtin, p.identifiers, p.description, p.specifications, p.cost, p.cost_currency, p.price, p.price_currency, p.margin_amount, p.margin_percent, p.availability, p.category, p.status, p.review_status, p.first_seen_at, p.last_checked_at, p.extraction_method, p.extraction_confidence, p.captured_page_id, p.source_evidence, p.internal_notes, p.custom_fields, p.created_by, p.created_at, p.updated_at, s.name AS supplier_name,
-  (SELECT pi.url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.position LIMIT 1) AS primary_image_url,
+  coalesce((SELECT pi.url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.position LIMIT 1), '')::text AS primary_image_url,
   (SELECT count(*) FROM product_variants pv WHERE pv.product_id = p.id) AS variant_count,
   count(*) OVER () AS total
 FROM products p LEFT JOIN suppliers s ON s.id = p.supplier_id

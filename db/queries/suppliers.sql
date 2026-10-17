@@ -1,6 +1,6 @@
 -- name: ListSuppliers :many
 SELECT sqlc.embed(s), co.name AS company_name, ps.name AS stage_name, ps.color AS stage_color,
-  (pc.first_name || ' ' || pc.last_name)::text AS primary_contact_name,
+  concat_ws(' ', pc.first_name, pc.last_name)::text AS primary_contact_name,
   (SELECT count(*) FROM supplier_products sp WHERE sp.supplier_id = s.id) AS product_count,
   count(*) OVER () AS total
 FROM suppliers s
@@ -11,6 +11,7 @@ WHERE (sqlc.narg('q')::text IS NULL
        OR rea_search_doc(s.name, s.domain, s.country, s.description) @@ websearch_to_tsquery('simple', sqlc.narg('q'))
        OR s.normalized_name % lower(sqlc.narg('q')) OR s.name ILIKE '%' || sqlc.narg('q') || '%')
   AND (sqlc.narg('supplier_type')::text IS NULL OR s.supplier_type = sqlc.narg('supplier_type'))
+  AND (sqlc.narg('company_id')::uuid IS NULL OR s.company_id = sqlc.narg('company_id'))
   AND (sqlc.narg('stage_id')::uuid IS NULL OR s.pipeline_stage_id = sqlc.narg('stage_id'))
   AND (sqlc.narg('country')::text IS NULL OR s.country ILIKE sqlc.narg('country'))
   AND (sqlc.narg('min_rating')::int IS NULL OR s.rating >= sqlc.narg('min_rating'))

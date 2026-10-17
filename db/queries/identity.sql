@@ -15,14 +15,26 @@ SELECT * FROM users WHERE email = $1;
 -- name: ListUsers :many
 SELECT sqlc.embed(u), r.key AS role_key, r.name AS role_name
 FROM users u JOIN roles r ON r.id = u.role_id
+WHERE sqlc.narg(q)::text IS NULL
+   OR u.email::text ILIKE '%' || sqlc.narg(q)::text || '%'
+   OR u.display_name ILIKE '%' || sqlc.narg(q)::text || '%'
 ORDER BY u.is_owner DESC, u.display_name
-LIMIT $1 OFFSET $2;
+LIMIT sqlc.arg(lim) OFFSET sqlc.arg(off);
+
+-- name: CountUsersMatching :one
+SELECT count(*) FROM users u
+WHERE sqlc.narg(q)::text IS NULL
+   OR u.email::text ILIKE '%' || sqlc.narg(q)::text || '%'
+   OR u.display_name ILIKE '%' || sqlc.narg(q)::text || '%';
 
 -- name: UpdateUserProfile :one
 UPDATE users SET display_name = $2, email = $3 WHERE id = $1 RETURNING *;
 
 -- name: UpdateUserAdmin :one
-UPDATE users SET display_name = $2, role_id = $3, is_active = $4 WHERE id = $1 RETURNING *;
+UPDATE users SET display_name = $2, role_id = $3, is_active = $4, email = $5 WHERE id = $1 RETURNING *;
+
+-- name: UnlockUser :execrows
+UPDATE users SET failed_login_count = 0, locked_until = NULL WHERE id = $1;
 
 -- name: UpdateUserPassword :exec
 UPDATE users SET password_hash = $2, password_changed_at = now(), failed_login_count = 0, locked_until = NULL

@@ -82,6 +82,12 @@ func TestGTINAndAvailability(t *testing.T) {
 	if !ValidGTIN("4006381333931") || ValidGTIN("4006381333932") || !ValidGTIN("036000291452") {
 		t.Error("GTIN check digit validation is wrong")
 	}
+	for in, want := range map[string]string{"in_stock": "in_stock", "OUT_OF_STOCK": "out_of_stock", "pre-order": "preorder", "back_order": "backorder",
+		"preorder": "preorder", "Currently unavailable": "out_of_stock", "discontinued": "discontinued", "maybe": "unknown"} {
+		if got := Availability(in); got != want {
+			t.Errorf("Availability(%q) = %q, want %q", in, got, want)
+		}
+	}
 	if Availability("https://schema.org/InStock") != "in_stock" || Availability("Sold out") != "out_of_stock" || Availability("") != "unknown" {
 		t.Error("availability mapping is wrong")
 	}

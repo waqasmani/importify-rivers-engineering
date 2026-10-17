@@ -68,6 +68,20 @@ func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const countUsersMatching = `-- name: CountUsersMatching :one
+SELECT count(*) FROM users u
+WHERE $1::text IS NULL
+   OR u.email::text ILIKE '%' || $1::text || '%'
+   OR u.display_name ILIKE '%' || $1::text || '%'
+`
+
+func (q *Queries) CountUsersMatching(ctx context.Context, q_ *string) (int64, error) {
+	row := q.db.QueryRow(ctx, countUsersMatching, q_)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createAPICredential = `-- name: CreateAPICredential :one
 INSERT INTO api_credentials (user_id, device_id, name, kind, token_hash, token_prefix, scopes, expires_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -990,13 +1004,17 @@ func (q *Queries) ListUserSessions(ctx context.Context, userID uuid.UUID) ([]Use
 const listUsers = `-- name: ListUsers :many
 SELECT u.id, u.email, u.display_name, u.password_hash, u.role_id, u.is_owner, u.is_active, u.failed_login_count, u.locked_until, u.last_login_at, u.password_changed_at, u.created_at, u.updated_at, r.key AS role_key, r.name AS role_name
 FROM users u JOIN roles r ON r.id = u.role_id
+WHERE $1::text IS NULL
+   OR u.email::text ILIKE '%' || $1::text || '%'
+   OR u.display_name ILIKE '%' || $1::text || '%'
 ORDER BY u.is_owner DESC, u.display_name
-LIMIT $1 OFFSET $2
+LIMIT $3 OFFSET $2
 `
 
 type ListUsersParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Q   *string `json:"q"`
+	Off int32   `json:"off"`
+	Lim int32   `json:"lim"`
 }
 
 type ListUsersRow struct {
@@ -1006,7 +1024,7 @@ type ListUsersRow struct {
 }
 
 func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]ListUsersRow, error) {
-	rows, err := q.db.Query(ctx, listUsers, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listUsers, arg.Q, arg.Off, arg.Lim)
 	if err != nil {
 		return nil, err
 	}
@@ -1255,6 +1273,18 @@ func (q *Queries) TransferOwnership(ctx context.Context, newOwnerID uuid.UUID) e
 	return err
 }
 
+const unlockUser = `-- name: UnlockUser :execrows
+UPDATE users SET failed_login_count = 0, locked_until = NULL WHERE id = $1
+`
+
+func (q *Queries) UnlockUser(ctx context.Context, id uuid.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, unlockUser, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const updateRole = `-- name: UpdateRole :one
 UPDATE roles SET name = $2, description = $3 WHERE id = $1 RETURNING id, key, name, description, is_system, created_at, updated_at
 `
@@ -1281,7 +1311,7 @@ func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, e
 }
 
 const updateUserAdmin = `-- name: UpdateUserAdmin :one
-UPDATE users SET display_name = $2, role_id = $3, is_active = $4 WHERE id = $1 RETURNING id, email, display_name, password_hash, role_id, is_owner, is_active, failed_login_count, locked_until, last_login_at, password_changed_at, created_at, updated_at
+UPDATE users SET display_name = $2, role_id = $3, is_active = $4, email = $5 WHERE id = $1 RETURNING id, email, display_name, password_hash, role_id, is_owner, is_active, failed_login_count, locked_until, last_login_at, password_changed_at, created_at, updated_at
 `
 
 type UpdateUserAdminParams struct {
@@ -1289,6 +1319,7 @@ type UpdateUserAdminParams struct {
 	DisplayName string    `json:"display_name"`
 	RoleID      uuid.UUID `json:"role_id"`
 	IsActive    bool      `json:"is_active"`
+	Email       string    `json:"email"`
 }
 
 func (q *Queries) UpdateUserAdmin(ctx context.Context, arg UpdateUserAdminParams) (User, error) {
@@ -1297,6 +1328,7 @@ func (q *Queries) UpdateUserAdmin(ctx context.Context, arg UpdateUserAdminParams
 		arg.DisplayName,
 		arg.RoleID,
 		arg.IsActive,
+		arg.Email,
 	)
 	var i User
 	err := row.Scan(

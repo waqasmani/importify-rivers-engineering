@@ -132,14 +132,16 @@ func parseNumber(raw string) (decimal.Decimal, bool) {
 func Availability(s string) string {
 	l := strings.ToLower(strings.TrimSpace(s))
 	l = strings.TrimPrefix(strings.TrimPrefix(l, "https://schema.org/"), "http://schema.org/")
+	// Accept REA's own values (in_stock, out_of_stock, …) and common spellings with - or _.
+	l = strings.NewReplacer("_", " ", "-", " ").Replace(l)
 	switch {
 	case l == "":
 		return "unknown"
 	case strings.Contains(l, "outofstock") || strings.Contains(l, "out of stock") || strings.Contains(l, "sold out") || strings.Contains(l, "unavailable"):
 		return "out_of_stock"
-	case strings.Contains(l, "preorder") || strings.Contains(l, "pre-order") || strings.Contains(l, "presale"):
+	case strings.Contains(l, "preorder") || strings.Contains(l, "pre order") || strings.Contains(l, "presale"):
 		return "preorder"
-	case strings.Contains(l, "backorder"):
+	case strings.Contains(l, "backorder") || strings.Contains(l, "back order"):
 		return "backorder"
 	case strings.Contains(l, "discontinued"):
 		return "discontinued"

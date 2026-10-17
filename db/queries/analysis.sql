@@ -147,3 +147,9 @@ DELETE FROM analysis_reports WHERE id = $1 AND project_id = $2;
 
 -- name: SetAnalysisSourceStatus :exec
 UPDATE analysis_sources SET status = $2, error = $3 WHERE id = $1;
+
+-- name: SetAnalysisSourceFiles :exec
+-- Records the file listing (paths, sizes, skip reasons; never contents) of a codebase source.
+UPDATE analysis_sources
+SET metadata = coalesce(metadata, '{}'::jsonb) || jsonb_build_object('files', sqlc.arg(files)::jsonb, 'file_count', sqlc.arg(file_count)::int)
+WHERE id = sqlc.arg(id);

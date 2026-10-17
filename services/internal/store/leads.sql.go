@@ -123,7 +123,7 @@ func (q *Queries) GetLead(ctx context.Context, id uuid.UUID) (Lead, error) {
 }
 
 const listLeads = `-- name: ListLeads :many
-SELECT l.id, l.title, l.company_id, l.contact_id, l.source, l.pipeline_stage_id, l.estimated_value, l.currency, l.description, l.owner_id, l.converted_at, l.custom_fields, l.created_by, l.created_at, l.updated_at, l.converted_opportunity_id, co.name AS company_name, (ct.first_name || ' ' || ct.last_name)::text AS contact_name,
+SELECT l.id, l.title, l.company_id, l.contact_id, l.source, l.pipeline_stage_id, l.estimated_value, l.currency, l.description, l.owner_id, l.converted_at, l.custom_fields, l.created_by, l.created_at, l.updated_at, l.converted_opportunity_id, co.name AS company_name, concat_ws(' ', ct.first_name, ct.last_name)::text AS contact_name,
   ps.name AS stage_name, ps.category AS stage_category, ps.color AS stage_color, u.display_name AS owner_name,
   count(*) OVER () AS total
 FROM leads l

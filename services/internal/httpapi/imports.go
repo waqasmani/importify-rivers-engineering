@@ -160,8 +160,10 @@ type importRequest struct {
 	SupplierID        *uuid.UUID       `json:"supplier_id"`
 	SupplierContactID *uuid.UUID       `json:"supplier_contact_id"`
 	CreateSupplier    bool             `json:"create_supplier"`
-	TagNames          []string         `json:"tag_names"`
-	Source            string           `json:"source"`
+	// SkipSupplierLink leaves the product without a supplier even when one matches the payload.
+	SkipSupplierLink bool     `json:"skip_supplier_link,omitempty"`
+	TagNames         []string `json:"tag_names"`
+	Source           string   `json:"source"`
 }
 
 type checkResponse struct {
@@ -274,6 +276,10 @@ func (s *Server) handleSubmitProductImport(w http.ResponseWriter, r *http.Reques
 			}
 			if contactID == nil {
 				contactID = su.PrimaryContactID
+			}
+		} else if in.SkipSupplierLink {
+			if in.CreateSupplier {
+				return errField("create_supplier", "cannot be combined with skip_supplier_link")
 			}
 		} else if sug := s.suggestSupplier(ctx, q, n); sug != nil {
 			supplierID = &sug.ID
@@ -812,17 +818,24 @@ func (s *Server) handleUpdateAdapter(w http.ResponseWriter, r *http.Request) err
 	if err != nil {
 		return err
 	}
+	params := store.UpdateSourceAdapterParams{ID: id, Name: before.Name, DomainPatterns: before.DomainPatterns, Selectors: before.Selectors,
+		Enabled: in.Enabled, Priority: in.Priority, Description: normalize.Text(in.Description)}
 	if before.Kind == "builtin" {
-		// Built-in adapters only allow enabling/disabling, priority and description changes.
-		in.Name = before.Name
-		in.DomainPatterns = before.DomainPatterns
-		in.Selectors = map[string]string{"title": "builtin"}
+		// Built-in adapters keep their name, domains and extraction logic; only enabling,
+		// priority and description can change.
+		v := valid.New()
+		v.Max("description", params.Description, 1000)
+		v.Check(in.Priority >= 0 && in.Priority <= 10000, "priority", "must be between 0 and 10000")
+		if err := checkValid(v); err != nil {
+			return err
+		}
+	} else {
+		if err := in.validate(false); err != nil {
+			return err
+		}
+		params.Name, params.DomainPatterns, params.Selectors, params.Description = in.Name, in.DomainPatterns, jsonOf(in.Selectors), in.Description
 	}
-	if err := in.validate(false); err != nil {
-		return err
-	}
-	a, err := s.db.UpdateSourceAdapter(r.Context(), store.UpdateSourceAdapterParams{ID: id, Name: in.Name, DomainPatterns: in.DomainPatterns,
-		Enabled: in.Enabled, Priority: in.Priority, Selectors: jsonOf(in.Selectors), Description: in.Description})
+	a, err := s.db.UpdateSourceAdapter(r.Context(), params)
 	if err != nil {
 		return err
 	}

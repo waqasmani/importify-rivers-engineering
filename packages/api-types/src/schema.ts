@@ -2414,7 +2414,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List users */
+        /** List users (q matches name or e-mail) */
         get: operations["listUsers"];
         put?: never;
         /** Create a user */
@@ -2451,7 +2451,7 @@ export interface paths {
         };
         /** Get a user */
         get: operations["getUser"];
-        /** Update a user's name, role and status */
+        /** Update a user's name, e-mail, role and status */
         put: operations["updateUser"];
         post?: never;
         /** Delete a user */
@@ -2489,6 +2489,23 @@ export interface paths {
         put?: never;
         /** Make another administrator the owner */
         post: operations["transferOwnership"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{id}/unlock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Clear a sign-in lockout */
+        post: operations["unlockUser"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3407,6 +3424,7 @@ export interface components {
             create_supplier: boolean;
             decision: string;
             payload: components["schemas"]["Payload"];
+            skip_supplier_link?: boolean;
             source: string;
             /** Format: uuid */
             supplier_contact_id: string | null;
@@ -5360,6 +5378,7 @@ export interface components {
         };
         UpdateUserInput: {
             display_name: string;
+            email?: string;
             is_active: boolean;
             /** Format: uuid */
             role_id: string;
@@ -10997,6 +11016,7 @@ export interface operations {
                 offset?: string;
                 sort?: string;
                 supplier_type?: string;
+                company_id?: string;
                 stage_id?: string;
                 country?: string;
                 min_rating?: string;
@@ -11137,6 +11157,7 @@ export interface operations {
                 offset?: string;
                 sort?: string;
                 supplier_type?: string;
+                company_id?: string;
                 stage_id?: string;
                 country?: string;
                 min_rating?: string;
@@ -11865,6 +11886,7 @@ export interface operations {
     listUsers: {
         parameters: {
             query?: {
+                q?: string;
                 limit?: string;
                 offset?: string;
             };
@@ -12085,6 +12107,35 @@ export interface operations {
         };
     };
     transferOwnership: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    unlockUser: {
         parameters: {
             query?: never;
             header?: never;

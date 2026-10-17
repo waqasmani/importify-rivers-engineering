@@ -2949,6 +2949,9 @@
           "payload": {
             "$ref": "#/components/schemas/Payload"
           },
+          "skip_supplier_link": {
+            "type": "boolean"
+          },
           "source": {
             "type": "string"
           },
@@ -9279,6 +9282,9 @@
       "UpdateUserInput": {
         "properties": {
           "display_name": {
+            "type": "string"
+          },
+          "email": {
             "type": "string"
           },
           "is_active": {
@@ -17726,6 +17732,14 @@
           },
           {
             "in": "query",
+            "name": "company_id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
             "name": "stage_id",
             "required": false,
             "schema": {
@@ -17979,6 +17993,14 @@
           {
             "in": "query",
             "name": "supplier_type",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "company_id",
             "required": false,
             "schema": {
               "type": "string"
@@ -19112,6 +19134,14 @@
         "parameters": [
           {
             "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
@@ -19149,7 +19179,7 @@
             "description": "Error"
           }
         },
-        "summary": "List users",
+        "summary": "List users (q matches name or e-mail)",
         "tags": [
           "Admin"
         ]
@@ -19343,7 +19373,7 @@
             "description": "Error"
           }
         },
-        "summary": "Update a user's name, role and status",
+        "summary": "Update a user's name, e-mail, role and status",
         "tags": [
           "Admin"
         ]
@@ -19422,6 +19452,40 @@
           }
         },
         "summary": "Make another administrator the owner",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/users/{id}/unlock": {
+      "post": {
+        "operationId": "unlockUser",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Clear a sign-in lockout",
         "tags": [
           "Admin"
         ]

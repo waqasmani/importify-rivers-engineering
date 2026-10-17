@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/shopspring/decimal"
 
@@ -174,7 +175,37 @@ func (w *Worker) executeAnalysis(ctx context.Context, run store.AnalysisRun) (an
 			in.RawFilename = name
 		}
 	}
+	if len(in.Files) > 0 {
+		w.recordFileListing(ctx, src.ID, in.Files)
+	}
 	return an.Analyze(ctx, in)
+}
+
+// fileEntry is one line of the file listing shown in the codebase viewer.
+type fileEntry struct {
+	Path    string `json:"path"`
+	Size    int64  `json:"size"`
+	Skipped string `json:"skipped,omitempty"`
+}
+
+// recordFileListing stores the paths and sizes of a codebase source so the dashboard can show
+// its file tree. File contents are never stored here. Failures only cost the listing.
+func (w *Worker) recordFileListing(ctx context.Context, id uuid.UUID, files []analysis.File) {
+	const maxEntries = 20000
+	list := make([]fileEntry, 0, min(len(files), maxEntries))
+	for _, f := range files {
+		if len(list) == maxEntries {
+			break
+		}
+		list = append(list, fileEntry{Path: f.Path, Size: f.Size, Skipped: f.Skipped})
+	}
+	b, err := json.Marshal(list)
+	if err != nil {
+		return
+	}
+	if err := w.db.SetAnalysisSourceFiles(ctx, store.SetAnalysisSourceFilesParams{ID: id, Files: b, FileCount: int32(len(files))}); err != nil {
+		w.log.Warn("could not record file listing", slog.String("source_id", id.String()), slog.String("error", err.Error()))
+	}
 }
 
 func (w *Worker) attachmentPath(ctx context.Context, src store.AnalysisSource) (string, error) {

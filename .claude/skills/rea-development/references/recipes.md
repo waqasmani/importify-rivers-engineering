@@ -42,17 +42,39 @@
    `httpapi/ai.go handleApplyAIJob` if it writes data (always label output as AI-generated).
 3. Render it in `apps/web/src/components/ai/AiJobResult.vue`.
 
-## Add an extension site adapter
-1. Module in `apps/extension/src/content/extract/<site>.ts` returning `AdapterOutput` fields with
+## Add or fix a marketplace (rules adapter) — preferred for marketplaces
+1. Write `db/marketplaces/<key>.json`: `key` (= file name), `name`, `region` (global, china,
+   cross_border, north_america, south_asia, southeast_asia), `description`, `domains` (bare host and
+   `*.host` per regional domain, max 100), `priority` (60), `version` (raise it on every change),
+   `verification` (`status: "synthetic_fixture"` unless real pages were checked, a `note` describing
+   the assumed layout, `fixture`, `fixture_url`) and `rules` (see docs/marketplaces.md: sources,
+   field candidates, path language, transforms, `list`/`property_join` variants, product signal,
+   `currency_by_host`). Never regexes or code; no `>` in selectors.
+2. Write `testdata/fixtures/marketplaces/<key>.html`: a minimal synthetic page with invented data in
+   that layout (never copy real pages, images or text), including token-like keys or hidden inputs
+   containing `should-not-leak` to prove they are dropped.
+3. Add expectations to `EXPECTED` and the key to `REQUIRED` in
+   `packages/extractor/tests/marketplaces.spec.ts` (title, price + currency, images, variants/specs)
+   and to `required` in `services/internal/marketplaces/definitions_test.go`.
+4. `pnpm --filter @rea/extractor test`, `go test ./services/internal/marketplaces`; the API syncs the
+   definition at start-up (existing installs keep enabled/priority). Verify on a saved real page in
+   the Adapter lab before claiming anything beyond `synthetic_fixture`.
+5. Changing the rule language: update `rules/schema.ts` and `services/internal/marketplaces/rules.go`
+   (+ `path.go`) together and add cases to `testdata/rules/validation-cases.json`.
+
+## Add an extension site adapter (code)
+1. Module in `packages/extractor/src/adapters/<site>.ts` returning `AdapterOutput` fields with
    per-field confidence and evidence (see `shopify.ts`, `woocommerce.ts`); register it in the
-   `BUILTIN` map in `extract/index.ts`. `merge.ts` combines adapters by confidence.
+   `BUILTIN` map in `packages/extractor/src/page.ts`. `merge.ts` combines adapters by confidence.
+   Use only DOM APIs (the package typechecks without Node or Chrome types).
 2. Built-in adapters are switched on and prioritized by server rows: add a migration inserting a
    `source_adapters` row with `kind = 'builtin'`, the same `key`, domain patterns and priority.
 3. Never read cookies, form values, hidden inputs or token-like meta tags; the content script
    must make no network requests (`scripts/check-dist.mjs` enforces parts of this).
-4. Fixture HTML in `testdata/fixtures` + a case in `apps/extension/tests/adapters.spec.ts`.
+4. Fixture HTML in `testdata/fixtures` + a case in `packages/extractor/tests/adapters.spec.ts`.
    Simple sites need no code: an administrator adds a selector adapter under Settings → Source
-   adapters, which the extension receives from `/extension/config`.
+   adapters, or a rules adapter under Products → Marketplaces (tested in the Adapter lab), which the
+   extension receives from `/extension/config`.
 
 ## Release / deploy
 ```bash

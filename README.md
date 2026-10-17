@@ -22,10 +22,18 @@ telemetry, and AI is optional.
   run, CSV/JSON export, global search, activity timelines and a full audit log.
 - **Product import manager** — capture → detect → extract → normalize → de-duplicate → review →
   save → link supplier. Products are never published, purchased or messaged about automatically.
+- **Marketplace support** — declarative definitions for 31 marketplaces (AliExpress, Alibaba,
+  1688, Taobao, Tmall, JD.com, DHgate, CJdropshipping, Banggood, Geekbuying, Tomtop, SaleYee, Temu,
+  SHEIN, Rosegal, Wish, Walmart, Etsy, Kohl's, Costco, Bed Bath & Beyond, Bonanza, LTD Commodities,
+  AllStarHealth, Flipkart, Snapdeal, Lazada, Shopee, Amazon, eBay, Nordstrom) with their regional
+  domains: embedded page data, JSON-LD and selectors mapped to fields and variants without running
+  page code. They have so far been tested only against synthetic fixtures; the **Adapter lab**
+  checks them, or your own rule documents, against product pages you saved
+  ([docs/marketplaces.md](docs/marketplaces.md)).
 - **Browser extension** (Chrome, Manifest V3) — capture pages, import products with site adapters
-  (JSON-LD, microdata, Open Graph, Shopify, WooCommerce, Alibaba, custom selectors, generic
-  fallback), an element picker, page inspector, quick research, AI analysis and save-to-CRM,
-  paired to your server with short-lived, revocable tokens.
+  (JSON-LD, microdata, Open Graph, Shopify, WooCommerce, Alibaba, marketplace definitions and other
+  rules adapters, custom selectors, generic fallback), an element picker, page inspector, quick
+  research, AI analysis and save-to-CRM, paired to your server with short-lived, revocable tokens.
 - **Optional AI** — Ollama, OpenAI-compatible servers, OpenAI or Anthropic for summaries,
   normalization, extraction, tagging, duplicate review, comparisons, documentation and plans.
   Outputs are schema-validated, grounded in numbered evidence, labelled as AI-generated and only
@@ -67,6 +75,7 @@ OpenAPI 3 generated from the Go types.
 | [architecture.md](docs/architecture.md) | Components, data model, jobs, analysis engine, AI layer |
 | [api.md](docs/api.md) | Authentication, conventions, OpenAPI |
 | [extension.md](docs/extension.md) | Building, installing and pairing the extension, permissions, troubleshooting |
+| [marketplaces.md](docs/marketplaces.md) | Supported marketplaces, verification status, Adapter lab, rule document reference, updating definitions |
 | [development.md](docs/development.md) | Local development, tests, code generation |
 | [progress.md](docs/progress.md) | What was built in each phase and how it was verified |
 
@@ -76,7 +85,7 @@ OpenAPI 3 generated from the Go types.
 make deps
 make dev-api      # API on :8080 against a local PostgreSQL
 make dev-web      # dashboard on :5173
-make test         # Go, dashboard and extension tests (set REA_TEST_DATABASE_URL)
+make test         # Go, dashboard, extractor and extension tests (set REA_TEST_DATABASE_URL)
 ```
 
 See [docs/development.md](docs/development.md).

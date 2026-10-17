@@ -67,6 +67,7 @@ jobs:
         run: pnpm api-types && git diff --exit-code packages/api-types
       - run: pnpm -r typecheck
       - run: pnpm --filter @rea/web test
+      - run: pnpm --filter @rea/extractor test
       - run: pnpm --filter @rea/extension test
       - run: pnpm --filter @rea/web build
       - run: pnpm --filter @rea/extension build

@@ -36,7 +36,8 @@ per-database secret key under `.dev/` (git-ignored).
 export REA_TEST_DATABASE_URL='postgres://rea:rea@127.0.0.1:5432/rea?sslmode=disable'
 make test-go          # unit, database integration, API contract, migration lint and rollback, security regressions
 make test-web         # Vue component tests (Vitest + happy-dom)
-make test-extension   # extension adapters, sanitizer, messaging and token logic
+make test-extractor   # @rea/extractor: adapters, rules engine, every marketplace definition against its fixture
+make test-extension   # extension extraction entry, sanitizer, messaging and token logic
 make e2e              # Playwright: dashboard flows and extension load/pairing against a real API
 make lint             # gofmt, go vet, migration lint, TypeScript
 ```

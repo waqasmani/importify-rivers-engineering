@@ -19,6 +19,7 @@ It talks only to the REA API under `/api/v1` on the same origin, using the sessi
 | `src/components/record/*` | Shared record features: `EntityPicker`, `TagEditor`, `NotesPanel`, `TasksPanel`, `TaskFormModal`, `AttachmentsPanel`, `ActivityTimeline`, `ChangesView`, `CustomFieldsEditor`, `CsvImportDialog`, `ExportButton`, `RecordPanels` |
 | `src/components/ai/*` | `AiToolsPanel` (run tools for a record), `AiJobResult` (render + apply), `CitationList` |
 | `src/components/content/MarkdownView.vue` | Sanitized Markdown with Mermaid (strict) for reports |
+| `src/components/marketplaces/*` | Marketplaces page helpers (`marketplaces.ts`), `RulesAdapterFormModal`, the Adapter lab (`lab.ts`, `LabResults`) |
 | `src/composables/*` | `useListQuery`, `useToast`, `useConfirm`, `useFieldErrors`, `useAiJob` |
 | `tests/unit/**.spec.ts` | Vitest + @vue/test-utils + happy-dom |
 | `e2e/*.spec.ts` | Playwright against a real API |
@@ -37,4 +38,5 @@ It talks only to the REA API under `/api/v1` on the same origin, using the sessi
 - Nothing is published, purchased or sent from the UI. Product approval only changes REA's own review status.
 - No `v-html` except through `MarkdownView` (DOMPurify). External links use `rel="noopener noreferrer nofollow"`.
 - Accessibility: labelled inputs (`FormField` wires `for`/`id`), buttons with text or `aria-label`, keyboard reachable menus.
-- No new dependencies without updating this document and the root lockfile.
+- Saved pages in the Adapter lab are parsed with `DOMParser` and read with `@rea/extractor` only: never insert their markup into the live document and never render their images or other resources (list URLs as links instead).
+- No new dependencies without updating this document and the root lockfile. Workspace packages in use: `@rea/api-types` (API types) and `@rea/extractor` (product extraction, also used by the extension; it brings `zod`).

@@ -1,0 +1,33 @@
+{
+  "key": "tomtop",
+  "name": "Tomtop",
+  "region": "cross_border",
+  "description": "Tomtop product pages: JSON-LD Product (name, SKU, brand, description) with the visible sale and was price, lazy-loaded gallery, breadcrumb, specification table and warehouse note.",
+  "domains": ["tomtop.com", "*.tomtop.com"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/tomtop.html",
+    "fixture_url": "https://www.tomtop.com/p-p0123456.html",
+    "note": "Assumes a JSON-LD Product without offers and visible .productTitle h1, .sale_price/.was_price, .product-img img[data-original], .breadcrumb a, table.specTable and .shipping-tip; '$' prices are read as USD. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency": "USD",
+    "product_signal": { "any": [{ "css": ".productTitle h1" }] },
+    "sources": { "ld": { "kind": "json_ld", "types": ["Product"] } },
+    "fields": {
+      "title": [{ "source": "ld", "path": "name" }, { "css": ".productTitle h1" }],
+      "description": [{ "source": "ld", "path": "description" }],
+      "brand": [{ "source": "ld", "path": "brand.name" }],
+      "sku": [{ "source": "ld", "path": "sku" }],
+      "price": [{ "css": ".price .sale_price" }],
+      "list_price": [{ "css": ".price .was_price" }],
+      "category": [{ "css": ".breadcrumb a:not(:first-child)", "all": true }],
+      "images": [{ "css": ".product-img img", "attr": "data-original", "all": true }],
+      "specifications": [{ "css": "table.specTable", "table": true }],
+      "shipping": [{ "css": ".shipping-tip" }]
+    }
+  }
+}

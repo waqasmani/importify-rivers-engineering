@@ -1,0 +1,30 @@
+{
+  "key": "geekbuying",
+  "name": "Geekbuying",
+  "region": "cross_border",
+  "description": "Geekbuying product pages: visible title, SKU, sale and regular price, gallery images, breadcrumb, warehouse note and specification table, with Open Graph as a fallback.",
+  "domains": ["geekbuying.com", "*.geekbuying.com"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/geekbuying.html",
+    "fixture_url": "https://www.geekbuying.com/item/Arvo-X3-Robot-Vacuum-Cleaner-552233.html",
+    "note": "Assumes h1#productName, .pro_sku em, #saleprice / #regprice, .pro_img_list img[data-big], .crumbs a, .warehouse and a .specification table. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency_by_host": { "geekbuying.com": "USD" },
+    "product_signal": { "any": [{ "css": "h1#productName" }, { "meta": "og:type", "equals": "product" }] },
+    "fields": {
+      "title": [{ "css": "h1#productName" }, { "meta": "og:title" }],
+      "sku": [{ "css": ".pro_sku em" }],
+      "price": [{ "css": "#saleprice" }, { "css": "#saleprice", "attr": "data-price" }],
+      "list_price": [{ "css": "#regprice" }],
+      "category": [{ "css": ".crumbs a:not(:first-child)", "all": true }],
+      "images": [{ "css": ".pro_img_list img", "attr": "data-big", "all": true }, { "meta": "og:image" }],
+      "specifications": [{ "css": ".specification table", "table": true }],
+      "shipping": [{ "css": ".pro_info .warehouse" }]
+    }
+  }
+}

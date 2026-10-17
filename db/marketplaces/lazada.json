@@ -1,0 +1,53 @@
+{
+  "key": "lazada",
+  "name": "Lazada",
+  "region": "southeast_asia",
+  "description": "Lazada product pages in Singapore, Malaysia, the Philippines, Thailand, Vietnam and Indonesia: title, description, brand, prices, gallery, specifications, seller and SKUs from the embedded __moduleData__, with SKU property paths joined to options and prices looked up in skuInfos.",
+  "domains": [
+    "lazada.sg", "*.lazada.sg", "lazada.com.my", "*.lazada.com.my", "lazada.com.ph", "*.lazada.com.ph",
+    "lazada.co.th", "*.lazada.co.th", "lazada.vn", "*.lazada.vn", "lazada.co.id", "*.lazada.co.id"
+  ],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/lazada.html",
+    "fixture_url": "https://www.lazada.sg/products/bamboo-charcoal-memory-foam-pillow-i301234567.html",
+    "note": "Assumes var __moduleData__ = { data: { root: { fields: { product, skuInfos (keyed by skuId, '0' is the default), productOption.skuBase.properties/skus (propPath 'pid:vid'), skuGalleries, seller, specifications.<skuId>.features, Breadcrumb } } } }. Currency follows the country site. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency_by_host": { "lazada.sg": "SGD", "lazada.com.my": "MYR", "lazada.com.ph": "PHP", "lazada.co.th": "THB", "lazada.vn": "VND", "lazada.co.id": "IDR" },
+    "product_signal": { "any": [{ "source": "module", "path": "data.root.fields.product.title" }] },
+    "sources": { "module": { "kind": "script_marker", "marker": "__moduleData__" } },
+    "fields": {
+      "title": [{ "source": "module", "path": "data.root.fields.product.title", "transforms": ["trim"] }, { "css": "h1.pdp-mod-product-badge-title" }],
+      "description": [{ "source": "module", "path": "data.root.fields.product.desc", "transforms": ["strip_html"] }],
+      "brand": [{ "source": "module", "path": "data.root.fields.product.brand.name" }],
+      "price": [{ "source": "module", "path": "data.root.fields.skuInfos.0.price.salePrice.text" }, { "source": "module", "path": "data.root.fields.skuInfos.0.price.salePrice.value" }],
+      "list_price": [{ "source": "module", "path": "data.root.fields.skuInfos.0.price.originalPrice.text" }],
+      "availability": [{ "source": "module", "path": "data.root.fields.skuInfos.0.stock", "transforms": ["stock"] }],
+      "category": [{ "source": "module", "path": "data.root.fields.Breadcrumb[*].title" }],
+      "images": [{ "source": "module", "path": "data.root.fields.skuGalleries.0[*].src", "transforms": ["protocol_fix", "image_original"] }],
+      "specifications": [{ "source": "module", "path": "data.root.fields.specifications.*.features", "transforms": ["first"] }],
+      "supplier_name": [{ "source": "module", "path": "data.root.fields.seller.name" }],
+      "supplier_url": [{ "source": "module", "path": "data.root.fields.seller.url" }],
+      "shipping": [{ "source": "module", "path": "data.root.fields.delivery.text" }],
+      "rating": [{ "source": "module", "path": "data.root.fields.review.ratings.average" }],
+      "rating_count": [{ "source": "module", "path": "data.root.fields.review.ratings.rateCount" }]
+    },
+    "variants": {
+      "mode": "property_join",
+      "properties": { "source": "module", "path": "data.root.fields.productOption.skuBase.properties", "id": "pid", "name": "name", "values": "values", "value_id": "vid", "value_name": "name" },
+      "skus": { "source": "module", "path": "data.root.fields.productOption.skuBase.skus", "ids": "propPath", "separator": ";", "sku": "skuId" },
+      "offers": {
+        "source": "module",
+        "path": "data.root.fields.skuInfos",
+        "key": "skuId",
+        "price": "price.salePrice.text",
+        "stock": "stock",
+        "image": { "path": "image", "transforms": ["protocol_fix"] }
+      }
+    }
+  }
+}

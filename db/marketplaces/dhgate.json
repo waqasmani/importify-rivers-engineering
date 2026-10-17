@@ -1,0 +1,51 @@
+{
+  "key": "dhgate",
+  "name": "DHgate",
+  "region": "cross_border",
+  "description": "DHgate product pages: item, tiered prices, images, attributes, SKUs and store from the embedded window.__INIT_DATA__ JSON string, with SKU attribute value ids joined to options; JSON-LD as a fallback.",
+  "domains": ["dhgate.com", "*.dhgate.com"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/dhgate.html",
+    "fixture_url": "https://www.dhgate.com/product/wireless-sport-earbuds-ipx5/887766554.html",
+    "note": "Assumes window.__INIT_DATA__ = JSON.parse(\"...\") holding item { itemName, priceRanges, images, attrList[].attrValueList, skuList[].attrValIds (comma-separated value ids), specs, seller }. The smallest-quantity tier price is used. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency": "USD",
+    "product_signal": { "any": [{ "source": "init", "path": "item.itemName" }, { "source": "ld", "path": "name" }] },
+    "sources": {
+      "init": { "kind": "script_marker", "marker": "window.__INIT_DATA__" },
+      "ld": { "kind": "json_ld", "types": ["Product"] }
+    },
+    "fields": {
+      "title": [
+        { "source": "init", "path": "item.itemName", "transforms": ["trim"] },
+        { "source": "ld", "path": "name" },
+        { "css": "h1.pro-title" }
+      ],
+      "sku": [{ "source": "init", "path": "item.itemCode" }],
+      "currency": [{ "source": "init", "path": "item.currency" }],
+      "price": [
+        { "source": "init", "path": "item.priceRanges[0].price" },
+        { "source": "ld", "path": "offers.highPrice" }
+      ],
+      "category": [{ "source": "init", "path": "item.categoryPath" }],
+      "images": [
+        { "source": "init", "path": "item.images", "transforms": ["protocol_fix"] },
+        { "source": "ld", "path": "image" }
+      ],
+      "specifications": [{ "source": "init", "path": "item.specs", "entry": { "name": "name", "value": "value" } }],
+      "supplier_name": [{ "source": "init", "path": "item.seller.name" }],
+      "supplier_url": [{ "source": "init", "path": "item.seller.url" }],
+      "shipping": [{ "source": "init", "path": "item.shipping" }]
+    },
+    "variants": {
+      "mode": "property_join",
+      "properties": { "source": "init", "path": "item.attrList", "id": "attrId", "name": "attrName", "values": "attrValueList", "value_id": "attrValId", "value_name": "attrValName", "value_image": { "path": "picUrl", "transforms": ["protocol_fix"] } },
+      "skus": { "source": "init", "path": "item.skuList", "ids": "attrValIds", "separator": ",", "sku": "skuId", "price": "price", "stock": "inventory" }
+    }
+  }
+}

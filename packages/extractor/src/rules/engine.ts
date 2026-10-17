@@ -254,7 +254,7 @@ function readCandidate(run: Run, field: RuleField, cand: RuleCandidate): unknown
         if (name && val && map[name] === undefined) map[name] = val
       }
       v = map
-    } else if (cand.table || (field === 'specifications' && !cand.attr)) {
+    } else if (cand.table || (field === 'specifications' && !cand.attr && !cand.all)) {
       v = rowsToSpecs(tableRows(els[0]!))
     } else {
       const all = cand.all ?? field === 'images'
@@ -309,7 +309,7 @@ function readPrice(v: unknown): PriceRead | null {
   }
   if (isObject(v)) {
     const amount = v['value'] ?? v['amount'] ?? v['price']
-    const cur = scalarText(v['currency'] ?? v['currencyCode'] ?? v['priceCurrency']).toUpperCase()
+    const cur = scalarText(v['currency'] ?? v['currencyCode'] ?? v['currencyUnit'] ?? v['priceCurrency']).toUpperCase()
     const p = readPrice(amount)
     if (p && validCurrency(cur)) return { ...p, currency: cur, ambiguous: false, warnings: p.warnings.filter((w) => !w.includes('ambiguous')) }
     return p
@@ -351,7 +351,9 @@ function settle(run: Run, p: PriceRead, explicit: string): PriceValue & { warnin
       warnings = warnings.filter((w) => !w.includes('ambiguous'))
     }
   }
-  return { text: p.text || `${p.amount}${currency ? ' ' + currency : ''}`, amount: p.amount, currency, warnings }
+  // Text that names no currency of its own shows the one that was resolved.
+  const text = p.text && p.currency ? p.text : `${p.amount}${currency ? ' ' + currency : ''}`
+  return { text, amount: p.amount, currency, warnings }
 }
 
 function imagesFrom(run: Run, v: unknown, alt: string): PayloadImage[] {
@@ -386,11 +388,16 @@ function specsFrom(v: unknown): Record<string, string> {
   return out
 }
 
+/**
+ * A definition written for one marketplace outranks the generic adapters (JSON-LD reports 0.95),
+ * which then only fill fields the definition does not produce. Embedded data scores highest,
+ * then site-specific selectors (like selector adapters), then meta tags.
+ */
 function baseConfidence(run: Run, cand: RuleCandidate): number {
   if (cand.confidence !== undefined) return cand.confidence
-  const base = run.doc.confidence ?? 0.96
-  if (cand.css !== undefined) return Math.max(0.1, base - 0.04)
-  if (cand.meta !== undefined) return Math.max(0.1, base - 0.1)
+  const base = run.doc.confidence ?? 0.97
+  if (cand.css !== undefined) return Math.max(0.1, Math.round((base - 0.01) * 100) / 100)
+  if (cand.meta !== undefined) return Math.max(0.1, Math.round((base - 0.07) * 100) / 100)
   return base
 }
 

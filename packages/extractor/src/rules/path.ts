@@ -5,12 +5,14 @@
 //   a[0].b  a[-1]    array index (negative counts from the end)
 //   a[*].b  a.*.b    every element of an array, or every value of an object
 //   a["odd key"]     quoted key (single or double quotes)
+//   a[?name=Brand]   array elements whose "name" equals the text (quotes allowed: [?name='Brand Name'])
 //   ""               the value itself
 //
-// A path with a wildcard returns an array of every match; otherwise the single value or undefined.
+// A path with a wildcard or filter returns an array of every match (keys applied to an array of
+// matches reach into its elements); otherwise the single value or undefined.
 import { isSensitiveName } from '../sensitive'
 
-export type Segment = { t: 'key'; k: string } | { t: 'index'; i: number } | { t: 'wild' }
+export type Segment = { t: 'key'; k: string } | { t: 'index'; i: number } | { t: 'wild' } | { t: 'filter'; k: string; v: string }
 
 export const PATH_LIMITS = { length: 300, segments: 40, matches: 500 } as const
 
@@ -45,6 +47,29 @@ export function parsePath(src: string): Segment[] {
       if (q === '*') {
         i++
         segs.push({ t: 'wild' })
+      } else if (q === '?') {
+        i++
+        const k = readIdent()
+        if (!k) throw new PathError('expected a key after "[?"')
+        if (FORBIDDEN_KEYS.has(k) || isSensitiveName(k)) throw new PathError(`"${k}" cannot be used in a filter`)
+        if (src[i] !== '=') throw new PathError('expected "=" in a filter')
+        i++
+        let v = ''
+        const vq = src[i]
+        if (vq === '"' || vq === "'") {
+          i++
+          while (i < n && src[i] !== vq) {
+            if (src[i] === '\\' && i + 1 < n) i++
+            v += src[i]
+            i++
+          }
+          if (src[i] !== vq) throw new PathError('unterminated filter value')
+          i++
+        } else {
+          while (i < n && src[i] !== ']') v += src[i++]
+        }
+        if (!v || v.length > 100) throw new PathError('filter values must have 1-100 characters')
+        segs.push({ t: 'filter', k, v })
       } else if (q === '"' || q === "'") {
         i++
         let k = ''
@@ -113,6 +138,12 @@ function own(o: Record<string, unknown>, k: string): unknown {
   return Object.prototype.hasOwnProperty.call(o, k) && !FORBIDDEN_KEYS.has(k) ? o[k] : undefined
 }
 
+function scalar(v: unknown): string | null {
+  if (typeof v === 'string') return v.trim()
+  if (typeof v === 'number' || typeof v === 'boolean') return String(v)
+  return null
+}
+
 const cache = new Map<string, Segment[]>()
 
 function compiled(path: string): Segment[] {
@@ -142,15 +173,18 @@ export function evalPath(root: unknown, path: string, scope: PathScope = {}): un
       if (seg.t === 'key') {
         if (isObject(v)) next.push(own(v, seg.k))
         else if (Array.isArray(v) && /^\d+$/.test(seg.k)) next.push(v[parseInt(seg.k, 10)])
+        else if (Array.isArray(v) && multi) for (const x of v.slice(0, PATH_LIMITS.matches)) if (isObject(x)) next.push(own(x, seg.k))
       } else if (seg.t === 'index') {
         if (Array.isArray(v)) next.push(v[seg.i < 0 ? v.length + seg.i : seg.i])
+      } else if (seg.t === 'filter') {
+        if (Array.isArray(v)) for (const x of v.slice(0, PATH_LIMITS.matches)) if (isObject(x) && scalar(own(x, seg.k)) === seg.v) next.push(x)
       } else {
         if (Array.isArray(v)) next.push(...v.slice(0, PATH_LIMITS.matches))
         else if (isObject(v)) for (const k of Object.keys(v).slice(0, PATH_LIMITS.matches)) next.push(own(v, k))
       }
       if (next.length >= PATH_LIMITS.matches) break
     }
-    if (seg.t === 'wild') multi = true
+    if (seg.t === 'wild' || seg.t === 'filter') multi = true
     cur = next.filter((x) => x !== undefined).slice(0, PATH_LIMITS.matches)
   }
   return multi ? cur : cur[0]

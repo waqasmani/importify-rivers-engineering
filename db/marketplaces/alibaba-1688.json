@@ -1,0 +1,58 @@
+{
+  "key": "alibaba-1688",
+  "name": "1688.com",
+  "region": "china",
+  "description": "1688.com wholesale offer pages: title, range prices, images, attributes and supplier from the embedded window.__INIT_DATA state, with SKUs joined to options by option names. Prices are in CNY.",
+  "domains": ["1688.com", "*.1688.com"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/alibaba-1688.html",
+    "fixture_url": "https://detail.1688.com/offer/712233445566.html",
+    "note": "Assumes window.__INIT_DATA = { globalData: { tempModel, images[].fullPathImageURI, orderParamModel.orderParam.skuParam.skuRangePrices, skuModel.skuProps, skuModel.skuInfoMap keyed by option names joined with '&gt;', offerDetail.featureAttributes } }. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency": "CNY",
+    "product_signal": { "any": [{ "source": "init", "path": "globalData.tempModel.offerTitle" }] },
+    "sources": { "init": { "kind": "script_marker", "marker": "window.__INIT_DATA" } },
+    "fields": {
+      "title": [
+        { "source": "init", "path": "globalData.tempModel.offerTitle", "transforms": ["trim"] },
+        { "css": ".title-content h1" }
+      ],
+      "sku": [{ "source": "init", "path": "globalData.tempModel.offerId" }],
+      "price": [
+        { "source": "init", "path": "globalData.orderParamModel.orderParam.skuParam.skuRangePrices[0].price" },
+        { "source": "init", "path": "globalData.skuModel.skuInfoMap.*.price", "transforms": ["first"] }
+      ],
+      "images": [{ "source": "init", "path": "globalData.images[*].fullPathImageURI", "transforms": ["protocol_fix", "image_original"] }],
+      "specifications": [{ "source": "init", "path": "globalData.offerDetail.featureAttributes", "entry": { "name": "name", "value": "values" } }],
+      "supplier_name": [{ "source": "init", "path": "globalData.tempModel.companyName" }],
+      "supplier_url": [{ "source": "init", "path": "globalData.tempModel.sellerWinportUrl" }]
+    },
+    "variants": {
+      "mode": "property_join",
+      "properties": {
+        "source": "init",
+        "path": "globalData.skuModel.skuProps",
+        "name": "prop",
+        "values": "value",
+        "value_id": "name",
+        "value_name": "name",
+        "value_image": { "path": "imageUrl", "transforms": ["image_original"] }
+      },
+      "skus": {
+        "source": "init",
+        "path": "globalData.skuModel.skuInfoMap",
+        "ids": "specAttrs",
+        "separator": "&gt;",
+        "match": "name",
+        "sku": "skuId",
+        "price": "price",
+        "stock": "canBookCount"
+      }
+    }
+  }
+}

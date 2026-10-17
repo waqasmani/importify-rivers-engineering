@@ -1,0 +1,44 @@
+{
+  "key": "temu",
+  "name": "Temu",
+  "region": "cross_border",
+  "description": "Temu goods pages: name, gallery, category, properties, store and SKUs from the embedded window.rawData store; prices are stored in cents.",
+  "domains": ["temu.com", "*.temu.com"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/temu.html",
+    "fixture_url": "https://www.temu.com/silicone-kitchen-utensil-set-g-601099512345678.html",
+    "note": "Assumes window.rawData = { store: { goods { goodsName, currency, minOnSalePrice (cents), gallery, categoryList, goodsProperty }, sku[] { salePrice/linePrice in cents, stockQuantity, specs[] }, mall, review } }. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "product_signal": { "any": [{ "source": "raw", "path": "store.goods.goodsName" }] },
+    "sources": { "raw": { "kind": "script_marker", "marker": "window.rawData" } },
+    "fields": {
+      "title": [{ "source": "raw", "path": "store.goods.goodsName", "transforms": ["trim"] }, { "css": "h1.goods-title" }],
+      "sku": [{ "source": "raw", "path": "store.goods.goodsId" }],
+      "currency": [{ "source": "raw", "path": "store.goods.currency" }],
+      "price": [{ "source": "raw", "path": "store.goods.minOnSalePrice", "transforms": ["cents"] }],
+      "list_price": [{ "source": "raw", "path": "store.sku[0].linePrice", "transforms": ["cents"] }],
+      "category": [{ "source": "raw", "path": "store.goods.categoryList[*].name" }],
+      "images": [{ "source": "raw", "path": "store.goods.gallery[*].url" }],
+      "specifications": [{ "source": "raw", "path": "store.goods.goodsProperty", "entry": { "name": "key", "value": "values" } }],
+      "supplier_name": [{ "source": "raw", "path": "store.mall.mallName" }],
+      "shipping": [{ "source": "raw", "path": "store.shipping.text" }],
+      "rating": [{ "source": "raw", "path": "store.review.goodsScore" }],
+      "rating_count": [{ "source": "raw", "path": "store.review.reviewNum" }]
+    },
+    "variants": {
+      "mode": "list",
+      "source": "raw",
+      "path": "store.sku",
+      "sku": "skuId",
+      "price": { "path": "salePrice", "transforms": ["cents"] },
+      "stock": "stockQuantity",
+      "image": "thumbUrl",
+      "option_list": { "path": "specs", "name": "specKey", "value": "specValue" }
+    }
+  }
+}

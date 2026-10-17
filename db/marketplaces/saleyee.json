@@ -1,0 +1,30 @@
+{
+  "key": "saleyee",
+  "name": "SaleYee",
+  "region": "cross_border",
+  "description": "SaleYee dropshipping supplier pages: visible name, item number, price and market price, preview images, attribute list and warehouse note.",
+  "domains": ["saleyee.com", "*.saleyee.com"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/saleyee.html",
+    "fixture_url": "https://www.saleyee.com/product/ergonomic-mesh-office-chair-SY10233.html",
+    "note": "Assumes .goods-name h1, .goods-sku em, .goods-price .price/.market-price, .preview-list img[data-src], .goods-attr li name/value pairs and .warehouse-info; '$' prices are read as USD. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency": "USD",
+    "product_signal": { "all": [{ "css": ".goods-name h1" }, { "css": ".goods-price" }] },
+    "fields": {
+      "title": [{ "css": ".goods-name h1" }],
+      "description": [{ "meta": "description" }],
+      "sku": [{ "css": ".goods-sku em" }],
+      "price": [{ "css": ".goods-price .price" }, { "css": ".goods-price .price", "attr": "data-price" }],
+      "list_price": [{ "css": ".goods-price .market-price" }],
+      "images": [{ "css": ".preview-list img", "attr": "data-src", "all": true }],
+      "specifications": [{ "css": ".goods-attr li", "pairs": { "name": ".attr-name", "value": ".attr-val" } }],
+      "shipping": [{ "css": ".warehouse-info" }]
+    }
+  }
+}

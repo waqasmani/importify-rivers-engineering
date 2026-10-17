@@ -1,0 +1,37 @@
+{
+  "key": "etsy",
+  "name": "Etsy",
+  "region": "global",
+  "description": "Etsy listing pages: JSON-LD Product (name, description, images, category, brand, lowest offer price, rating) plus the shop name and item details. Variation menus are form controls and are not read. The Etsy Open API is the better route for monitoring.",
+  "domains": ["etsy.com", "*.etsy.com"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/etsy.html",
+    "fixture_url": "https://www.etsy.com/listing/1500123456/hand-thrown-stoneware-planter",
+    "note": "Assumes a JSON-LD Product with image[].contentURL and an AggregateOffer (lowPrice, priceCurrency), the h1[data-buy-box-listing-title], [data-shop-name] and #product-details-content-toggle li 'Name: value' items. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "product_signal": { "any": [{ "source": "ld", "path": "offers" }, { "css": "h1[data-buy-box-listing-title]" }] },
+    "sources": { "ld": { "kind": "json_ld", "types": ["Product"] } },
+    "fields": {
+      "title": [{ "source": "ld", "path": "name" }, { "css": "h1[data-buy-box-listing-title]" }],
+      "description": [{ "source": "ld", "path": "description" }],
+      "brand": [{ "source": "ld", "path": "brand.name" }],
+      "sku": [{ "source": "ld", "path": "sku" }],
+      "price": [{ "source": "ld", "path": "offers.lowPrice" }, { "source": "ld", "path": "offers.price" }],
+      "currency": [{ "source": "ld", "path": "offers.priceCurrency" }],
+      "availability": [{ "source": "ld", "path": "offers.availability" }],
+      "category": [{ "source": "ld", "path": "category", "transforms": [{ "split": "<" }, { "join": " > " }] }],
+      "images": [{ "source": "ld", "path": "image[*].contentURL" }, { "source": "ld", "path": "image[*].url" }, { "source": "ld", "path": "image" }],
+      "specifications": [{ "css": "#product-details-content-toggle li", "all": true }],
+      "supplier_name": [{ "css": "[data-shop-name]", "attr": "data-shop-name" }],
+      "supplier_url": [{ "css": "[data-shop-name] a", "attr": "href" }],
+      "canonical_url": [{ "source": "ld", "path": "url" }],
+      "rating": [{ "source": "ld", "path": "aggregateRating.ratingValue" }],
+      "rating_count": [{ "source": "ld", "path": "aggregateRating.reviewCount" }]
+    }
+  }
+}

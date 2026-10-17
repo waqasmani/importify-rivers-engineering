@@ -1,0 +1,37 @@
+{
+  "key": "costco",
+  "name": "Costco",
+  "region": "north_america",
+  "description": "Costco product pages (US, Canada and the other national sites): visible name, item number, price, images, description, breadcrumb, specification grid and shipping statement, with JSON-LD for the brand.",
+  "domains": [
+    "costco.com", "*.costco.com", "costco.ca", "*.costco.ca", "costco.co.uk", "*.costco.co.uk", "costco.com.au", "*.costco.com.au",
+    "costco.co.jp", "*.costco.co.jp", "costco.co.kr", "*.costco.co.kr", "costco.com.mx", "*.costco.com.mx", "costco.com.tw", "*.costco.com.tw"
+  ],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/costco.html",
+    "fixture_url": "https://www.costco.com/northpeak-6-person-instant-cabin-tent.product.1712345.html",
+    "note": "Assumes h1[automation-id=productName], [automation-id=itemNumber], [automation-id=productPriceOutput], #productImageContainer img, .product-info-description, .product-info-specs .row name/value pairs and #crumbs_ul. '$' prices take the currency of the national site. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency_by_host": {
+      "costco.com": "USD", "costco.ca": "CAD", "costco.co.uk": "GBP", "costco.com.au": "AUD", "costco.co.jp": "JPY", "costco.co.kr": "KRW", "costco.com.mx": "MXN", "costco.com.tw": "TWD"
+    },
+    "product_signal": { "any": [{ "css": "h1[automation-id='productName']" }] },
+    "sources": { "ld": { "kind": "json_ld", "types": ["Product"] } },
+    "fields": {
+      "title": [{ "css": "h1[automation-id='productName']" }, { "source": "ld", "path": "name" }],
+      "description": [{ "css": ".product-info-description", "multiline": true }],
+      "brand": [{ "source": "ld", "path": "brand.name" }],
+      "sku": [{ "css": "[automation-id='itemNumber']" }, { "source": "ld", "path": "sku" }],
+      "price": [{ "css": "[automation-id='productPriceOutput']" }, { "css": "#pull-right-price .value" }],
+      "category": [{ "css": "#crumbs_ul li:not(:first-child) a", "all": true }],
+      "images": [{ "css": "#productImageContainer img", "all": true }, { "meta": "og:image" }],
+      "specifications": [{ "css": ".product-info-specs .row", "pairs": { "name": ".spec-name", "value": ".spec-value" } }],
+      "shipping": [{ "css": ".shipping-statement" }]
+    }
+  }
+}

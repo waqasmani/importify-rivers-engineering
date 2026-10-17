@@ -1,0 +1,30 @@
+{
+  "key": "bonanza",
+  "name": "Bonanza",
+  "region": "north_america",
+  "description": "Bonanza listing pages: visible title, price, gallery, item specifics table, description, booth (seller) link and shipping information.",
+  "domains": ["bonanza.com", "*.bonanza.com"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/bonanza.html",
+    "fixture_url": "https://www.bonanza.com/listings/Vintage-Brass-Compass-with-Wooden-Box/1122334455",
+    "note": "Assumes h1.listing_title, .item_price .price (itemprop content), .image_gallery img, table.extended_info_table, .item_description, .booth_link a and .shipping_info; prices are USD. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency": "USD",
+    "product_signal": { "all": [{ "css": "h1.listing_title" }, { "css": ".item_price" }] },
+    "fields": {
+      "title": [{ "css": "h1.listing_title" }],
+      "description": [{ "css": ".item_description", "multiline": true }],
+      "price": [{ "css": ".item_price .price", "attr": "content" }, { "css": ".item_price .price" }],
+      "images": [{ "css": ".image_gallery img", "all": true }],
+      "specifications": [{ "css": "table.extended_info_table", "table": true }],
+      "supplier_name": [{ "css": ".booth_link a" }],
+      "supplier_url": [{ "css": ".booth_link a", "attr": "href" }],
+      "shipping": [{ "css": ".shipping_info" }]
+    }
+  }
+}

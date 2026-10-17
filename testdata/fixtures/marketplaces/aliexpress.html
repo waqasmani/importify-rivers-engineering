@@ -1,0 +1,61 @@
+<!doctype html>
+<!-- Synthetic fixture: invented product data in the layout REA assumes for AliExpress item pages
+     (window.runParams.data with productInfo/price/sku/image/seller components). Not a copy of a real page. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Folding LED Desk Lamp, 3 Colour Modes - AliExpress</title>
+<meta name="description" content="Folding LED desk lamp with three colour temperatures and a USB-C cable.">
+<meta property="og:title" content="Folding LED Desk Lamp, 3 Colour Modes">
+<meta property="og:image" content="https://ae01.alicdn.example/kf/Slamp1.jpg">
+<meta name="csrf-token" content="meta-csrf-should-not-leak">
+</head>
+<body>
+<div id="root">
+  <div class="pdp-info">
+    <h1 data-pl="product-title">Folding LED Desk Lamp, 3 Colour Modes</h1>
+    <div class="product-price-current"><span>US $18.40</span></div>
+  </div>
+  <form><input type="hidden" name="_csrf" value="hidden-csrf-should-not-leak"><input name="quantity" value="7"></form>
+</div>
+<script>
+window.runParams = {
+  data: {
+    productInfoComponent: { subject: "Folding LED Desk Lamp, 3 Colour Modes", idStr: "1005001234567890" },
+    breadcrumbComponent: { pathList: [{ name: "Lights & Lighting" }, { name: "Indoor Lighting" }, { name: "Desk Lamps" }] },
+    imageComponent: { imagePathList: ["https://ae01.alicdn.example/kf/Slamp1.jpg_220x220.jpg", "https://ae01.alicdn.example/kf/Slamp2.jpg_220x220.jpg", "//ae01.alicdn.example/kf/Slamp3.jpg_220x220q75.jpg_.webp"] },
+    priceComponent: {
+      discountPrice: { minActivityAmount: { value: 18.4, currency: "USD", formatedAmount: "US $18.40" } },
+      origPrice: { minAmount: { value: 32, currency: "USD", formatedAmount: "US $32.00" } },
+      skuPriceList: [
+        { skuId: 12000031001, skuPropIds: "193,201336100", skuVal: { availQuantity: 120, skuActivityAmount: { value: 18.4, currency: "USD" } } },
+        { skuId: 12000031002, skuPropIds: "193,201336106", skuVal: { availQuantity: 0, skuActivityAmount: { value: 21.1, currency: "USD" } } },
+        { skuId: 12000031003, skuPropIds: "29,201336100", skuVal: { availQuantity: 35, skuActivityAmount: { value: 18.9, currency: "USD" } } }
+      ]
+    },
+    skuComponent: {
+      productSKUPropertyList: [
+        { skuPropertyId: 14, skuPropertyName: "Color", skuPropertyValues: [
+          { propertyValueId: 193, propertyValueDisplayName: "Black", skuPropertyImagePath: "https://ae01.alicdn.example/kf/Sblack.jpg_640x640.jpg" },
+          { propertyValueId: 29, propertyValueDisplayName: "White", skuPropertyImagePath: "https://ae01.alicdn.example/kf/Swhite.jpg_640x640.jpg" } ] },
+        { skuPropertyId: 200007763, skuPropertyName: "Ships From", skuPropertyValues: [
+          { propertyValueId: 201336100, propertyValueDisplayName: "CHINA" },
+          { propertyValueId: 201336106, propertyValueDisplayName: "United States" } ] }
+      ]
+    },
+    productPropComponent: { props: [
+      { attrName: "Brand Name", attrValue: "LUMOFOLD" },
+      { attrName: "Model Number", attrValue: "LF-D3" },
+      { attrName: "Power Source", attrValue: "USB" },
+      { attrName: "Colour Temperature", attrValue: "3000K-6000K" } ] },
+    inventoryComponent: { totalAvailQuantity: 155 },
+    sellerComponent: { storeName: "Lumofold Lighting Store", storeURL: "//www.aliexpress.com/store/1102233" },
+    shippingComponent: { summary: "Free shipping, delivery in 7-12 days" },
+    feedbackComponent: { evarageStar: "4.8", totalValidNum: 312 }
+  },
+  csrfToken: 'runparams-csrf-should-not-leak',
+  abVersion: 'b'
+};
+</script>
+</body>
+</html>

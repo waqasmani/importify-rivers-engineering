@@ -1,0 +1,52 @@
+{
+  "key": "alibaba-com",
+  "name": "Alibaba.com",
+  "region": "cross_border",
+  "description": "Alibaba.com product-detail pages: subject, ladder prices, media, attributes and supplier from the embedded window.detailData state, with SKU combinations joined to colour and size options. Runs alongside the built-in visible-markup Alibaba adapter.",
+  "domains": ["alibaba.com", "*.alibaba.com"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/alibaba-com.html",
+    "fixture_url": "https://www.alibaba.com/product-detail/Custom-Logo-Bamboo-Fibre-Lunch_1600999888777.html",
+    "note": "Assumes window.detailData = { globalData: { product: { subject, mediaItems, price.productLadderPrices, sku.skuAttrs, sku.skuInfoMap keyed by 'attrId:valueId;...' }, seller } }. The smallest-quantity ladder price is used. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency": "USD",
+    "product_signal": { "any": [{ "source": "detail", "path": "globalData.product.subject" }] },
+    "sources": { "detail": { "kind": "script_marker", "marker": "window.detailData" } },
+    "fields": {
+      "title": [
+        { "source": "detail", "path": "globalData.product.subject", "transforms": ["trim"] },
+        { "css": ".product-title h1" }
+      ],
+      "brand": [{ "source": "detail", "path": "globalData.product.productBasicProperties[?attrName='Brand Name'].attrValue" }],
+      "model": [{ "source": "detail", "path": "globalData.product.productBasicProperties[?attrName='Model Number'].attrValue" }],
+      "price": [
+        { "source": "detail", "path": "globalData.product.price.productLadderPrices[0].price" },
+        { "source": "detail", "path": "globalData.product.price.productLadderPrices[0].formatPrice" }
+      ],
+      "images": [{ "source": "detail", "path": "globalData.product.mediaItems[?type=image].imageUrl.big", "transforms": ["protocol_fix", "image_original"] }],
+      "specifications": [{ "source": "detail", "path": "globalData.product.productBasicProperties", "entry": { "name": "attrName", "value": "attrValue" } }],
+      "supplier_name": [{ "source": "detail", "path": "globalData.seller.companyName" }],
+      "supplier_url": [{ "source": "detail", "path": "globalData.seller.homeUrl" }],
+      "shipping": [{ "source": "detail", "path": "globalData.trade.leadTime" }]
+    },
+    "variants": {
+      "mode": "property_join",
+      "properties": {
+        "source": "detail",
+        "path": "globalData.product.sku.skuAttrs",
+        "id": "id",
+        "name": "name",
+        "values": "values",
+        "value_id": "id",
+        "value_name": "name",
+        "value_image": { "path": "imageUrl", "transforms": ["protocol_fix", "image_original"] }
+      },
+      "skus": { "source": "detail", "path": "globalData.product.sku.skuInfoMap", "ids": "$key", "separator": ";", "sku": "id", "price": "price.price" }
+    }
+  }
+}

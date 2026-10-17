@@ -1,0 +1,32 @@
+{
+  "key": "ltdcommodities",
+  "name": "LTD Commodities",
+  "region": "north_america",
+  "description": "LTD Commodities product pages: JSON-LD Product and offer plus the visible name, item number, sale and regular price, zoom images and details list.",
+  "domains": ["ltdcommodities.com", "*.ltdcommodities.com"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/ltdcommodities.html",
+    "fixture_url": "https://www.ltdcommodities.com/product/set-of-4-solar-lantern-stakes/366778",
+    "note": "Assumes a JSON-LD Product with an Offer, h1.product-name, .item-number span, .sale-price/.regular-price, .product-images img[data-zoom-image] and #details li 'Name: value' items. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency": "USD",
+    "product_signal": { "any": [{ "css": "h1.product-name" }, { "source": "ld", "path": "offers" }] },
+    "sources": { "ld": { "kind": "json_ld", "types": ["Product"] } },
+    "fields": {
+      "title": [{ "css": "h1.product-name" }, { "source": "ld", "path": "name" }],
+      "description": [{ "css": "#details p", "multiline": true }],
+      "sku": [{ "css": ".item-number span" }, { "source": "ld", "path": "sku" }],
+      "price": [{ "source": "ld", "path": "offers.price" }, { "css": ".product-price .sale-price" }],
+      "currency": [{ "source": "ld", "path": "offers.priceCurrency" }],
+      "list_price": [{ "css": ".product-price .regular-price" }],
+      "availability": [{ "source": "ld", "path": "offers.availability" }],
+      "images": [{ "css": ".product-images img", "attr": "data-zoom-image", "all": true }, { "source": "ld", "path": "image" }],
+      "specifications": [{ "css": "#details li", "all": true }]
+    }
+  }
+}

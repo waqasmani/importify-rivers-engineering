@@ -1,0 +1,29 @@
+{
+  "key": "rosegal",
+  "name": "Rosegal",
+  "region": "cross_border",
+  "description": "Rosegal product pages: visible title, item code, prices (the USD base amount in data-orgp, independent of the display currency), lazy-loaded gallery, breadcrumb and attribute list.",
+  "domains": ["rosegal.com", "*.rosegal.com"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/rosegal.html",
+    "fixture_url": "https://www.rosegal.com/maxi-dresses/floral-print-tiered-maxi-dress-471122334.html",
+    "note": "Assumes h1.goods-title, .goods-sn span, .goods-price .my-shop-price[data-orgp] holding the USD base price (the visible text follows the shopper's currency), .goods-img-list img[data-origin], .crumbs a and a .goods-attr definition list. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency": "USD",
+    "product_signal": { "all": [{ "css": "h1.goods-title" }, { "css": ".goods-price .my-shop-price" }] },
+    "fields": {
+      "title": [{ "css": "h1.goods-title" }, { "meta": "og:title" }],
+      "sku": [{ "css": ".goods-sn span" }],
+      "price": [{ "css": ".goods-price span.my-shop-price", "attr": "data-orgp" }],
+      "list_price": [{ "css": ".goods-price del.my-shop-price", "attr": "data-orgp" }],
+      "category": [{ "css": ".crumbs a:not(:first-child)", "all": true }],
+      "images": [{ "css": ".goods-img-list img", "attr": "data-origin", "all": true }],
+      "specifications": [{ "css": ".goods-attr dl", "table": true }]
+    }
+  }
+}

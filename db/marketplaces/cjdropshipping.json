@@ -1,0 +1,45 @@
+{
+  "key": "cjdropshipping",
+  "name": "CJdropshipping",
+  "region": "cross_border",
+  "description": "CJdropshipping product pages: name, sell price, images, description, properties and variants from the Next.js __NEXT_DATA__ product detail. For monitoring, CJ's official API is the better route.",
+  "domains": ["cjdropshipping.com", "*.cjdropshipping.com"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/cjdropshipping.html",
+    "fixture_url": "https://cjdropshipping.com/product/magnetic-phone-holder-p-1500112233445566778.html",
+    "note": "Assumes script#__NEXT_DATA__ with props.pageProps.productDetail { productNameEn, productSku, sellPrice (USD), productImageSet, description HTML, properties, variants[] }. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency": "USD",
+    "product_signal": { "any": [{ "source": "next", "path": "props.pageProps.productDetail.productNameEn" }] },
+    "sources": { "next": { "kind": "script_json", "selector": "script#__NEXT_DATA__" } },
+    "fields": {
+      "title": [
+        { "source": "next", "path": "props.pageProps.productDetail.productNameEn", "transforms": ["trim"] },
+        { "css": "h1.product-name" },
+        { "meta": "og:title" }
+      ],
+      "description": [{ "source": "next", "path": "props.pageProps.productDetail.description", "transforms": ["strip_html"] }],
+      "sku": [{ "source": "next", "path": "props.pageProps.productDetail.productSku" }],
+      "price": [{ "source": "next", "path": "props.pageProps.productDetail.sellPrice" }],
+      "category": [{ "source": "next", "path": "props.pageProps.productDetail.categoryName", "transforms": [{ "split": "/" }, { "join": " > " }] }],
+      "images": [{ "source": "next", "path": "props.pageProps.productDetail.productImageSet" }],
+      "specifications": [{ "source": "next", "path": "props.pageProps.productDetail.properties", "entry": { "name": "name", "value": "value" } }]
+    },
+    "variants": {
+      "mode": "list",
+      "source": "next",
+      "path": "props.pageProps.productDetail.variants",
+      "title": "variantNameEn",
+      "sku": "variantSku",
+      "price": "variantSellPrice",
+      "image": "variantImage",
+      "stock": "inventory",
+      "options": { "Variant": "variantKey" }
+    }
+  }
+}

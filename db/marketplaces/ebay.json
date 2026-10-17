@@ -1,0 +1,48 @@
+{
+  "key": "ebay",
+  "name": "eBay",
+  "region": "global",
+  "description": "eBay item pages on its regional sites: JSON-LD Product (name, brand, MPN, GTIN, offer) plus the visible title, price, full-size carousel images, item specifics, seller card, shipping and breadcrumb. eBay's Browse API is the better route for monitoring.",
+  "domains": [
+    "ebay.com", "*.ebay.com", "ebay.co.uk", "*.ebay.co.uk", "ebay.de", "*.ebay.de", "ebay.fr", "*.ebay.fr", "ebay.it", "*.ebay.it",
+    "ebay.es", "*.ebay.es", "ebay.ca", "*.ebay.ca", "ebay.com.au", "*.ebay.com.au", "ebay.at", "*.ebay.at", "ebay.ch", "*.ebay.ch",
+    "ebay.ie", "*.ebay.ie", "ebay.nl", "*.ebay.nl", "ebay.pl", "*.ebay.pl", "ebay.be", "*.ebay.be", "ebay.com.sg", "*.ebay.com.sg",
+    "ebay.com.my", "*.ebay.com.my", "ebay.ph", "*.ebay.ph", "ebay.com.hk", "*.ebay.com.hk"
+  ],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/ebay.html",
+    "fixture_url": "https://www.ebay.com/itm/284455667788",
+    "note": "Assumes a JSON-LD Product with an Offer, h1.x-item-title__mainTitle, .x-price-primary, .ux-image-carousel-item img[data-zoom-src], .ux-labels-values label/value columns, .x-sellercard-atf__info__about-seller a, .d-shipping-minview and nav.breadcrumbs. '$' prices take the site's currency. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency_by_host": {
+      "ebay.com": "USD", "ebay.co.uk": "GBP", "ebay.de": "EUR", "ebay.fr": "EUR", "ebay.it": "EUR", "ebay.es": "EUR", "ebay.at": "EUR",
+      "ebay.ie": "EUR", "ebay.nl": "EUR", "ebay.be": "EUR", "ebay.ca": "CAD", "ebay.com.au": "AUD", "ebay.ch": "CHF", "ebay.pl": "PLN",
+      "ebay.com.sg": "SGD", "ebay.com.my": "MYR", "ebay.ph": "PHP", "ebay.com.hk": "HKD"
+    },
+    "product_signal": { "any": [{ "css": "h1.x-item-title__mainTitle" }, { "source": "ld", "path": "offers" }] },
+    "sources": { "ld": { "kind": "json_ld", "types": ["Product"] } },
+    "fields": {
+      "title": [{ "css": "h1.x-item-title__mainTitle" }, { "source": "ld", "path": "name" }],
+      "brand": [{ "source": "ld", "path": "brand.name" }],
+      "mpn": [{ "source": "ld", "path": "mpn" }],
+      "gtin": [{ "source": "ld", "path": "gtin13" }, { "source": "ld", "path": "gtin12" }],
+      "price": [{ "source": "ld", "path": "offers.price" }, { "css": ".x-price-primary" }],
+      "currency": [{ "source": "ld", "path": "offers.priceCurrency" }],
+      "availability": [{ "source": "ld", "path": "offers.availability" }],
+      "category": [{ "css": "nav.breadcrumbs li a", "all": true }],
+      "images": [
+        { "css": ".ux-image-carousel-item img", "attr": "data-zoom-src", "all": true },
+        { "source": "ld", "path": "image", "transforms": ["image_original"] }
+      ],
+      "specifications": [{ "css": ".ux-layout-section-evo__col", "pairs": { "name": ".ux-labels-values__labels", "value": ".ux-labels-values__values" } }],
+      "supplier_name": [{ "css": ".x-sellercard-atf__info__about-seller a" }],
+      "supplier_url": [{ "css": ".x-sellercard-atf__info__about-seller a", "attr": "href" }],
+      "shipping": [{ "css": ".d-shipping-minview" }]
+    }
+  }
+}

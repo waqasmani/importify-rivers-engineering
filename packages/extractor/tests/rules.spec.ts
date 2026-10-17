@@ -113,6 +113,21 @@ describe('path language', () => {
     expect(evalPath({ v: 1 }, '$key', { key: 'k9' })).toBe('k9')
   })
 
+  it('filters arrays by a key and reaches into matches after a wildcard', () => {
+    const props = { props: [{ attrName: 'Brand Name', attrValue: 'Lumo' }, { attrName: 'Model', attrValue: 'L1' }, { attrName: 'Brand Name', attrValue: 'Dup' }, 'x'] }
+    expect(evalPath(props, "props[?attrName='Brand Name'].attrValue")).toEqual(['Lumo', 'Dup'])
+    expect(evalPath(props, 'props[?attrName=Model].attrValue')).toEqual(['L1'])
+    expect(evalPath(props, 'props[?attrName=Nope].attrValue')).toEqual([])
+    expect(evalPath({ n: [{ k: 1 }, { k: 2 }] }, 'n[?k=2].k')).toEqual([2])
+    const groups = { g: { a: { shots: [{ u: 1 }, { u: 2 }] }, b: { shots: [{ u: 3 }] } } }
+    expect(evalPath(groups, 'g.*.shots[*].u')).toEqual([1, 2, 3])
+    expect(evalPath({ imgs: { main: { o: 'm' }, detail: [{ o: 'd1' }, { o: 'd2' }] } }, 'imgs.*.o')).toEqual(['m', 'd1', 'd2'])
+    expect(evalPath({ a: [{ b: 1 }] }, 'a.b')).toBeUndefined()
+    expect(pathError('a[?csrfToken=x]')).toMatch(/cannot be used in a filter/)
+    expect(pathError('a[?=x]')).toMatch(/expected a key/)
+    expect(pathError("a[?k='x]")).toMatch(/unterminated/)
+  })
+
   it('never reaches prototypes or inherited properties', () => {
     expect(evalPath({}, 'toString')).toBeUndefined()
     expect(evalPath([], 'length')).toBeUndefined()
@@ -291,7 +306,7 @@ describe('rules engine', () => {
     expect(p.supplier_url).toBe('https://shop.example/store/88')
     expect(p.adapter_key).toBe('lampshop')
     expect(p.evidence['title']).toBe('lampshop: script "window.pageData" → data.info.subject (rule title[0])')
-    expect(p.field_confidence['title']).toBe(0.96)
+    expect(p.field_confidence['title']).toBe(0.97)
     expect(page.product.fields.title?.adapter).toBe('lampshop')
   })
 

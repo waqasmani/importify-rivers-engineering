@@ -1,0 +1,44 @@
+{
+  "key": "flipkart",
+  "name": "Flipkart",
+  "region": "south_asia",
+  "description": "Flipkart product pages: title, brand, final price and MRP, images (size placeholders resolved), grouped specifications, seller, breadcrumbs and swatches from the embedded window.__INITIAL_STATE__. Prices are in INR.",
+  "domains": ["flipkart.com", "*.flipkart.com"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/flipkart.html",
+    "fixture_url": "https://www.flipkart.com/novaphone-x2-midnight-black-128-gb/p/itm0123456789abc",
+    "note": "Assumes window.__INITIAL_STATE__ = { productPage: { productDetails: { title, brand, pricing.finalPrice/mrp, media.images[].url with {@width}/{@height}/{@quality} placeholders, specifications[].values[], seller, breadcrumbs, swatches[] } } }. Flipkart's real state is more deeply nested; adjust the paths in the Adapter lab against a saved page. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency": "INR",
+    "product_signal": { "any": [{ "source": "state", "path": "productPage.productDetails.title" }] },
+    "sources": { "state": { "kind": "script_marker", "marker": "window.__INITIAL_STATE__" } },
+    "fields": {
+      "title": [{ "source": "state", "path": "productPage.productDetails.title", "transforms": ["trim"] }, { "css": "h1 span" }],
+      "brand": [{ "source": "state", "path": "productPage.productDetails.brand" }],
+      "sku": [{ "source": "state", "path": "productPage.productDetails.productId" }],
+      "model": [{ "source": "state", "path": "productPage.productDetails.specifications[*].values[?key='Model Number'].value[0]" }],
+      "price": [{ "source": "state", "path": "productPage.productDetails.pricing.finalPrice" }],
+      "list_price": [{ "source": "state", "path": "productPage.productDetails.pricing.mrp" }],
+      "category": [{ "source": "state", "path": "productPage.productDetails.breadcrumbs[*].title" }],
+      "images": [{ "source": "state", "path": "productPage.productDetails.media.images[*].url", "transforms": ["image_original"] }],
+      "specifications": [{ "source": "state", "path": "productPage.productDetails.specifications[*].values[*]", "entry": { "name": "key", "value": "value" } }],
+      "supplier_name": [{ "source": "state", "path": "productPage.productDetails.seller.name" }],
+      "shipping": [{ "source": "state", "path": "productPage.productDetails.delivery.message" }],
+      "rating": [{ "source": "state", "path": "productPage.productDetails.rating.average" }],
+      "rating_count": [{ "source": "state", "path": "productPage.productDetails.rating.count" }]
+    },
+    "variants": {
+      "mode": "list",
+      "source": "state",
+      "path": "productPage.productDetails.swatches",
+      "sku": "productId",
+      "stock": "available",
+      "option_list": { "path": "attributes", "name": "$key", "value": "" }
+    }
+  }
+}

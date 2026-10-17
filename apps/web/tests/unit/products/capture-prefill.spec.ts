@@ -80,7 +80,7 @@ describe('Capture → import prefill', () => {
         gtin: '4006381333931',
         price: '€39,95',
         currency: 'EUR',
-        availability: 'https://schema.org/InStock',
+        availability: 'in_stock',
         canonical_url: 'https://shop.example.com/products/trailblazer',
         specifications: { Capacity: '2 L', Weight: '820 g' },
         images: [{ url: 'https://cdn.example.com/front.jpg', alt: '' }, { url: 'https://cdn.example.com/side.jpg', alt: 'Side' }],

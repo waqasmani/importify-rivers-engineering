@@ -199,7 +199,7 @@ const isHttp = (u?: string | null) => !!u && /^https?:\/\//i.test(u)
         <StateViews v-if="findings.isLoading.value" kind="loading" />
         <StateViews v-else-if="findings.error.value" kind="error" :message="errorMessage(findings.error.value)" @retry="findings.refetch()" />
         <template v-else>
-          <CodebaseViewer v-if="viewer === 'codebase'" :findings="findingRows" :stats="lastStats" />
+          <CodebaseViewer v-if="viewer === 'codebase'" :findings="findingRows" :stats="lastStats" :metadata="meta" />
           <template v-else-if="viewer === 'api'">
             <ApiViewer :kind="src.kind" :findings="findingRows" />
             <details class="mt-5">

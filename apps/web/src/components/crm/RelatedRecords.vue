@@ -1,6 +1,5 @@
 <script setup lang="ts">
-// Compact list of records related to the current one, loaded from a list endpoint with filters.
-// When the endpoint has no filter for the relation, `match` filters pages client-side (bounded).
+// Compact list of records related to the current one: the first page of a list endpoint with filters.
 import { computed } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { api, errorMessage } from '@/api/client'
@@ -21,36 +20,17 @@ const props = withDefaults(
     query?: Record<string, string>
     /** Link to the full, filtered list page. */
     viewAll?: string
-    match?: (row: Row) => boolean
-    /** Upper bound of records scanned when `match` is used. */
-    scanLimit?: number
     limit?: number
   }>(),
-  { query: () => ({}), viewAll: undefined, match: undefined, scanLimit: 1000, limit: 10 },
+  { query: () => ({}), viewAll: undefined, limit: 10 },
 )
 
 const q = useQuery({
-  queryKey: computed(() => ['related', props.endpoint, props.query, !!props.match]),
-  queryFn: async ({ signal }) => {
-    if (!props.match) {
-      const page = await api.get<PageOf<Row>>(props.endpoint, { ...props.query, limit: props.limit }, signal)
-      return { items: page.items, total: page.total, truncated: false }
-    }
-    const found: Row[] = []
-    let offset = 0
-    let total = 0
-    do {
-      const page = await api.get<PageOf<Row>>(props.endpoint, { ...props.query, limit: 200, offset }, signal)
-      total = page.total
-      found.push(...page.items.filter(props.match))
-      offset += 200
-      if (page.items.length < 200) break
-    } while (offset < Math.min(total, props.scanLimit))
-    return { items: found, total: found.length, truncated: total > props.scanLimit }
-  },
+  queryKey: computed(() => ['related', props.endpoint, props.query]),
+  queryFn: ({ signal }) => api.get<PageOf<Row>>(props.endpoint, { ...props.query, limit: props.limit }, signal),
 })
 
-const rows = computed(() => (q.data.value?.items ?? []).slice(0, props.limit))
+const rows = computed(() => q.data.value?.items ?? [])
 const total = computed(() => q.data.value?.total ?? 0)
 
 function s(r: Row, k: string): string {
@@ -103,6 +83,5 @@ function badgeOf(r: Row): string {
         <UiBadge v-if="badgeOf(r)" :value="badgeOf(r)" />
       </li>
     </ul>
-    <p v-if="q.data.value?.truncated" class="mt-2 text-xs text-slate-500">Only the first {{ scanLimit }} records were checked.</p>
   </section>
 </template>

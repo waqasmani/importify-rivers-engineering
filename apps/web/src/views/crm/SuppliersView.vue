@@ -29,7 +29,7 @@ import { titleCase } from '@/lib/format'
 
 type Supplier = Schemas['SupplierView']
 
-const FILTERS = ['q', 'supplier_type', 'stage_id', 'country', 'min_rating', 'owner_id', 'tag_id']
+const FILTERS = ['q', 'supplier_type', 'company_id', 'stage_id', 'country', 'min_rating', 'owner_id', 'tag_id']
 const SORTS = ['name', '-name', '-rating', 'created', '-created'] as const
 
 const auth = useAuth()
@@ -91,6 +91,9 @@ function created(s: Supplier) {
           <option value="">Any type</option>
           <option v-for="t in SUPPLIER_TYPES" :key="t" :value="t">{{ titleCase(t) }}</option>
         </select>
+      </FormField>
+      <FormField v-slot="{ id }" :label="label('company')">
+        <EntityPicker :model-value="f.company_id || null" type="company" :input-id="id" placeholder="Any" @update:model-value="list.set('company_id', $event ?? '')" />
       </FormField>
       <FormField v-slot="{ id }" label="Stage">
         <StageSelect :model-value="f.stage_id || null" entity-type="supplier" :input-id="id" none-label="Any stage" @update:model-value="list.set('stage_id', $event ?? '')" />

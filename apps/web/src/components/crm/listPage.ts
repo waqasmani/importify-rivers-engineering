@@ -3,7 +3,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useListQuery } from '@/composables/useListQuery'
-import { currentFilters, nextSort, patchQuery } from './crm'
+import { currentFilters, nextSort } from './crm'
 
 export function useListPage<T extends { id: string }>(key: string, path: string, filterKeys: string[], sortKeys: readonly string[]) {
   const route = useRoute()
@@ -23,8 +23,5 @@ export function useListPage<T extends { id: string }>(key: string, path: string,
   function clearFilters() {
     void router.replace({ query: sort.value ? { sort: sort.value } : {} })
   }
-  function setMany(patch: Record<string, string>) {
-    void patchQuery(router, route, patch)
-  }
-  return { ...list, selected, sort, onSort, query, hasFilters, clearFilters, setMany }
+  return { ...list, selected, sort, onSort, query, hasFilters, clearFilters }
 }

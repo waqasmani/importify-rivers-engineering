@@ -1,11 +1,10 @@
 <script setup lang="ts">
-// User administration: accounts, roles, activation, password resets and ownership transfer.
+// User administration: accounts, roles, activation, unlocking, password resets and ownership transfer.
 import { computed, reactive, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 import { refDebounced } from '@vueuse/core'
-import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import { Crown, KeyRound, LockOpen, Pencil, Plus, Trash2 } from 'lucide-vue-next'
-import { api, errorMessage, type Schemas } from '@/api/client'
+import { api, ApiError, errorMessage, type Schemas } from '@/api/client'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import DataTable, { type Column } from '@/components/ui/DataTable.vue'
 import UiPagination from '@/components/ui/UiPagination.vue'
@@ -19,46 +18,29 @@ import { useAuth } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import { useFieldErrors } from '@/composables/useFieldErrors'
+import { useListQuery } from '@/composables/useListQuery'
 import { formatDate, formatDateTime, relativeTime } from '@/lib/format'
 
 type User = Schemas['UserView']
 
-const PAGE = 50
-/** The API pages users without a text filter, so a search scans the first page of this size. */
-const SEARCH_WINDOW = 200
-
 const auth = useAuth()
-const route = useRoute()
-const router = useRouter()
 const qc = useQueryClient()
 const toast = useToast()
 const { confirm } = useConfirm()
 
 // ---- list ----
-const searchText = ref(typeof route.query.q === 'string' ? route.query.q : '')
+const list = useListQuery<User>('users', '/users', ['q'])
+const searchText = ref(list.filters.q ?? '')
 const debounced = refDebounced(searchText, 250)
 watch(debounced, (v) => {
-  const next: Record<string, string> = { ...(route.query as Record<string, string>), q: v.trim() }
-  delete next.offset
-  if (!next.q) delete next.q
-  void router.replace({ query: next })
+  if (v.trim() !== (list.filters.q ?? '')) list.set('q', v.trim())
 })
-const search = computed(() => (typeof route.query.q === 'string' ? route.query.q.trim().toLowerCase() : ''))
-const offset = computed(() => Math.max(0, Number(route.query.offset ?? 0) || 0))
-const q = useQuery({
-  queryKey: computed(() => ['users', search.value ? 'search' : offset.value]),
-  queryFn: ({ signal }) => api.get<Schemas['UserViewPage']>('/users', search.value ? { limit: SEARCH_WINDOW, offset: 0 } : { limit: PAGE, offset: offset.value }, signal),
-  placeholderData: keepPreviousData,
-})
-const rows = computed(() => {
-  const items = q.data.value?.items ?? []
-  if (!search.value) return items
-  return items.filter((u) => u.display_name.toLowerCase().includes(search.value) || u.email.toLowerCase().includes(search.value))
-})
-const total = computed(() => q.data.value?.total ?? 0)
-function setOffset(v: number) {
-  void router.replace({ query: { ...route.query, offset: v ? String(v) : undefined } })
-}
+watch(
+  () => list.filters.q,
+  (v) => {
+    if ((v ?? '') !== searchText.value.trim()) searchText.value = v ?? ''
+  },
+)
 
 const columns: Column[] = [
   { key: 'display_name', label: 'User' },
@@ -113,13 +95,14 @@ async function create() {
 
 // ---- edit ----
 const editing = ref<User | null>(null)
-const editForm = reactive({ display_name: '', role_id: '', is_active: true })
+const editForm = reactive({ display_name: '', email: '', role_id: '', is_active: true })
 const editErrors = useFieldErrors()
 const saving = ref(false)
 function openEdit(u: User) {
   editErrors.clear()
   editing.value = u
   editForm.display_name = u.display_name
+  editForm.email = u.email
   editForm.role_id = u.role_id
   editForm.is_active = u.is_active
 }
@@ -129,18 +112,35 @@ async function saveEdit() {
   saving.value = true
   editErrors.clear()
   try {
-    await api.put<User>(`/users/${editing.value.id}`, { ...editForm } satisfies Schemas['UpdateUserInput'])
+    await api.put<User>(`/users/${editing.value.id}`, { ...editForm, email: editForm.email.trim() } satisfies Schemas['UpdateUserInput'])
     toast.success('User saved.')
     editing.value = null
     await refresh()
   } catch (e) {
-    editErrors.capture(e)
+    // The server answers 409 when another user already has the e-mail address.
+    if (e instanceof ApiError && e.status === 409 && e.code === 'duplicate') editErrors.errors.value = { email: e.message }
+    else editErrors.capture(e)
   } finally {
     saving.value = false
   }
 }
 
-// ---- password reset / unlock ----
+// ---- unlock ----
+const unlocking = ref<string | null>(null)
+async function unlock(u: User) {
+  unlocking.value = u.id
+  try {
+    await api.post(`/users/${u.id}/unlock`)
+    toast.success(`${u.display_name} can sign in again.`)
+  } catch (e) {
+    toast.error(errorMessage(e))
+  } finally {
+    unlocking.value = null
+    await refresh()
+  }
+}
+
+// ---- password reset ----
 const resetting = ref<User | null>(null)
 const resetPassword = ref('')
 const resetErrors = useFieldErrors()
@@ -228,16 +228,15 @@ async function doTransfer() {
     <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
       <label for="user-search" class="sr-only">Search users</label>
       <input id="user-search" v-model="searchText" type="search" class="input sm:max-w-xs" placeholder="Search by name or e-mail…" />
-      <p v-if="search && total > SEARCH_WINDOW" class="text-xs text-slate-500">Searching the first {{ SEARCH_WINDOW }} of {{ total }} users.</p>
     </div>
 
     <DataTable
       :columns="columns"
-      :rows="rows"
-      :loading="q.isFetching.value"
-      :error="q.error.value ? errorMessage(q.error.value) : null"
-      :empty-title="search ? 'No matching users' : 'No users'"
-      @retry="q.refetch()"
+      :rows="list.items.value"
+      :loading="list.loading.value"
+      :error="list.error.value"
+      :empty-title="list.filters.q ? 'No matching users' : 'No users'"
+      @retry="list.refetch()"
     >
       <template #cell-display_name="{ row }">
         <p class="flex flex-wrap items-center gap-1.5 font-medium text-slate-900">
@@ -265,7 +264,7 @@ async function doTransfer() {
       <template #cell-created_at="{ row }">{{ formatDate(row.created_at) }}</template>
       <template #cell-actions="{ row }">
         <div class="flex justify-end gap-0.5 whitespace-nowrap">
-          <UiButton v-if="locked(row) && (!row.is_owner || amOwner)" size="sm" variant="ghost" :aria-label="`Unlock ${row.display_name}`" title="Unlock by setting a new password" @click="openReset(row)"><LockOpen class="h-4 w-4" aria-hidden="true" /></UiButton>
+          <UiButton v-if="locked(row) && (!row.is_owner || amOwner)" size="sm" variant="ghost" :loading="unlocking === row.id" :aria-label="`Unlock ${row.display_name}`" title="Clear the sign-in lock" @click="unlock(row)"><LockOpen class="h-4 w-4" aria-hidden="true" /></UiButton>
           <UiButton v-if="!row.is_owner || amOwner" size="sm" variant="ghost" :aria-label="`Edit ${row.display_name}`" @click="openEdit(row)"><Pencil class="h-4 w-4" aria-hidden="true" /></UiButton>
           <UiButton v-if="!isSelf(row) && (!row.is_owner || amOwner)" size="sm" variant="ghost" :aria-label="`Reset password for ${row.display_name}`" @click="openReset(row)"><KeyRound class="h-4 w-4" aria-hidden="true" /></UiButton>
           <UiButton v-if="canTransferTo(row)" size="sm" variant="ghost" :aria-label="`Transfer ownership to ${row.display_name}`" @click="openTransfer(row)"><Crown class="h-4 w-4" aria-hidden="true" /></UiButton>
@@ -273,9 +272,9 @@ async function doTransfer() {
         </div>
       </template>
     </DataTable>
-    <UiPagination v-if="!search && total > PAGE" :total="total" :limit="PAGE" :offset="offset" @update:offset="setOffset" />
+    <UiPagination v-if="list.total.value > list.limit.value" :total="list.total.value" :limit="list.limit.value" :offset="list.offset.value" @update:offset="list.set('offset', String($event))" />
     <p class="mt-3 text-xs text-slate-500">
-      Accounts lock for 15 minutes after 10 failed sign-ins. Setting a new password unlocks an account straight away. Ownership can be transferred to an active Administrator.
+      Accounts lock for 15 minutes after 10 failed sign-ins. Unlock clears the lock straight away, and so does setting a new password. Ownership can be transferred to an active Administrator.
     </p>
 
     <!-- create -->
@@ -305,11 +304,11 @@ async function doTransfer() {
     <!-- edit -->
     <UiModal :open="!!editing" :title="editing ? `Edit ${editing.display_name}` : ''" @close="editing = null">
       <form v-if="editing" id="user-edit-form" class="grid grid-cols-1 gap-4" @submit.prevent="saveEdit">
-        <FormField v-slot="{ id, describedby }" label="E-mail address" hint="People change their own e-mail address under Profile.">
-          <input :id="id" :value="editing.email" class="input" disabled :aria-describedby="describedby" />
-        </FormField>
         <FormField v-slot="{ id }" label="Display name" required :error="editErrors.errors.value.display_name">
           <input :id="id" v-model="editForm.display_name" class="input" maxlength="120" required />
+        </FormField>
+        <FormField v-slot="{ id, describedby }" label="E-mail address" required :error="editErrors.errors.value.email" hint="Used to sign in.">
+          <input :id="id" v-model="editForm.email" type="email" class="input" maxlength="320" required autocomplete="off" :aria-describedby="describedby" />
         </FormField>
         <FormField
           v-slot="{ id, describedby }"
@@ -333,7 +332,7 @@ async function doTransfer() {
     </UiModal>
 
     <!-- reset password -->
-    <UiModal :open="!!resetting" :title="resetting ? `${locked(resetting) ? 'Unlock' : 'Reset password for'} ${resetting.display_name}` : ''" size="sm" @close="resetting = null">
+    <UiModal :open="!!resetting" :title="resetting ? `Reset password for ${resetting.display_name}` : ''" size="sm" @close="resetting = null">
       <form v-if="resetting" id="user-reset-form" class="space-y-3" autocomplete="off" @submit.prevent="doReset">
         <p class="text-sm text-slate-600">
           Set a new password for {{ resetting.email }}. All of their browser sessions are signed out<template v-if="locked(resetting)"> and the sign-in lock is cleared</template>.
@@ -344,7 +343,7 @@ async function doTransfer() {
       </form>
       <template #footer>
         <UiButton variant="ghost" @click="resetting = null">Cancel</UiButton>
-        <UiButton type="submit" form="user-reset-form" variant="danger" :loading="resetBusy" :disabled="!resetPassword">{{ resetting && locked(resetting) ? 'Set password and unlock' : 'Reset password' }}</UiButton>
+        <UiButton type="submit" form="user-reset-form" variant="danger" :loading="resetBusy" :disabled="!resetPassword">Reset password</UiButton>
       </template>
     </UiModal>
 

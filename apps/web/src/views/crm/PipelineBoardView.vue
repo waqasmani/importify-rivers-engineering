@@ -69,10 +69,11 @@ const board = useQuery({
     return out
   },
 })
-// The summary endpoint totals opportunities only, so it is used for opportunity pipelines.
+// Per-stage record counts and value totals of every record type (opportunity amounts and lead
+// estimated values; suppliers carry no value).
 const summary = useQuery({
   queryKey: computed(() => ['pipeline-summary', pipeline.value?.id]),
-  enabled: computed(() => type.value === 'opportunity' && !!pipeline.value),
+  enabled: computed(() => !!pipeline.value),
   queryFn: ({ signal }) => api.get<Schemas['PipelineSummaryDoc']>(`/pipelines/${pipeline.value!.id}/summary`, undefined, signal),
 })
 const currency = computed(() => settings.value?.imports.default_currency ?? 'USD')
@@ -100,6 +101,12 @@ function cards(stageId: string): Card[] {
 }
 function count(stageId: string) {
   return board.data.value?.[stageId]?.total ?? 0
+}
+/** Records in the stage; the summary does not apply the search, so while searching it is the number of matches. */
+function columnCount(stageId: string): number | null {
+  const total = search.value ? undefined : stageTotal(stageId)
+  if (total) return total.deal_count
+  return board.data.value ? count(stageId) : null
 }
 const detailPath = computed(() => CRM_PATH[type.value])
 
@@ -214,10 +221,10 @@ function onDragEnd() {
               <span class="h-2.5 w-2.5 shrink-0 rounded-full" :style="{ backgroundColor: st.color || '#64748b' }" aria-hidden="true" />
               <h2 :id="`stage-${st.id}`" class="truncate text-sm font-semibold text-slate-800">{{ st.name }}</h2>
               <UiBadge v-if="st.category !== 'open'" :value="st.category" />
-              <span class="ml-auto text-xs font-medium text-slate-500" :aria-label="`${count(st.id)} records`">{{ board.isLoading.value ? '…' : count(st.id) }}</span>
+              <span class="ml-auto text-xs font-medium text-slate-500" :aria-label="`${columnCount(st.id) ?? 0} records`" data-testid="stage-count">{{ columnCount(st.id) ?? '…' }}</span>
             </div>
-            <p v-if="type === 'opportunity' && stageTotal(st.id)" class="mt-0.5 text-xs text-slate-500">
-              {{ formatMoney(stageTotal(st.id)!.total_amount, currency) }} in {{ stageTotal(st.id)!.deal_count }} deals<span v-if="st.probability !== null && st.probability !== undefined"> · {{ st.probability }}%</span>
+            <p v-if="type !== 'supplier' && stageTotal(st.id)" class="mt-0.5 text-xs text-slate-500" data-testid="stage-total">
+              {{ formatMoney(stageTotal(st.id)!.total_amount, currency) }} in {{ stageTotal(st.id)!.deal_count }} {{ label(type, stageTotal(st.id)!.deal_count !== 1).toLowerCase() }}<span v-if="st.probability !== null && st.probability !== undefined"> · {{ st.probability }}%</span>
             </p>
           </header>
           <ul class="flex min-h-24 flex-1 flex-col gap-2 p-2">

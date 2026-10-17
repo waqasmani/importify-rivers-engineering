@@ -1,6 +1,8 @@
 <script setup lang="ts">
-// Codebase overview from the static codebase analyzer: languages, a file tree of the top-level
-// layout and every file the findings refer to, dependencies, entry points, routes and data models.
+// Codebase overview from the static codebase analyzer: languages, a file tree, dependencies, entry
+// points, routes and data models. The tree comes from the file listing the worker stores in the
+// source's metadata (paths and sizes only); sources analyzed before that listing existed fall back
+// to the top-level layout and the files the findings refer to.
 // Code was read as text only; nothing from the archive or path was executed.
 import { computed, ref } from 'vue'
 import { Code } from 'lucide-vue-next'
@@ -11,7 +13,7 @@ import FileTreeNode, { type TreeNode } from './FileTreeNode.vue'
 import { CODE_NOTICE } from '../options'
 import { arr, byCategory, dataOf, num, obj, str, strings, type FindingRow } from '../findingData'
 
-const props = defineProps<{ findings: FindingRow[]; stats?: Record<string, unknown> | null }>()
+const props = defineProps<{ findings: FindingRow[]; stats?: Record<string, unknown> | null; metadata?: Record<string, unknown> }>()
 
 const languages = computed(() => {
   const f = byCategory(props.findings, 'language')[0]
@@ -24,39 +26,68 @@ const languages = computed(() => {
     .sort((a, b) => b.files - a.files)
 })
 
+/** Files listed by the worker in `metadata.files`; empty for sources analyzed before the listing existed. */
+const listing = computed(() =>
+  arr(props.metadata?.files)
+    .map(obj)
+    .map((f) => ({ path: str(f.path), size: num(f.size), skipped: str(f.skipped) }))
+    .filter((f) => f.path),
+)
+const fileCount = computed(() => Math.max(num(props.metadata?.file_count), listing.value.length))
+
 const tree = computed<TreeNode[]>(() => {
+  const listed = listing.value.length > 0
   const root: TreeNode = { name: '', path: '', dir: true, notes: [], children: [] }
+  // Nodes by "d:" or "f:" + path, so listings with thousands of files build quickly.
+  const index = new Map<string, TreeNode>()
   const ensureDir = (parts: string[]): TreeNode => {
     let cur = root
     let path = ''
     for (const p of parts) {
       path = path ? `${path}/${p}` : p
-      let next = cur.children.find((c) => c.dir && c.name === p)
+      let next = index.get(`d:${path}`)
       if (!next) {
         next = { name: p, path, dir: true, notes: [], children: [] }
+        index.set(`d:${path}`, next)
         cur.children.push(next)
       }
       cur = next
     }
     return cur
   }
-  const addFile = (file: string, note: string) => {
-    const clean = file.replace(/^\.\//, '').replace(/:\d+$/, '')
-    if (!clean || clean.includes(' ')) return
-    const parts = clean.split('/')
-    const name = parts.pop()!
-    const dir = ensureDir(parts)
-    let node = dir.children.find((c) => !c.dir && c.name === name)
-    if (!node) {
-      node = { name, path: clean, dir: false, notes: [], children: [] }
-      dir.children.push(node)
+  const fileNode = (file: string, create: boolean): TreeNode | undefined => {
+    const parts = file.replace(/^\.\//, '').split('/').filter(Boolean)
+    const path = parts.join('/')
+    let node = index.get(`f:${path}`)
+    if (!node && create && parts.length) {
+      node = { name: parts.pop()!, path, dir: false, notes: [], children: [] }
+      index.set(`f:${path}`, node)
+      ensureDir(parts).children.push(node)
     }
-    if (!node.notes.includes(note)) node.notes.push(note)
+    return node
   }
-  for (const f of byCategory(props.findings, 'structure')) {
-    for (const [d, n] of Object.entries(obj(dataOf(f).directories))) {
-      if (d === '(root)') continue
-      ensureDir([d]).count = num(n)
+  // With a listing, findings only annotate listed files; without one they add the files they name.
+  const addFile = (file: string, note: string) => {
+    const clean = file.replace(/:\d+$/, '')
+    if (!clean || clean.includes(' ')) return
+    const node = fileNode(clean, !listed)
+    if (node && !node.notes.includes(note)) node.notes.push(note)
+  }
+  if (listed) {
+    for (const f of listing.value) {
+      const node = fileNode(f.path, true)
+      if (!node) continue
+      node.size = f.size
+      if (f.skipped) node.skipped = f.skipped
+    }
+    const countFiles = (n: TreeNode): number => (n.dir ? (n.count = n.children.reduce((sum, c) => sum + countFiles(c), 0)) : 1)
+    countFiles(root)
+  } else {
+    for (const f of byCategory(props.findings, 'structure')) {
+      for (const [d, n] of Object.entries(obj(dataOf(f).directories))) {
+        if (d === '(root)') continue
+        ensureDir([d]).count = num(n)
+      }
     }
   }
   for (const f of props.findings) {
@@ -79,7 +110,8 @@ const tree = computed<TreeNode[]>(() => {
         addFile(f.evidence_locator, f.category)
         break
       case 'security':
-        for (const s of strings(d.files)) addFile(s, 'skipped: may hold secrets')
+        // The listing already marks these files as skipped.
+        for (const s of strings(d.files)) addFile(s, listed ? 'may hold secrets' : 'skipped: may hold secrets')
         break
     }
   }
@@ -129,7 +161,10 @@ const statsLine = computed(() => {
       <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <section aria-labelledby="cb-tree">
           <h3 id="cb-tree" class="mb-2 text-sm font-semibold text-slate-800">File tree</h3>
-          <p class="mb-2 text-xs text-slate-500">Top-level directories with file counts, and the files that findings refer to.</p>
+          <p v-if="listing.length" class="mb-2 text-xs text-slate-500">
+            Every file in the source with its size. Skipped files were listed but not read.<template v-if="fileCount > listing.length"> Only the first {{ listing.length }} of {{ fileCount }} files are listed.</template>
+          </p>
+          <p v-else class="mb-2 text-xs text-slate-500">Top-level directories with file counts, and the files that findings refer to.</p>
           <ul v-if="tree.length" class="max-h-96 overflow-auto rounded-md border border-slate-200 bg-white p-2 text-sm" data-testid="file-tree">
             <FileTreeNode v-for="n in tree" :key="n.path" :node="n" />
           </ul>

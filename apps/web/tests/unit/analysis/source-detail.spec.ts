@@ -81,6 +81,42 @@ describe('SourceDetailView', () => {
     expect(wrapper.text()).toContain('Go')
   })
 
+  it('builds the codebase tree from the stored file listing with sizes and skipped files', async () => {
+    const files = [
+      { path: 'cmd/app/main.go', size: 2048 },
+      { path: 'internal/http/server.go', size: 512 },
+      { path: 'internal/http/handlers/items.go', size: 300 },
+      { path: '.env', size: 40, skipped: 'not needed for analysis' },
+      { path: 'assets/logo.png', size: 3 * 1024 * 1024, skipped: 'larger than the per-file analysis limit' },
+    ]
+    mockApi(routes(source('repository_archive', { attachment_id: 'att2', metadata: { filename: 'app.zip', files, file_count: 7 } }), [
+      // Directory counts come from the listing, not from the structure finding.
+      finding('d1', 'verified', { category: 'structure', data: { directories: { cmd: 1, internal: 9, '(root)': 1 } } }),
+      finding('r1', 'verified', { category: 'route', data: { method: 'GET', path: '/health', file: 'internal/http/server.go', line: 12, framework: 'net/http' } }),
+      // Files that are not in the listing are not added from findings.
+      finding('m1', 'inferred', { category: 'entry_point', title: 'Entry point: cmd/other/main.go', data: { file: 'cmd/other/main.go' } }),
+    ]))
+    const { wrapper } = await mount()
+    const tree = wrapper.get('[data-testid="file-tree"]')
+    expect(wrapper.text()).toContain('Only the first 5 of 7 files are listed.')
+    expect(wrapper.text()).not.toContain('the files that findings refer to')
+    expect(tree.text()).toContain('internal/2 files')
+    expect(tree.text()).toContain('main.go')
+    expect(tree.text()).toContain('2.0 KB')
+    expect(tree.text()).not.toContain('other/')
+    const server = tree.findAll('li').find((li) => li.find('details').exists() === false && li.text().includes('server.go'))!
+    expect(server.text()).toContain('512 B')
+    expect(server.text()).toContain('route')
+    const skipped = tree.findAll('[data-testid="file-skipped"]').map((x) => x.text())
+    expect(skipped).toEqual(['skipped: larger than the per-file analysis limit', 'skipped: not needed for analysis'])
+    // Directories below the second level open on demand.
+    expect(tree.text()).not.toContain('items.go')
+    const handlers = tree.findAll('details').find((d) => d.find('summary').text().startsWith('handlers/'))!
+    ;(handlers.element as HTMLDetailsElement).open = true
+    await handlers.trigger('toggle')
+    expect(tree.text()).toContain('items.go')
+  })
+
   it('searches extracted document text', async () => {
     mockApi(routes(source('document', { content_text: 'Intro\nThe system must export CSV.\nThe system should log events.\nEnd', content_length: 64 }), []))
     const { wrapper } = await mount()

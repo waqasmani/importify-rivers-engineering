@@ -2,7 +2,6 @@
 // Paginated findings of a project with filters kept in the URL. Classification is always shown
 // with its own badge, and every row shows its confidence, evidence excerpt and locator.
 import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 import { useQueryClient } from '@tanstack/vue-query'
 import { Plus } from 'lucide-vue-next'
 import type { Schemas } from '@/api/client'
@@ -31,8 +30,6 @@ const props = withDefaults(
 )
 const emit = defineEmits<{ changed: [] }>()
 const qc = useQueryClient()
-const route = useRoute()
-const router = useRouter()
 
 const path = computed(() => `/analysis/projects/${props.projectId}/findings`)
 const list = useListQuery<Row>('analysis-findings', path, ['q', 'category', 'classification', 'source_id', 'origin'], props.sourceId ? { source_id: props.sourceId } : {})
@@ -42,12 +39,10 @@ watch(() => list.filters.q, (v) => (search.value = v ?? ''))
 function submitSearch() {
   list.set('q', search.value.trim())
 }
-const hasFilters = computed(() => ['q', 'category', 'classification', 'origin', ...(props.sourceId ? [] : ['source_id'])].some((k) => list.filters[k]))
+const filterKeys = computed(() => ['q', 'category', 'classification', 'origin', ...(props.sourceId ? [] : ['source_id'])])
+const hasFilters = computed(() => filterKeys.value.some((k) => list.filters[k]))
 function reset() {
-  // One navigation for all keys: several list.set() calls in a row would each start from the old query.
-  const next = { ...route.query }
-  for (const k of ['q', 'category', 'classification', 'origin', 'offset', ...(props.sourceId ? [] : ['source_id'])]) delete next[k]
-  void router.replace({ query: next })
+  list.setMany(Object.fromEntries(filterKeys.value.map((k) => [k, ''])))
 }
 
 const columns = computed(() => [

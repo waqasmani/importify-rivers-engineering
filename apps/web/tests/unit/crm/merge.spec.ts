@@ -68,6 +68,20 @@ describe('CompanyDetailView merge', () => {
     expect(labels.some((t) => t.includes('Delete'))).toBe(false)
     expect(labels.some((t) => t.includes('Edit'))).toBe(true)
   })
+
+  it("loads the company's suppliers with the company_id filter and links to the filtered list", async () => {
+    const supplier = (n: number) => ({ id: `5555555${n}-5555-4555-8555-555555555555`, name: `Supplier ${n}`, supplier_type: 'manufacturer', country: 'DE', company_id: ID })
+    const api = mockApi(detailRoutes({ 'GET /suppliers': { items: [supplier(1), supplier(2)], total: 12, limit: 10, offset: 0 } }))
+    const { wrapper } = await mountView(CompanyDetailView, { path: `/companies/${ID}`, pattern: '/companies/:id' })
+    const calls = api.calls.filter((c) => c.path === '/suppliers')
+    expect(calls).toHaveLength(1)
+    expect(Object.fromEntries(calls[0]!.query)).toEqual({ company_id: ID, limit: '10' })
+    const section = wrapper.get('section[aria-label="Suppliers"]')
+    expect(section.text()).toContain('(12)')
+    expect(section.text()).toContain('Supplier 2')
+    expect(section.text()).not.toContain('records were checked')
+    expect(section.get('a[href^="/suppliers?"]').attributes('href')).toBe(`/suppliers?company_id=${ID}`)
+  })
 })
 
 describe('DuplicatesView', () => {

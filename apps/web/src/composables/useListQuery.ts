@@ -34,16 +34,29 @@ export function useListQuery<T>(key: string, path: string | Ref<string>, filterK
     placeholderData: keepPreviousData,
   })
 
-  function set(k: string, v: string) {
-    const next: Record<string, string> = { ...(route.query as Record<string, string>), [k]: v }
-    if (k !== 'offset') delete next.offset
+  // Query of the navigation in flight. Calls made before it settles build on it instead of on
+  // route.query, which still holds the old values, so consecutive changes all apply.
+  let pending: Record<string, string> | null = null
+
+  /** Sets several query keys in one navigation. Empty values are removed; paging resets unless `offset` is part of the patch. */
+  function setMany(patch: Record<string, string>) {
+    const next: Record<string, string> = { ...(pending ?? (route.query as Record<string, string>)), ...patch }
+    if (!('offset' in patch)) delete next.offset
     for (const key of Object.keys(next)) if (next[key] === '' || next[key] === undefined) delete next[key]
-    void router.replace({ query: next })
+    pending = next
+    void router.replace({ query: next }).finally(() => {
+      if (pending === next) pending = null
+    })
+  }
+
+  function set(k: string, v: string) {
+    setMany({ [k]: v })
   }
 
   return {
     filters,
     set,
+    setMany,
     items: computed(() => q.data.value?.items ?? []),
     total: computed(() => q.data.value?.total ?? 0),
     limit: computed(() => Number(filters.limit || 50)),

@@ -46,7 +46,8 @@ describe('PipelineBoardView', () => {
     const cols = wrapper.findAll('[data-testid^="column-"]')
     expect(cols.map((c) => c.find('h2').text())).toEqual(['Proposal', 'Negotiation', 'Lost'])
     expect(cols[0]!.text()).toContain('Container order')
-    expect(cols[0]!.text()).toContain('in 1 deals')
+    expect(cols[0]!.get('[data-testid="stage-total"]').text()).toContain('in 1 opportunity')
+    expect(cols.map((c) => c.get('[data-testid="stage-count"]').text())).toEqual(['1', '0', '0'])
     const stageQueries = api.calls.filter((c) => c.path === '/opportunities').map((c) => c.query.get('stage_id'))
     expect(stageQueries.sort()).toEqual(['s-lost', 's-neg', 's-open'])
   })
@@ -91,18 +92,50 @@ describe('PipelineBoardView', () => {
     })
   })
 
-  it('uses the lead list endpoint for lead pipelines and hides moving without write access', async () => {
+  it('uses the lead list endpoint and the summary counts for lead pipelines and hides moving without write access', async () => {
     const leadStages = [{ ...stages[0]!, id: 'l1', pipeline_id: 'lp' }, { ...stages[1]!, id: 'l2', pipeline_id: 'lp' }]
+    const lead = { id: 'lead1', title: 'Website enquiry', currency: 'EUR', estimated_value: null, tags: [], source: 'website' }
     const api = mockApi({
       ...baseRoutes,
       'GET /pipelines': (c) => (c.query.get('entity_type') === 'lead' ? { items: [{ ...pipelines.items[0]!, id: 'lp', entity_type: 'lead', stages: leadStages }] } : pipelines),
-      'GET /leads': (c) => (c.query.get('stage_id') === 'l1' ? page([{ id: 'lead1', title: 'Website enquiry', currency: 'EUR', estimated_value: null, tags: [], source: 'website' }]) : page([])),
+      'GET /pipelines/lp/summary': {
+        pipeline: { ...pipelines.items[0]!, id: 'lp', entity_type: 'lead' },
+        stages: [
+          { stage_id: 'l1', stage_name: 'Proposal', category: 'open', color: '', position: 0, deal_count: 3, total_amount: '1500' },
+          { stage_id: 'l2', stage_name: 'Negotiation', category: 'open', color: '', position: 1, deal_count: 1, total_amount: '0' },
+        ],
+      },
+      'GET /leads': (c) => (c.query.get('stage_id') === 'l1' ? page([lead]) : page([])),
     })
-    const { wrapper } = await mountView(PipelineBoardView, { path: '/pipelines?type=lead', pattern: '/pipelines', permissions: ['crm.read'] })
+    const { wrapper, router } = await mountView(PipelineBoardView, { path: '/pipelines?type=lead', pattern: '/pipelines', permissions: ['crm.read'] })
     await settle()
-    expect(api.calls.some((c) => c.path === '/pipelines/lp/summary')).toBe(false)
+    expect(api.calls.some((c) => c.path === '/pipelines/lp/summary')).toBe(true)
+    const col = wrapper.get('[data-testid="column-l1"]')
+    expect(col.get('[data-testid="stage-count"]').text()).toBe('3')
+    expect(col.get('[data-testid="stage-total"]').text()).toContain('in 3 leads')
+    expect(wrapper.get('[data-testid="column-l2"] [data-testid="stage-total"]').text()).toContain('in 1 lead ')
     expect(wrapper.find('[data-testid="card-lead1"]').text()).toContain('Website enquiry')
     expect(wrapper.find('[data-testid="move-to"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="card-lead1"]').attributes('draggable')).toBe('false')
+
+    // The summary ignores the search, so a search shows the number of matching records.
+    await router.replace({ query: { type: 'lead', q: 'web' } })
+    await settle()
+    expect(api.calls.filter((c) => c.path === '/leads').at(-1)!.query.get('q')).toBe('web')
+    expect(wrapper.get('[data-testid="column-l1"] [data-testid="stage-count"]').text()).toBe('1')
+  })
+
+  it('counts supplier columns from the summary without a value total', async () => {
+    const supStages = [{ ...stages[0]!, id: 'sp1', pipeline_id: 'sp' }]
+    mockApi({
+      ...baseRoutes,
+      'GET /pipelines': (c) => (c.query.get('entity_type') === 'supplier' ? { items: [{ ...pipelines.items[0]!, id: 'sp', entity_type: 'supplier', stages: supStages }] } : pipelines),
+      'GET /pipelines/sp/summary': { pipeline: { ...pipelines.items[0]!, id: 'sp', entity_type: 'supplier' }, stages: [{ stage_id: 'sp1', stage_name: 'Proposal', category: 'open', color: '', position: 0, deal_count: 7, total_amount: '0' }] },
+      'GET /suppliers': page([]),
+    })
+    const { wrapper } = await mountView(PipelineBoardView, { path: '/pipelines?type=supplier', pattern: '/pipelines' })
+    await settle()
+    expect(wrapper.get('[data-testid="column-sp1"] [data-testid="stage-count"]').text()).toBe('7')
+    expect(wrapper.find('[data-testid="stage-total"]').exists()).toBe(false)
   })
 })

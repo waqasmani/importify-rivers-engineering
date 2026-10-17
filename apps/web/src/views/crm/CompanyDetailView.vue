@@ -153,7 +153,7 @@ async function remove() {
               <UiButton v-if="auth.can('crm.write')" size="sm" @click="adding = 'lead'"><Plus class="h-3.5 w-3.5" /> Add</UiButton>
             </template>
           </RelatedRecords>
-          <RelatedRecords :title="label('supplier', true)" type="supplier" endpoint="/suppliers" :match="(r) => r.company_id === c!.id">
+          <RelatedRecords :title="label('supplier', true)" type="supplier" endpoint="/suppliers" :query="{ company_id: c.id }" :view-all="`/suppliers?company_id=${c.id}`">
             <template #actions>
               <UiButton v-if="auth.can('crm.write')" size="sm" @click="adding = 'supplier'"><Plus class="h-3.5 w-3.5" /> Add</UiButton>
             </template>

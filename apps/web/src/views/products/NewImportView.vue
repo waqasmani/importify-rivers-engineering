@@ -126,7 +126,7 @@ async function runCheck() {
     if (!dups.some((c) => c.id === target.value)) target.value = dups[0]?.id ?? null
     if (firstCheck || (decision.value === 'update_existing' && !target.value)) decision.value = res.definite_duplicate && dups.length ? 'update_existing' : 'create_new'
     if (decision.value === 'park' && !res.definite_duplicate) decision.value = 'create_new'
-    // REA links the suggested supplier automatically; preselect it so the choice is visible.
+    // Preselect the supplier REA suggests for the page; "No supplier" leaves the product unlinked.
     if (res.suggested_supplier && canPickSupplier.value && supplierMode.value !== 'create' && !(supplierMode.value === 'existing' && supplierId.value)) {
       supplierMode.value = 'existing'
       supplierId.value = res.suggested_supplier.id
@@ -175,6 +175,7 @@ async function submit() {
     supplier_id: creating && supplierMode.value === 'existing' ? supplierId.value : null,
     supplier_contact_id: creating ? contactId.value : null,
     create_supplier: creating && supplierMode.value === 'create',
+    skip_supplier_link: creating && supplierMode.value === 'none',
     tag_names: decision.value === 'skip' || decision.value === 'park' ? [] : tagList(tags.value),
   }
   try {
@@ -369,10 +370,7 @@ const steps = ['Product data', 'Check', 'Decide', 'Done']
           </label>
           <label class="flex items-start gap-2 text-sm">
             <input v-model="supplierMode" type="radio" :name="`${uid}-supplier`" value="none" class="mt-0.5" />
-            <span>
-              <span class="font-medium text-slate-800">No {{ label('supplier').toLowerCase() }}</span>
-              <span v-if="check?.suggested_supplier" class="block text-xs text-amber-700">REA still links the suggested {{ label('supplier').toLowerCase() }} “{{ check.suggested_supplier.label }}” automatically because it matches the page.</span>
-            </span>
+            <span class="font-medium text-slate-800">No {{ label('supplier').toLowerCase() }}</span>
           </label>
         </fieldset>
 

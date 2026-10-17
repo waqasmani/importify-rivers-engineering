@@ -1,7 +1,6 @@
 <script setup lang="ts">
 // History of AI jobs with status, tool and "mine" filters. Results open on the job page.
 import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import { Sparkles } from 'lucide-vue-next'
 import { api, type Schemas } from '@/api/client'
@@ -19,17 +18,13 @@ import { formatDateTime, relativeTime } from '@/lib/format'
 type Row = Schemas['ListAIJobsRow']
 
 const auth = useAuth()
-const route = useRoute()
-const router = useRouter()
 const list = useListQuery<Row>('ai-jobs-list', '/ai/jobs', ['status', 'tool', 'mine'])
 const tools = useQuery({ queryKey: ['ai-tools'], queryFn: ({ signal }) => api.get<Schemas['AiToolsDoc']>('/ai/tools', undefined, signal), staleTime: 300_000 })
 const status = useQuery({ queryKey: ['ai-status'], queryFn: ({ signal }) => api.get<Schemas['AiStatusDoc']>('/ai/status', undefined, signal), staleTime: 30_000 })
 const toolLabel = (k: string) => tools.data.value?.items.find((t) => t.key === k)?.label ?? k.replace(/_/g, ' ')
 const hasFilters = computed(() => !!(list.filters.status || list.filters.tool || list.filters.mine))
 function clearFilters() {
-  const next = { ...route.query }
-  for (const k of ['status', 'tool', 'mine', 'offset']) delete next[k]
-  void router.replace({ query: next })
+  list.setMany({ status: '', tool: '', mine: '' })
 }
 
 const columns = [

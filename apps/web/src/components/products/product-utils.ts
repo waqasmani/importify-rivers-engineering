@@ -8,7 +8,7 @@ export type Normalized = Schemas['Normalized']
 export const AVAILABILITIES = ['in_stock', 'out_of_stock', 'preorder', 'backorder', 'discontinued', 'unknown'] as const
 export const isKnownAvailability = (a: string) => (AVAILABILITIES as readonly string[]).includes(a)
 
-/** Mirrors normalize.Availability on the server (schema.org URLs and page wording). */
+/** Mirrors normalize.Availability on the server (REA's own values, schema.org URLs and page wording). */
 export function normalizeAvailability(raw: string | null | undefined): string {
   const l = (raw ?? '').trim().toLowerCase().replace(/^https?:\/\/schema\.org\//, '')
   if (isKnownAvailability(l)) return l
@@ -21,12 +21,6 @@ export function normalizeAvailability(raw: string | null | undefined): string {
   return 'unknown'
 }
 
-// The server's normalizer reads page wording and schema.org values; it does not recognise its own
-// stored tokens "in_stock" and "out_of_stock", so the form sends the schema.org equivalents.
-const AVAILABILITY_WIRE: Record<string, string> = { in_stock: 'https://schema.org/InStock', out_of_stock: 'https://schema.org/OutOfStock' }
-export function availabilityForPayload(v: string): string {
-  return AVAILABILITY_WIRE[v] ?? v
-}
 export const PRODUCT_STATUSES = ['draft', 'active', 'archived'] as const
 export const REVIEW_STATUSES = ['pending', 'needs_changes', 'approved', 'rejected'] as const
 export const IMPORT_STATUSES = ['pending', 'duplicate', 'imported', 'updated', 'linked', 'rejected', 'failed'] as const
@@ -231,7 +225,7 @@ export function draftToPayload(d: PayloadDraft): Payload {
     price: nullable(d.price),
     price_amount: nullable(d.price_amount),
     currency: d.currency.trim().toUpperCase(),
-    availability: availabilityForPayload(d.availability),
+    availability: d.availability,
     category: d.category.trim(),
     images: d.images.filter((i) => i.url.trim()).map((i) => ({ url: i.url.trim(), alt: i.alt.trim(), width: null, height: null })),
     variants: d.variants
@@ -242,7 +236,7 @@ export function draftToPayload(d: PayloadDraft): Payload {
         price: nullable(v.price),
         price_amount: null,
         currency: v.currency.trim().toUpperCase(),
-        availability: availabilityForPayload(v.availability),
+        availability: v.availability,
         image_url: v.image_url.trim(),
       }))
       .filter((v) => v.title || v.sku || Object.keys(v.options).length > 0),

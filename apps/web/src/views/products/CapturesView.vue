@@ -1,7 +1,6 @@
 <script setup lang="ts">
 // Pages captured with the browser extension, with filters, deletion and purging of old captures.
 import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 import { refDebounced } from '@vueuse/core'
 import { useQueryClient } from '@tanstack/vue-query'
 import { Camera, Trash2 } from 'lucide-vue-next'
@@ -26,8 +25,6 @@ import { formatDate, formatDateTime, relativeTime, titleCase } from '@/lib/forma
 type Row = Schemas['ListCapturedPagesRow']
 
 const auth = useAuth()
-const route = useRoute()
-const router = useRouter()
 const toast = useToast()
 const qc = useQueryClient()
 const { confirm } = useConfirm()
@@ -47,10 +44,7 @@ watch(domainDebounced, (v) => {
   if (v.trim().toLowerCase() !== (list.filters.domain ?? '')) list.set('domain', v.trim().toLowerCase())
 })
 function applyText() {
-  const next: Record<string, string> = { ...(route.query as Record<string, string>), q: search.value.trim(), domain: domain.value.trim().toLowerCase() }
-  delete next.offset
-  for (const k of Object.keys(next)) if (!next[k]) delete next[k]
-  void router.replace({ query: next })
+  list.setMany({ q: search.value.trim(), domain: domain.value.trim().toLowerCase() })
 }
 watch(
   () => [list.filters.q, list.filters.domain],

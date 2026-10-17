@@ -68,7 +68,7 @@ describe('NewImportView', () => {
     const check = api.calls.find((c) => c.path === '/imports/products/check')!
     expect(check.body).toMatchObject({
       source: 'manual',
-      payload: { title: 'Steel Bottle 750 ml', url: 'https://shop.example.com/p/bottle', currency: 'USD', specifications: { Capacity: '750 ml' }, availability: 'https://schema.org/InStock' },
+      payload: { title: 'Steel Bottle 750 ml', url: 'https://shop.example.com/p/bottle', currency: 'USD', specifications: { Capacity: '750 ml' }, availability: 'in_stock' },
     })
     expect(wrapper.get('[data-testid="definite-duplicate"]').text()).toContain('Steel Bottle 750ml')
     expect(wrapper.get('[data-testid="check-warnings"]').text()).toContain('no product images were found')
@@ -83,7 +83,7 @@ describe('NewImportView', () => {
     await settle()
 
     const submit = api.calls.find((c) => c.method === 'POST' && c.path === '/imports/products')!
-    expect(submit.body).toMatchObject({ decision: 'update_existing', target_product_id: EXISTING, source: 'manual', create_supplier: false, supplier_id: null, tag_names: ['bottles', 'summer'] })
+    expect(submit.body).toMatchObject({ decision: 'update_existing', target_product_id: EXISTING, source: 'manual', create_supplier: false, skip_supplier_link: false, supplier_id: null, tag_names: ['bottles', 'summer'] })
     const outcome = wrapper.get('[data-testid="import-outcome"]')
     expect(outcome.text()).toContain('Existing product updated.')
     expect(outcome.get('[data-testid="outcome-product-link"]').attributes('href')).toBe(`/products/${EXISTING}`)
@@ -117,9 +117,30 @@ describe('NewImportView', () => {
     await wrapper.get('[data-testid="decision-form"]').trigger('submit')
     await settle()
     const submit = api.calls.find((c) => c.method === 'POST' && c.path === '/imports/products')!
-    expect(submit.body).toMatchObject({ decision: 'create_new', supplier_id: SUPPLIER, target_product_id: null })
+    expect(submit.body).toMatchObject({ decision: 'create_new', supplier_id: SUPPLIER, target_product_id: null, skip_supplier_link: false })
     expect(wrapper.get('[data-testid="import-outcome"]').text()).toContain('Draft product created.')
     expect(wrapper.get('[data-testid="import-outcome"]').text()).toContain('no product images were found')
+  })
+
+  it('creates a product without a supplier when "No supplier" is chosen despite a suggestion', async () => {
+    const api = mockApi({
+      ...base,
+      'POST /imports/products/check': checkResponse({ duplicates: [], definite_duplicate: false, suggested_supplier: { id: SUPPLIER, label: 'Shop Example', score: 1, reasons: ['same domain'], record: {} } }),
+      'POST /imports/products': () =>
+        new Response(JSON.stringify({ import: importRecord('imported', { product_id: EXISTING }), product: { id: EXISTING }, duplicates: [], status: 'imported', warnings: [] }), {
+          status: 201, headers: { 'Content-Type': 'application/json' },
+        }),
+    })
+    const { wrapper } = await mountView(NewImportView, { path: '/imports/new' })
+    await fillAndCheck(wrapper)
+    const decision = wrapper.get('[data-testid="decision-form"]')
+    await decision.find('input[value="none"]').setValue(true)
+    expect(decision.text()).not.toContain('automatically')
+    await decision.trigger('submit')
+    await settle()
+    const submit = api.calls.find((c) => c.method === 'POST' && c.path === '/imports/products')!
+    expect(submit.body).toMatchObject({ decision: 'create_new', supplier_id: null, create_supplier: false, skip_supplier_link: true })
+    expect(wrapper.get('[data-testid="import-outcome"]').text()).toContain('Draft product created.')
   })
 
   it('parks a duplicate in the queue (202) and resolves it in place', async () => {

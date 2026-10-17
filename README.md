@@ -22,6 +22,12 @@ telemetry, and AI is optional.
   run, CSV/JSON export, global search, activity timelines and a full audit log.
 - **Product import manager** — capture → detect → extract → normalize → de-duplicate → review →
   save → link supplier. Products are never published, purchased or messaged about automatically.
+- **Dropshipping pricing** — the marketplace price observed at import is kept as the source price,
+  the cost is derived from it (converted with manually maintained exchange rates) and ordered
+  pricing rules (marketplace, supplier, category, tag and cost-range conditions; markup,
+  multiplier, fixed amounts, minimum price and margin, .99-style or step rounding, compare-at
+  prices) set the selling price for products and variants. Manual prices can be locked; bulk
+  reprice shows a dry run first. Exact decimal maths, no rate fetching.
 - **Browser extension** (Chrome, Manifest V3) — capture pages, import products with site adapters
   (JSON-LD, microdata, Open Graph, Shopify, WooCommerce, Alibaba, custom selectors, generic
   fallback), an element picker, page inspector, quick research, AI analysis and save-to-CRM,
@@ -66,6 +72,7 @@ OpenAPI 3 generated from the Go types.
 | [security.md](docs/security.md) | Responsible-analysis rules and security controls, with where they are enforced |
 | [architecture.md](docs/architecture.md) | Components, data model, jobs, analysis engine, AI layer |
 | [api.md](docs/api.md) | Authentication, conventions, OpenAPI |
+| [pricing.md](docs/pricing.md) | Source price, cost and selling price, pricing rules with worked examples, exchange rates, pricing API |
 | [extension.md](docs/extension.md) | Building, installing and pairing the extension, permissions, troubleshooting |
 | [development.md](docs/development.md) | Local development, tests, code generation |
 | [progress.md](docs/progress.md) | What was built in each phase and how it was verified |

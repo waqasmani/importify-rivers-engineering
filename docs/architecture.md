@@ -37,6 +37,7 @@ flowchart LR
 | `services/internal/analysis` | Deterministic analyzers and report builders. |
 | `services/internal/ai` | Provider adapters, tool catalogue, evidence and grounding. |
 | `services/internal/products`, `normalize` | Product payload normalization, price/GTIN/URL handling, duplicate scoring inputs. |
+| `services/internal/pricing` | Pricing rule engine: rule order and conditions, decimal price maths, rounding, currency conversion, locked prices ([pricing.md](pricing.md)). |
 | `services/internal/safefetch`, `safearchive`, `htmlx` | SSRF-safe fetching, safe archive reading, HTML sanitization. |
 | `services/internal/worker` | Job loop for analysis runs, AI jobs and retention. |
 | `db/migrations` | Goose migrations, embedded into the binary and applied at start-up. |
@@ -73,7 +74,7 @@ All tables are created by the migrations in `db/migrations`:
   `pipelines`, `pipeline_stages`, `tasks`, `notes`, `attachments`, `tags`, `record_tags`,
   `custom_field_definitions`, `saved_filters`.
 - Products: `products`, `product_variants`, `product_images`, `supplier_products`,
-  `product_imports`, `captured_pages`, `source_adapters`.
+  `product_imports`, `captured_pages`, `source_adapters`, `pricing_rules`, `currency_rates`.
 - Analysis and AI: `analysis_projects`, `analysis_sources`, `analysis_runs`, `analysis_findings`,
   `analysis_reports`, `ai_provider_configs`, `ai_jobs`.
 

@@ -16,7 +16,7 @@ are in `references/rules.md`; check every change against them.
 | `services/api`, `services/worker` | `rea-api` (HTTP, migrations, operator commands) and `rea-worker` |
 | `services/internal/httpapi` | chi routes, middleware, handlers, OpenAPI generation (`openapi.go` `Operations()`) |
 | `services/internal/store` | sqlc output from `db/queries/*.sql` — never edit by hand |
-| `services/internal/{analysis,ai,products,normalize,safefetch,safearchive,htmlx,auth,worker}` | domain packages |
+| `services/internal/{analysis,ai,products,pricing,normalize,safefetch,safearchive,htmlx,auth,worker}` | domain packages |
 | `db/migrations` | goose migrations, embedded, applied at start-up |
 | `packages/api-types` | committed `openapi.json` + generated TypeScript (`Schemas['Name']`) |
 | `apps/web` | Vue 3 dashboard (see `docs/web-conventions.md`) |

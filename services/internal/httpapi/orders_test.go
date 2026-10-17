@@ -640,6 +640,38 @@ func TestCancelAndRevertRules(t *testing.T) {
 	shop.Do("PUT", teePath, map[string]any{"ship_to": shipTo, "note_to_supplier": ""}).Must(t, 403)
 }
 
+func TestRevertedDraftMergesWithANewerDraftOfTheSameSupplier(t *testing.T) {
+	e := newEnv(t)
+	f := e.orderFixture()
+	o := e.owner.Do("POST", "/api/v1/orders", orderBody("M-1", line("MUG-1", 1, "12"), line("LAMP-1", 1, "40"))).Must(t, 201)
+	id := o.Str("id")
+	a := supplierOrders(t, e.owner, id)["Ningbo Mugs"]
+	e.owner.Do("POST", "/api/v1/supplier-orders/"+a.Str("id")+"/confirm", confirmBody(a, true)).Must(t, 200)
+	// The lamp line is re-mapped to another product of the same supplier while A is confirmed: a new draft B.
+	lampLine := o.Get("lines").([]any)[1].(map[string]any)["id"].(string)
+	e.owner.Do("PUT", "/api/v1/orders/"+id+"/lines/"+lampLine, map[string]any{"product_id": f.soldOut, "variant_id": nil, "quantity": 1}).Must(t, 200)
+	var b string
+	for _, so := range e.owner.Do("GET", "/api/v1/orders/"+id, nil).Must(t, 200).Get("supplier_orders").([]any) {
+		m := so.(map[string]any)
+		if m["status"] == "draft" {
+			b = m["id"].(string)
+		}
+	}
+	if b == "" || b == a.Str("id") {
+		t.Fatal("expected a second draft for the same supplier")
+	}
+	// Reverting A leaves two drafts of one supplier until they are prepared again; then they merge into A.
+	if r := e.owner.Do("POST", "/api/v1/supplier-orders/"+a.Str("id")+"/revert", nil).Must(t, 200); r.Str("status") != "draft" || len(r.Get("items").([]any)) != 1 {
+		t.Fatalf("revert wrong: %s", r.Body)
+	}
+	e.owner.Do("POST", "/api/v1/orders/"+id+"/prepare", nil).Must(t, 200)
+	merged := e.owner.Do("GET", "/api/v1/supplier-orders/"+a.Str("id"), nil).Must(t, 200)
+	if merged.Str("status") != "draft" || len(merged.Get("items").([]any)) != 2 {
+		t.Fatalf("drafts not merged into the older one: %s", merged.Body)
+	}
+	e.owner.Do("GET", "/api/v1/supplier-orders/"+b, nil).Must(t, 404)
+}
+
 func TestOrderStatusFollowsSupplierOrders(t *testing.T) {
 	e := newEnv(t)
 	e.orderFixture()

@@ -129,7 +129,8 @@ func (s *Server) prepareOrder(ctx context.Context, q *store.Queries, r *http.Req
 	drafts := map[string]store.SupplierOrder{}
 	for _, so := range sos {
 		soByID[so.ID] = so
-		if so.Status == orders.SODraft {
+		// Two drafts of one supplier (for example after a revert) merge into the older one.
+		if _, seen := drafts[so.GroupKey]; so.Status == orders.SODraft && !seen {
 			drafts[so.GroupKey] = so
 		}
 	}
@@ -254,8 +255,9 @@ func (s *Server) prepareOrder(ctx context.Context, q *store.Queries, r *http.Req
 			}
 		}
 	}
-	for _, so := range drafts {
-		if !used[so.ID] {
+	// Drafts left without lines are removed (they never left REA).
+	for _, so := range sos {
+		if so.Status == orders.SODraft && !used[so.ID] {
 			if err := q.DeleteDraftSupplierOrder(ctx, so.ID); err != nil {
 				return err
 			}

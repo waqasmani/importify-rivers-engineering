@@ -583,8 +583,8 @@ func (s *Server) handleRevertSupplierOrder(w http.ResponseWriter, r *http.Reques
 				"voided_content_hash": so.ContentHash}}); err != nil {
 			return err
 		}
-		// The draft is rebuilt from the current product data, like every draft.
-		if err := s.prepareOrder(r.Context(), q, r, o.ID, false, true); err != nil {
+		// The draft keeps its items; "Prepare again" refreshes them like any draft.
+		if _, err := s.refreshOrderStatus(r.Context(), q, r, o.ID, true); err != nil {
 			return err
 		}
 		if so.PlacementMethod == orders.PlacementAutomation {

@@ -70,6 +70,7 @@ const appRoutes: RouteRecordRaw[] = [
   { path: 'settings/tags', name: 'settings-tags', component: v('settings/TagsView'), meta: { perm: 'crm.write', title: 'Tags' } },
   { path: 'settings/adapters', name: 'settings-adapters', component: v('settings/AdaptersView'), meta: { perm: 'products.read', title: 'Source adapters' } },
   { path: 'settings/ai', name: 'settings-ai', component: v('settings/AiProvidersView'), meta: { perm: 'ai.configure', title: 'AI providers' } },
+  { path: 'settings/integrations', name: 'settings-integrations', component: v('settings/IntegrationsView'), meta: { perm: 'settings.manage', title: 'Integrations' } },
   { path: 'settings/extension', name: 'settings-extension', component: v('settings/ExtensionView'), meta: { title: 'Browser extension' } },
   { path: 'settings/users', name: 'settings-users', component: v('settings/UsersView'), meta: { perm: 'users.manage', title: 'Users' } },
   { path: 'settings/roles', name: 'settings-roles', component: v('settings/RolesView'), meta: { perm: 'users.manage', title: 'Roles' } },

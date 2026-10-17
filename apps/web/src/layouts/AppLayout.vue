@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import {
   Bell, Building2, CopyCheck, Globe, Handshake, LayoutDashboard, LogOut, Menu, Package, PackageSearch, Puzzle, ScanSearch,
   ScrollText, Server, Settings, Shield, SlidersHorizontal, Sparkles, SquareCheckBig, SquareKanban, Tags, Target, Truck, UserCog, Users, X, Plug, FolderTree, Bot,
+  Webhook,
 } from 'lucide-vue-next'
 import GlobalSearch from '@/components/GlobalSearch.vue'
 import { api, type Schemas } from '@/api/client'
@@ -73,6 +74,7 @@ const sections = computed<{ title: string; items: NavItem[] }[]>(() => [
       { to: '/settings/tags', label: 'Tags', icon: Tags, perm: 'crm.write' },
       { to: '/settings/adapters', label: 'Source adapters', icon: Plug, perm: 'products.read' },
       { to: '/settings/ai', label: 'AI providers', icon: Bot, perm: 'ai.configure' },
+      { to: '/settings/integrations', label: 'Integrations', icon: Webhook, perm: 'settings.manage' },
       { to: '/settings/extension', label: 'Browser extension', icon: Puzzle },
       { to: '/settings/users', label: 'Users', icon: UserCog, perm: 'users.manage' },
       { to: '/settings/roles', label: 'Roles', icon: Shield, perm: 'users.manage' },

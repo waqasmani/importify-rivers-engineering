@@ -363,10 +363,14 @@ func (s *Server) resolveIntegrationKey(r *http.Request, token string) (*Principa
 	return p, nil
 }
 
-// integrationRouteAllowed lists the only endpoints integration keys may call: the catalog and
-// product import submission. Everything else (CRM, administration, settings, profile, analysis,
-// AI) is refused before routing, in addition to the per-route permission checks.
+// integrationRouteAllowed lists the only endpoints integration keys may call: the catalog, product
+// import submission and the order intake and automation endpoints. Everything else (CRM,
+// administration, settings, profile, analysis, AI, confirming supplier orders) is refused before
+// routing, in addition to the per-route permission checks.
 func integrationRouteAllowed(method, path string) bool {
+	if integrationOrderRouteAllowed(method, path) {
+		return true
+	}
 	switch {
 	case method == http.MethodGet || method == http.MethodHead:
 		return strings.HasPrefix(path, "/api/v1/catalog/")
@@ -392,7 +396,7 @@ func (s *Server) requireAuth(next http.Handler) http.Handler {
 			return
 		}
 		if p.Integration != nil && !integrationRouteAllowed(r.Method, r.URL.Path) {
-			s.writeError(w, r, errForbidden("Integration keys can only call the catalog (/api/v1/catalog) and product import endpoints."))
+			s.writeError(w, r, errForbidden("Integration keys can only call the catalog (/api/v1/catalog), product import and order intake and reporting endpoints."))
 			return
 		}
 		if p.Method == "session" && !isSafeMethod(r.Method) {

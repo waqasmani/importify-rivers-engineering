@@ -35,12 +35,12 @@ const config = useQuery({
 <template>
   <div>
     <SettingsNav />
-    <PageHeader title="Integrations" subtitle="Let your storefront, ERP or scripts read the published catalog and receive change events." />
+    <PageHeader title="Integrations" subtitle="Let your storefront, ERP or scripts read the published catalog, send customer orders and receive events. Supplier orders are only handed off after a person confirms them." />
     <StateViews v-if="config.isLoading.value" kind="loading" />
     <StateViews v-else-if="config.error.value" kind="error" :message="errorMessage(config.error.value)" @retry="config.refetch()" />
     <UiTabs v-else-if="config.data.value" v-model="tab" :tabs="TABS">
       <IntegrationKeysPanel v-if="tab === 'keys'" :scopes="config.data.value.scopes" />
-      <WebhooksPanel v-else-if="tab === 'webhooks'" :events="config.data.value.events" :policy="config.data.value.webhooks" />
+      <WebhooksPanel v-else-if="tab === 'webhooks'" :events="config.data.value.events" :order-events="config.data.value.order_events" :policy="config.data.value.webhooks" />
       <ConnectPanel v-else :config="config.data.value" />
     </UiTabs>
   </div>

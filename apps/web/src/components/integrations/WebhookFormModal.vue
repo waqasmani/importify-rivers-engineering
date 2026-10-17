@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Create or edit a webhook endpoint. On create the server returns the signing secret once; it is
-// handed to the parent, which shows it and forgets it when dismissed.
+// handed to the parent, which shows it and forgets it when dismissed. Order events carry customer
+// personal data, so they are never preselected.
 import { computed, reactive, ref, watch } from 'vue'
 import { api, type Schemas } from '@/api/client'
 import UiModal from '@/components/ui/UiModal.vue'
@@ -8,12 +9,16 @@ import UiButton from '@/components/ui/UiButton.vue'
 import FormField from '@/components/ui/FormField.vue'
 import { useFieldErrors } from '@/composables/useFieldErrors'
 
-const props = defineProps<{
-  open: boolean
-  webhook: Schemas['WebhookView'] | null
-  events: Schemas['EventType'][]
-  policy: Schemas['WebhookPolicyDoc'] | null
-}>()
+const props = withDefaults(
+  defineProps<{
+    open: boolean
+    webhook: Schemas['WebhookView'] | null
+    events: Schemas['EventType'][]
+    orderEvents?: Schemas['EventType'][]
+    policy: Schemas['WebhookPolicyDoc'] | null
+  }>(),
+  { orderEvents: () => [] },
+)
 const emit = defineEmits<{ close: []; saved: [webhook: Schemas['WebhookView'], secret: string | null] }>()
 
 const { errors, capture, clear } = useFieldErrors()
@@ -80,9 +85,22 @@ async function submit() {
         </div>
         <p v-if="errors.events" class="mt-1 text-xs text-red-600" role="alert">{{ errors.events }}</p>
       </fieldset>
+      <fieldset v-if="orderEvents.length" data-testid="order-events">
+        <legend class="label">Order events</legend>
+        <p class="mb-2 rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">
+          Order payloads contain personal data: customer names, e-mail addresses, phone numbers and shipping addresses. Subscribe only systems you trust with it.
+          <code>supplier_order.confirmed</code> is sent only after a person confirmed a supplier order, and only for suppliers with automated placement.
+        </p>
+        <div class="space-y-1.5">
+          <label v-for="ev in orderEvents" :key="ev.type" class="flex items-start gap-2 text-sm">
+            <input v-model="form.events" type="checkbox" :value="ev.type" class="mt-0.5 rounded border-slate-300" />
+            <span><code class="text-xs">{{ ev.type }}</code><span class="block text-xs text-slate-500">{{ ev.description }}</span></span>
+          </label>
+        </div>
+      </fieldset>
       <label class="flex items-start gap-2 text-sm">
         <input v-model="form.include_costs" type="checkbox" class="mt-0.5 rounded border-slate-300" />
-        <span>Include costs and sourcing<span class="block text-xs text-slate-500">Adds cost, margin, supplier and source URL to each product. Only for systems you fully trust.</span></span>
+        <span>Include costs and sourcing<span class="block text-xs text-slate-500">Adds cost, margin, supplier and source URL to each product, and expected and actual costs to supplier orders. Only for systems you fully trust.</span></span>
       </label>
       <label class="flex items-center gap-2 text-sm">
         <input v-model="form.enabled" type="checkbox" class="rounded border-slate-300" /> Enabled

@@ -31,13 +31,18 @@ func newEnv(t *testing.T) *env { return newEnvWith(t, nil) }
 
 // newEnvWith is newEnv with configuration changes applied before the server starts.
 func newEnvWith(t *testing.T, configure func(*config.Config)) *env {
+	return newEnvLogged(t, configure, io.Discard)
+}
+
+// newEnvLogged is newEnvWith with the server and worker logs written to logs.
+func newEnvLogged(t *testing.T, configure func(*config.Config), logs io.Writer) *env {
 	t.Helper()
 	d, url := testutil.OpenDB(t)
 	cfg := testutil.Config(t, url)
 	if configure != nil {
 		configure(cfg)
 	}
-	log := slog.New(slog.NewTextHandler(io.Discard, nil))
+	log := slog.New(slog.NewTextHandler(logs, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	api, err := httpapi.New(cfg, d, log, httpapi.Deps{})
 	if err != nil {
 		t.Fatal(err)

@@ -37,6 +37,7 @@ flowchart LR
 | `services/internal/analysis` | Deterministic analyzers and report builders. |
 | `services/internal/ai` | Provider adapters, tool catalogue, evidence and grounding. |
 | `services/internal/products`, `normalize` | Product payload normalization, price/GTIN/URL handling, duplicate scoring inputs. |
+| `services/internal/orders` | Orders rules: derived statuses, confirmation warnings, the content hash a person confirms, webhook payloads with cost stripping and erasure ([orders.md](orders.md)). |
 | `services/internal/pricing` | Pricing rule engine: rule order and conditions, decimal price maths, rounding, currency conversion, locked prices ([pricing.md](pricing.md)). |
 | `services/internal/safefetch`, `safearchive`, `htmlx` | SSRF-safe fetching, safe archive reading, HTML sanitization. |
 | `services/internal/worker` | Job loop for analysis runs, AI jobs and retention. |
@@ -79,6 +80,20 @@ All tables are created by the migrations in `db/migrations`:
   `product_imports`, `captured_pages`, `source_adapters`, `pricing_rules`, `currency_rates`.
 - Analysis and AI: `analysis_projects`, `analysis_sources`, `analysis_runs`, `analysis_findings`,
   `analysis_reports`, `ai_provider_configs`, `ai_jobs`.
+- Catalog API: `integration_keys`, `integration_key_usage`, `catalog_change_events`,
+  `catalog_changes`, `catalog_product_state`, `catalog_feed_state`, `webhook_endpoints`,
+  `webhook_deliveries`, `webhook_delivery_attempts`.
+- Orders ([orders.md](orders.md)): `orders` (customer orders: `SO-` number, channel `api` with the
+  integration key or `manual` with the user, `external_id` unique per key for idempotent intake,
+  customer and shipping address, paid amounts, derived `status` and `needs_attention`,
+  cancellation and erasure markers), `order_lines` (as sold, the resolved product and variant and
+  how, and the sourcing snapshot taken at preparation: supplier, source URL, options, expected unit
+  cost), `supplier_orders` (`PO-` number per supplier or source domain, placement method, status,
+  items as JSON, expected and actual cost, ship-to snapshot, the confirmed `content_hash` and who
+  confirmed, placement, failure, tracking and cancellation) and `order_events` (the order
+  timeline). Suppliers have an `order_placement` method; webhook deliveries of order events carry
+  `order_id` and `supplier_order_id`. The rules that need no database (status derivation, warnings,
+  content hash, webhook payloads, country codes) live in `services/internal/orders`.
 
 Notes, tags, attachments and tasks attach to any record through `(entity_type, entity_id)`;
 triggers remove them when the record is deleted. Search uses `pg_trgm` and expression indexes.

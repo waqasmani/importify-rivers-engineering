@@ -16,6 +16,7 @@ import (
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/ai"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/analysis"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/catalog"
+	"github.com/waqasmani/importify-rivers-engineering/services/internal/orders"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/products"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/store"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/webhooks"
@@ -266,6 +267,31 @@ func Operations() []opDoc {
 		op("GET", "/api/v1/integrations/deliveries/{id}", "getWebhookDelivery", "Catalog", "A delivery with its payload and attempts", nil, WebhookDeliveryDetail{}, 200),
 		op("POST", "/api/v1/integrations/deliveries/{id}/redeliver", "redeliverWebhook", "Catalog", "Queue the same event again", nil, WebhookDeliveryDetail{}, 202),
 
+		op("GET", "/api/v1/orders", "listOrders", "Orders", "Customer orders, newest first (integration keys: the orders they submitted)", nil, Page[OrderListItem]{}, 200,
+			"status", "needs_attention", "channel", "q", "from", "to", "integration_key_id", "limit", "offset"),
+		op("POST", "/api/v1/orders", "createOrder", "Orders", "Submit a customer order; REA prepares draft supplier orders (200 with the existing order when the external_id was already received)", orderInput{}, OrderDetail{}, 201),
+		op("GET", "/api/v1/orders/by-external-id/{external_id}", "getOrderByExternalID", "Orders", "An order by your external order ID (integration keys: among their orders; people: among manual orders)", nil, OrderDetail{}, 200),
+		op("GET", "/api/v1/orders/{id}", "getOrder", "Orders", "A customer order with lines, supplier orders, tracking and timeline", nil, OrderDetail{}, 200),
+		op("POST", "/api/v1/orders/{id}/cancel", "cancelOrder", "Orders", "Cancel a customer order while none of its supplier orders is placed", cancelInput{}, OrderDetail{}, 200),
+		op("POST", "/api/v1/orders/{id}/prepare", "prepareOrder", "Orders", "Resolve unmatched lines again and rebuild the draft supplier orders", nil, OrderDetail{}, 200),
+		op("PUT", "/api/v1/orders/{id}/lines/{lineID}", "updateOrderLine", "Orders", "Map a line to a product or variant and set its quantity (lines of drafts only)", orderLineUpdateInput{}, OrderDetail{}, 200),
+		op("POST", "/api/v1/orders/{id}/lines/{lineID}/cancel", "cancelOrderLine", "Orders", "Cancel a line that is not in a confirmed supplier order", nil, OrderDetail{}, 200),
+		op("POST", "/api/v1/orders/{id}/erase-customer", "eraseOrderCustomer", "Orders", "Erase the customer's personal data once no supplier order is open", nil, OrderDetail{}, 200),
+		op("GET", "/api/v1/supplier-orders", "listSupplierOrders", "Orders", "Supplier orders by queue (to_confirm, to_place, awaiting_tracking, failed) or status", nil, Page[SupplierOrderListItem]{}, 200,
+			"queue", "status", "placement_method", "supplier_id", "order_id", "q", "limit", "offset"),
+		op("GET", "/api/v1/supplier-orders/queues", "supplierOrderQueues", "Orders", "Number of supplier orders in each queue", nil, supplierOrderQueuesDoc{}, 200),
+		op("GET", "/api/v1/supplier-orders/{id}", "getSupplierOrder", "Orders", "A supplier order with items, ship-to, warnings and the content hash to confirm", nil, SupplierOrderView{}, 200),
+		op("PUT", "/api/v1/supplier-orders/{id}", "updateSupplierOrder", "Orders", "Edit the ship-to and note of a draft", supplierOrderUpdateInput{}, SupplierOrderView{}, 200),
+		op("POST", "/api/v1/supplier-orders/{id}/confirm", "confirmSupplierOrder", "Orders", "Confirm a draft for placement (a person with orders.place, dashboard session only)", confirmInput{}, SupplierOrderView{}, 200),
+		op("POST", "/api/v1/supplier-orders/{id}/revert", "revertSupplierOrder", "Orders", "Withdraw a confirmation that has not been placed (back to draft)", nil, SupplierOrderView{}, 200),
+		op("POST", "/api/v1/supplier-orders/{id}/retry", "retrySupplierOrder", "Orders", "Hand a failed supplier order off again", nil, SupplierOrderView{}, 200),
+		op("POST", "/api/v1/supplier-orders/{id}/switch-to-manual", "switchSupplierOrderToManual", "Orders", "Place a failed automated supplier order by hand instead", nil, SupplierOrderView{}, 200),
+		op("POST", "/api/v1/supplier-orders/{id}/placed", "supplierOrderPlaced", "Orders", "Record that a confirmed supplier order was placed with the supplier", placedInput{}, SupplierOrderView{}, 200),
+		op("POST", "/api/v1/supplier-orders/{id}/failed", "supplierOrderFailed", "Orders", "Report that placing a confirmed supplier order failed", failedInput{}, SupplierOrderView{}, 200),
+		op("POST", "/api/v1/supplier-orders/{id}/shipment", "supplierOrderShipment", "Orders", "Record or correct the tracking of a placed supplier order", shipmentInput{}, SupplierOrderView{}, 200),
+		op("POST", "/api/v1/supplier-orders/{id}/delivered", "supplierOrderDelivered", "Orders", "Mark a shipped supplier order as delivered", nil, SupplierOrderView{}, 200),
+		op("POST", "/api/v1/supplier-orders/{id}/cancel", "cancelSupplierOrder", "Orders", "Cancel a supplier order in REA (REA does not contact the supplier)", cancelInput{}, SupplierOrderView{}, 200),
+
 		op("GET", "/api/v1/admin/export", "fullExport", "Data", "Download all data as JSON Lines in a ZIP", nil, nil, 200).produces("application/zip"),
 		op("GET", "/api/v1/admin/backups", "listBackups", "Data", "Database backups", nil, backupListDoc{}, 200),
 		op("POST", "/api/v1/admin/backups", "createBackup", "Data", "Create a pg_dump backup", nil, backupInfo{}, 201),
@@ -483,6 +509,9 @@ func BuildOpenAPI(version string) map[string]any {
 		if o.ID == "submitProductImport" {
 			responses["202"] = map[string]any{"description": "A likely duplicate needs a decision", "content": map[string]any{"application/json": map[string]any{"schema": g.schema(reflect.TypeOf(importOutcome{}))}}}
 		}
+		if o.ID == "createOrder" {
+			responses["200"] = map[string]any{"description": "The external_id was already received with the same contents: the existing order", "content": map[string]any{"application/json": map[string]any{"schema": g.schema(reflect.TypeOf(OrderDetail{}))}}}
+		}
 		if o.ID == "createAIJob" {
 			responses["409"] = map[string]any{"description": "AI unavailable, or confirmation required before data leaves the server", "content": map[string]any{"application/json": map[string]any{"schema": g.schema(reflect.TypeOf(externalConfirmDoc{}))}}}
 		}
@@ -516,7 +545,7 @@ func BuildOpenAPI(version string) map[string]any {
 	return map[string]any{
 		"openapi": "3.0.3",
 		"info": map[string]any{"title": "REA and Importify CRM API", "version": version,
-			"description": "Self-hosted API for REA (Reverse Engineering Anything) and Importify CRM. Browser sessions use the session cookie plus the X-CSRF-Token header on unsafe methods; the browser extension and scripts use Bearer tokens; external systems use integration keys (reai_...) on the Catalog endpoints."},
+			"description": "Self-hosted API for REA (Reverse Engineering Anything) and Importify CRM. Browser sessions use the session cookie plus the X-CSRF-Token header on unsafe methods; the browser extension and scripts use Bearer tokens; external systems use integration keys (reai_...) on the Catalog and Orders endpoints. Supplier orders are only handed off for placement after a signed-in person confirms them."},
 		"servers":    []any{map[string]any{"url": "/"}},
 		"security":   []any{map[string]any{"session": []any{}}, map[string]any{"bearer": []any{}}},
 		"paths":      paths,
@@ -532,7 +561,7 @@ func BuildOpenAPI(version string) map[string]any {
 }
 
 // webhookDoc describes the requests REA sends to registered webhook endpoints (OpenAPI 3.0 has no
-// webhooks section, so it is an x- extension; the body schema is CatalogEvent).
+// webhooks section, so it is an x- extension; the body schemas are CatalogEvent and Event).
 func webhookDoc(g *schemaGen) map[string]any {
 	header := func(name, desc string) map[string]any {
 		return map[string]any{"name": name, "in": "header", "required": true, "description": desc, "schema": map[string]any{"type": "string"}}
@@ -542,18 +571,32 @@ func webhookDoc(g *schemaGen) map[string]any {
 		types = append(types, e.Type)
 	}
 	types = append(types, catalog.EventTest)
-	return map[string]any{"catalogEvent": map[string]any{"post": map[string]any{
+	orderTypes := []string{}
+	for _, e := range orders.EventTypes {
+		orderTypes = append(orderTypes, e.Type)
+	}
+	params := []any{
+		header(webhooks.HeaderEventID, "Event ID, identical across retries and redeliveries"),
+		header(webhooks.HeaderEventType, "Event type"),
+		header(webhooks.HeaderDeliveryID, "Delivery ID (a redelivery has a new one)"),
+		header(webhooks.HeaderTimestamp, "Unix seconds when the request was signed; reject old timestamps"),
+		header(webhooks.HeaderSignature, "Comma-separated v1=<hex HMAC-SHA256> signatures"),
+	}
+	return map[string]any{"orderEvent": map[string]any{"post": map[string]any{
+		"summary": "Order event delivered to a registered endpoint (contains personal data)",
+		"description": "POSTed as JSON for every subscribed order event (" + strings.Join(orderTypes, ", ") + "), signed like catalog events. " +
+			"The body contains the customer's name, e-mail, phone and shipping address. supplier_order.confirmed is sent only after a person confirmed the " +
+			"supplier order, and only for suppliers with automated placement; cost fields are present only for endpoints with include_costs.",
+		"parameters": params,
+		"requestBody": map[string]any{"required": true, "content": map[string]any{"application/json": map[string]any{
+			"schema": g.schema(reflect.TypeOf(orders.OrderWebhookEvent{}))}}},
+		"responses": map[string]any{"200": map[string]any{"description": "Any 2xx status acknowledges the delivery"}},
+	}}, "catalogEvent": map[string]any{"post": map[string]any{
 		"summary": "Catalog event delivered to a registered endpoint",
 		"description": "POSTed as JSON for every subscribed event (" + strings.Join(types, ", ") + "). Verify " + webhooks.HeaderSignature +
 			": v1=hex(HMAC-SHA256(secret, timestamp + \".\" + raw body)); during a secret rotation two v1 values are sent. " +
 			"Answer 2xx within the timeout; anything else is retried with exponential backoff. Deduplicate on the event id.",
-		"parameters": []any{
-			header(webhooks.HeaderEventID, "Event ID, identical across retries and redeliveries"),
-			header(webhooks.HeaderEventType, "Event type"),
-			header(webhooks.HeaderDeliveryID, "Delivery ID (a redelivery has a new one)"),
-			header(webhooks.HeaderTimestamp, "Unix seconds when the request was signed; reject old timestamps"),
-			header(webhooks.HeaderSignature, "Comma-separated v1=<hex HMAC-SHA256> signatures"),
-		},
+		"parameters": params,
 		"requestBody": map[string]any{"required": true, "content": map[string]any{"application/json": map[string]any{
 			"schema": g.schema(reflect.TypeOf(catalog.CatalogEvent{}))}}},
 		"responses": map[string]any{"200": map[string]any{"description": "Any 2xx status acknowledges the delivery"}},

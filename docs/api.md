@@ -12,7 +12,7 @@ response is validated against the document.
 | Session cookie | Dashboard | `POST /api/v1/auth/login` sets `rea_session` (`__Host-rea_session` on HTTPS) and returns `csrf_token`. Send it as `X-CSRF-Token` on every non-GET request. |
 | Personal API token | Scripts and integrations | Create under Profile → API tokens. Send `Authorization: Bearer reap_…`. Same permissions as the user. |
 | Extension tokens | Browser extension | Pairing and refresh endpoints under `/api/v1/extension`. Access tokens (`reaa_…`) last one hour. |
-| Integration keys | Your storefront, ERP and other systems | Created by administrators under Settings → Integrations. Send `Authorization: Bearer reai_…`. Organization-owned, scoped (`catalog.read`, `catalog.read_costs`, `imports.write`) and limited to the catalog and product import endpoints. See [catalog-api.md](catalog-api.md). |
+| Integration keys | Your storefront, ERP and other systems | Created by administrators under Settings → Integrations. Send `Authorization: Bearer reai_…`. Organization-owned, scoped (`catalog.read`, `catalog.read_costs`, `imports.write`, `orders.write`, `supplier_orders.report`) and limited to the catalog, product import and order intake and reporting endpoints. See [catalog-api.md](catalog-api.md) and [orders.md](orders.md). |
 
 Request bodies must be `application/json` (uploads use `multipart/form-data`) and may not contain
 unknown fields.
@@ -39,6 +39,23 @@ algorithm, payloads, signature verification and retry rules, is in
 ```bash
 curl -fsS -H "Authorization: Bearer $REA_KEY" "$BASE/api/v1/catalog/products?limit=100"
 curl -fsS -H "Authorization: Bearer $REA_KEY" "$BASE/api/v1/catalog/changes?since=0"
+```
+
+## Orders
+
+Customer orders arrive at `POST /api/v1/orders` (integration keys with `orders.write`, or people
+with `orders.write`) and are idempotent per key and `external_id` (`200` with the existing order on
+a repeat, `409 order_conflict` when the contents differ). REA prepares draft supplier orders
+(`/api/v1/supplier-orders`); a draft is handed off only when a person with `orders.place` confirms
+it from a dashboard session with the `content_hash` they reviewed — integration keys, personal and
+extension tokens cannot confirm. Placements, failures and shipments are recorded by people or
+reported by a `supplier_orders.report` key. Order webhooks (`order.*`, `supplier_order.*`) carry
+customer personal data. Full guide: [orders.md](orders.md).
+
+```bash
+curl -fsS -H "Authorization: Bearer $REA_KEY" -H 'Content-Type: application/json' "$BASE/api/v1/orders" \
+  -d '{"external_id":"1001","currency":"EUR","shipping_address":{"name":"Ada Lovelace","line1":"12 Example Street","city":"London","postal_code":"N1 7AA","country":"GB"},"lines":[{"sku":"MUG-RED-L","quantity":2,"unit_price":"19.90"}]}'
+curl -fsS -H "Authorization: Bearer $REA_KEY" "$BASE/api/v1/orders/by-external-id/1001"
 ```
 
 ## Example

@@ -34,7 +34,7 @@ WHERE id = (
   WHERE d.status = 'pending' AND d.next_attempt_at <= now() AND e.enabled
   ORDER BY d.next_attempt_at, d.created_at
   FOR UPDATE OF d SKIP LOCKED LIMIT 1)
-RETURNING id, endpoint_id, event_id, event_type, change_id, product_id, payload, is_test, status, attempts, max_attempts, next_attempt_at, last_attempt_at, response_status, response_body, latency_ms, error, redelivery_of, locked_by, locked_at, created_at, finished_at
+RETURNING id, endpoint_id, event_id, event_type, change_id, product_id, payload, is_test, status, attempts, max_attempts, next_attempt_at, last_attempt_at, response_status, response_body, latency_ms, error, redelivery_of, locked_by, locked_at, created_at, finished_at, order_id, supplier_order_id
 `
 
 func (q *Queries) ClaimWebhookDelivery(ctx context.Context, lockedBy string) (WebhookDelivery, error) {
@@ -63,6 +63,8 @@ func (q *Queries) ClaimWebhookDelivery(ctx context.Context, lockedBy string) (We
 		&i.LockedAt,
 		&i.CreatedAt,
 		&i.FinishedAt,
+		&i.OrderID,
+		&i.SupplierOrderID,
 	)
 	return i, err
 }
@@ -155,7 +157,7 @@ INSERT INTO webhook_deliveries (endpoint_id, event_id, event_type, change_id, pr
   redelivery_of, status, attempts, locked_by, locked_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
   CASE WHEN $10::text = 'delivering' THEN now() END)
-RETURNING id, endpoint_id, event_id, event_type, change_id, product_id, payload, is_test, status, attempts, max_attempts, next_attempt_at, last_attempt_at, response_status, response_body, latency_ms, error, redelivery_of, locked_by, locked_at, created_at, finished_at
+RETURNING id, endpoint_id, event_id, event_type, change_id, product_id, payload, is_test, status, attempts, max_attempts, next_attempt_at, last_attempt_at, response_status, response_body, latency_ms, error, redelivery_of, locked_by, locked_at, created_at, finished_at, order_id, supplier_order_id
 `
 
 type CreateWebhookDeliveryParams struct {
@@ -213,6 +215,8 @@ func (q *Queries) CreateWebhookDelivery(ctx context.Context, arg CreateWebhookDe
 		&i.LockedAt,
 		&i.CreatedAt,
 		&i.FinishedAt,
+		&i.OrderID,
+		&i.SupplierOrderID,
 	)
 	return i, err
 }
@@ -309,7 +313,7 @@ UPDATE webhook_deliveries SET status = $1, next_attempt_at = $2,
   last_attempt_at = now(), response_status = $3, response_body = $4,
   latency_ms = $5, error = $6, locked_by = '', locked_at = NULL,
   finished_at = CASE WHEN $1::text IN ('succeeded', 'failed') THEN now() END
-WHERE id = $7 RETURNING id, endpoint_id, event_id, event_type, change_id, product_id, payload, is_test, status, attempts, max_attempts, next_attempt_at, last_attempt_at, response_status, response_body, latency_ms, error, redelivery_of, locked_by, locked_at, created_at, finished_at
+WHERE id = $7 RETURNING id, endpoint_id, event_id, event_type, change_id, product_id, payload, is_test, status, attempts, max_attempts, next_attempt_at, last_attempt_at, response_status, response_body, latency_ms, error, redelivery_of, locked_by, locked_at, created_at, finished_at, order_id, supplier_order_id
 `
 
 type FinishWebhookDeliveryParams struct {
@@ -356,6 +360,8 @@ func (q *Queries) FinishWebhookDelivery(ctx context.Context, arg FinishWebhookDe
 		&i.LockedAt,
 		&i.CreatedAt,
 		&i.FinishedAt,
+		&i.OrderID,
+		&i.SupplierOrderID,
 	)
 	return i, err
 }
@@ -414,7 +420,7 @@ func (q *Queries) GetIntegrationKey(ctx context.Context, id uuid.UUID) (Integrat
 }
 
 const getWebhookDelivery = `-- name: GetWebhookDelivery :one
-SELECT id, endpoint_id, event_id, event_type, change_id, product_id, payload, is_test, status, attempts, max_attempts, next_attempt_at, last_attempt_at, response_status, response_body, latency_ms, error, redelivery_of, locked_by, locked_at, created_at, finished_at FROM webhook_deliveries WHERE id = $1
+SELECT id, endpoint_id, event_id, event_type, change_id, product_id, payload, is_test, status, attempts, max_attempts, next_attempt_at, last_attempt_at, response_status, response_body, latency_ms, error, redelivery_of, locked_by, locked_at, created_at, finished_at, order_id, supplier_order_id FROM webhook_deliveries WHERE id = $1
 `
 
 func (q *Queries) GetWebhookDelivery(ctx context.Context, id uuid.UUID) (WebhookDelivery, error) {
@@ -443,6 +449,8 @@ func (q *Queries) GetWebhookDelivery(ctx context.Context, id uuid.UUID) (Webhook
 		&i.LockedAt,
 		&i.CreatedAt,
 		&i.FinishedAt,
+		&i.OrderID,
+		&i.SupplierOrderID,
 	)
 	return i, err
 }

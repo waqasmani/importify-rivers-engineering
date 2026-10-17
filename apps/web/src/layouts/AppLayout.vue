@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import {
   BadgeDollarSign, Bell, Building2, CopyCheck, Globe, Handshake, LayoutDashboard, LogOut, Menu, Package, PackageSearch, Puzzle, ScanSearch,
   ScrollText, Server, Settings, Shield, SlidersHorizontal, Sparkles, SquareCheckBig, SquareKanban, Tags, Target, Truck, UserCog, Users, X, Plug, FolderTree, Bot,
-  Webhook, Store, FlaskConical,
+  Webhook, Store, FlaskConical, ShoppingCart, ClipboardList,
 } from 'lucide-vue-next'
 import GlobalSearch from '@/components/GlobalSearch.vue'
 import { api, type Schemas } from '@/api/client'
@@ -58,6 +58,13 @@ const sections = computed<{ title: string; items: NavItem[] }[]>(() => [
       { to: '/captures', label: 'Captured pages', icon: Globe, perm: 'products.read' },
       { to: '/marketplaces', label: 'Marketplaces', icon: Store, perm: 'products.read' },
       { to: '/adapter-lab', label: 'Adapter lab', icon: FlaskConical, perm: 'products.read' },
+    ],
+  },
+  {
+    title: 'Orders',
+    items: [
+      { to: '/orders', label: 'Orders', icon: ShoppingCart, perm: 'orders.read' },
+      { to: '/supplier-orders', label: 'Supplier orders', icon: ClipboardList, perm: 'orders.read' },
     ],
   },
   {

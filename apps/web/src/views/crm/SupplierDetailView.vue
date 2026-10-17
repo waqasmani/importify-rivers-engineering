@@ -13,6 +13,7 @@ import TagEditor from '@/components/record/TagEditor.vue'
 import CustomFieldsEditor from '@/components/record/CustomFieldsEditor.vue'
 import RecordPanels from '@/components/record/RecordPanels.vue'
 import DetailFacts, { type Fact } from '@/components/crm/DetailFacts.vue'
+import { PLACEMENT_LABELS } from '@/components/orders/order-utils'
 import RelatedRecords from '@/components/crm/RelatedRecords.vue'
 import MergeDialog from '@/components/crm/MergeDialog.vue'
 import StageSelect from '@/components/crm/StageSelect.vue'
@@ -50,6 +51,7 @@ const facts = computed<Fact[]>(() => {
   if (!x) return []
   return [
     { label: 'Type', value: titleCase(x.supplier_type) },
+    { label: 'Order placement', value: PLACEMENT_LABELS[x.order_placement] ?? x.order_placement },
     { label: 'Rating', value: x.rating ? `${x.rating} / 5` : null },
     { label: 'Website', value: x.website, href: x.website ?? undefined },
     { label: 'Domain', value: x.domain },

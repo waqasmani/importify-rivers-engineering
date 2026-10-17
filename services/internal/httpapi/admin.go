@@ -77,6 +77,15 @@ var exportTables = []struct{ name, query string }{
 	{"audit_logs", "SELECT * FROM audit_logs ORDER BY id DESC LIMIT 200000"},
 }
 
+// orderExportTables hold customer personal data; they are exported only for callers who may read
+// orders (orders.read).
+var orderExportTables = []struct{ name, query string }{
+	{"orders", "SELECT id, number, channel, integration_key_id, created_by, source_label, external_id, customer_name, customer_email, customer_phone, ship_name, ship_company, ship_line1, ship_line2, ship_city, ship_region, ship_postal_code, ship_country, ship_phone, currency, subtotal, shipping_amount, tax_amount, total, customer_note, ordered_at, status, needs_attention, cancelled_at, cancelled_by, cancel_reason, customer_erased_at, created_at, updated_at FROM orders"},
+	{"order_lines", "SELECT * FROM order_lines"},
+	{"supplier_orders", "SELECT * FROM supplier_orders"},
+	{"order_events", "SELECT * FROM order_events"},
+}
+
 // writeJSONLines streams query rows as JSON Lines into w.
 func (s *Server) writeJSONLines(ctx context.Context, w io.Writer, query string, args ...any) (int, error) {
 	rows, err := s.db.Pool.Query(ctx, "SELECT row_to_json(t)::text FROM ("+query+") t", args...)
@@ -105,7 +114,11 @@ func (s *Server) handleFullExport(w http.ResponseWriter, r *http.Request) error 
 	w.Header().Set("Cache-Control", "no-store")
 	zw := zip.NewWriter(w)
 	counts := map[string]int{}
-	for _, t := range exportTables {
+	tables := exportTables
+	if principal(r).Can(auth.PermOrdersRead) {
+		tables = append(tables[:len(tables):len(tables)], orderExportTables...)
+	}
+	for _, t := range tables {
 		f, err := zw.Create(t.name + ".jsonl")
 		if err != nil {
 			return err

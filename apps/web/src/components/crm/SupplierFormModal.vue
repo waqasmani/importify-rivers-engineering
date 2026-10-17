@@ -16,6 +16,7 @@ import { useToast } from '@/composables/useToast'
 import { useFieldErrors } from '@/composables/useFieldErrors'
 import { splitList, titleCase } from '@/lib/format'
 import { SUPPLIER_TYPES, customFields, toInt, useCustomFieldDefs } from './crm'
+import { PLACEMENT_HELP, PLACEMENT_LABELS } from '@/components/orders/order-utils'
 
 type Supplier = Schemas['SupplierView']
 
@@ -33,7 +34,10 @@ const blank = () => ({
   name: '', company_id: null as string | null, supplier_type: 'manufacturer', website: '', domain: '', country: '', city: '', address: '', email: '', phone: '',
   primary_contact_id: null as string | null, pipeline_stage_id: null as string | null, rating: '', payment_terms: '', lead_time_days: '', moq_notes: '',
   certifications: '', description: '', owner_id: null as string | null, custom_fields: {} as Record<string, unknown>, tag_ids: [] as string[],
+  order_placement: 'manual',
 })
+// Switching to automated placement decides where confirmed purchase orders go, so it needs orders.place.
+const canSetPlacement = computed(() => auth.can('orders.place'))
 const form = reactive(blank())
 
 watch(
@@ -49,6 +53,7 @@ watch(
         city: s.city, address: s.address, email: s.email, phone: s.phone, primary_contact_id: s.primary_contact_id ?? null, pipeline_stage_id: s.pipeline_stage_id ?? null,
         rating: s.rating ? String(s.rating) : '', payment_terms: s.payment_terms, lead_time_days: s.lead_time_days === null || s.lead_time_days === undefined ? '' : String(s.lead_time_days),
         moq_notes: s.moq_notes, certifications: (s.certifications ?? []).join(', '), description: s.description, owner_id: s.owner_id ?? null, custom_fields: customFields(s.custom_fields),
+        order_placement: s.order_placement || 'manual',
       })
     } else {
       form.owner_id = auth.user?.id ?? null
@@ -70,6 +75,7 @@ async function submit() {
     country: form.country, city: form.city, address: form.address, email: form.email, phone: form.phone, primary_contact_id: form.primary_contact_id,
     pipeline_stage_id: form.pipeline_stage_id, rating: form.rating ? Number(form.rating) : null, payment_terms: form.payment_terms, lead_time_days: leadTime,
     moq_notes: form.moq_notes, certifications: splitList(form.certifications), description: form.description, owner_id: form.owner_id, custom_fields: form.custom_fields,
+    order_placement: form.order_placement,
   }
   if (!editing.value && form.tag_ids.length) body.tag_ids = form.tag_ids
   try {
@@ -137,6 +143,15 @@ async function submit() {
         </FormField>
         <FormField v-slot="{ id }" label="MOQ notes" :error="errors.moq_notes" class="sm:col-span-2">
           <textarea :id="id" v-model="form.moq_notes" rows="2" class="input" maxlength="2000" />
+        </FormField>
+      </FormSection>
+      <FormSection title="Ordering">
+        <FormField v-slot="{ id, describedby }" label="Order placement" :error="errors.order_placement" class="sm:col-span-2"
+          :hint="canSetPlacement ? undefined : 'Only people with the orders.place permission can change this.'">
+          <select :id="id" v-model="form.order_placement" class="input" :disabled="!canSetPlacement" :aria-describedby="describedby" data-testid="order-placement">
+            <option v-for="(l, k) in PLACEMENT_LABELS" :key="k" :value="k">{{ l }}</option>
+          </select>
+          <p class="mt-1 text-xs text-slate-500">{{ PLACEMENT_HELP[form.order_placement] }} Either way, a person confirms every supplier order before it is handed off.</p>
         </FormField>
       </FormSection>
       <FormSection title="Contact details">

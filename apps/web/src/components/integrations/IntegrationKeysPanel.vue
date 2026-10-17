@@ -101,7 +101,7 @@ const describe = (code: string) => props.scopes.find((s) => s.code === code)?.de
   <div class="space-y-4">
     <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <p class="text-sm text-slate-600">
-        Keys let your own systems read the published catalog and submit products for review. They belong to the organization: their scopes never change when the person who created them changes role or leaves.
+        Keys let your own systems read the published catalog, submit products for review, send customer orders and report on the placements of your purchasing automation. No key can confirm a supplier order: that is always done by a person in REA. Keys belong to the organization: their scopes never change when the person who created them changes role or leaves.
       </p>
       <UiButton size="sm" variant="primary" class="shrink-0" @click="openCreate"><Plus class="h-4 w-4" aria-hidden="true" /> New key</UiButton>
     </div>

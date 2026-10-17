@@ -56,7 +56,7 @@ Run from a fresh clone of the branch with `pnpm install --frozen-lockfile`:
 | Go tests with PostgreSQL (`REA_REQUIRE_DB_TESTS=1`) | 90 passed, 0 failed, 0 skipped |
 | Dashboard component tests | 26 files, 96 tests passed |
 | Extension unit tests | 6 files, 99 tests passed |
-| Dashboard Playwright tests against a real API | 10 passed |
+| Dashboard Playwright tests against a real API, including an order from an integration key confirmed, placed and shipped by a person | 11 passed |
 | Extension Playwright tests (load, pair, capture, import, revoke) | 15 passed |
 | Docker images (`api`, `web`, `extension` targets) | built |
 | `docker compose up --wait` + `deploy/scripts/smoke-test.sh` | passed: health, headers, setup, sign-in, write, backup, verify, restore, restored data checked |
@@ -78,7 +78,7 @@ Known limitations (documented in the UI):
 
 ## Phase 10 — Dropshipping import platform (2026-10-17)
 Products are saved in REA and reached by other systems through its REST API; there are no store
-plugins. Built in three parallel branches and merged:
+plugins. Built in four parallel branches and merged:
 
 - **Marketplace support** — `packages/extractor` (`@rea/extractor`, the extension's extraction code
   plus a declarative `rules` adapter engine), `db/marketplaces/*.json` (31 definitions),
@@ -98,25 +98,38 @@ plugins. Built in three parallel branches and merged:
   without `catalog.read_costs`, and pricing bookkeeping columns were excluded from change capture
   so a reprice that changes no price emits nothing (`TestCatalogPricingAndSourcingFields`, which
   fails against the original triggers).
+- **Orders, confirm before placing** — `services/internal/orders` (content hash, warnings, derived
+  status, events), `services/internal/httpapi/{orders,orders_prepare,orders_events,supplier_orders}.go`,
+  migration `00009_orders`, the Orders, Supplier orders and New order screens, `docs/orders.md`.
+  Customer orders arrive through integration keys (`orders.write`) or the dashboard; REA matches
+  lines to products and prepares draft supplier orders with warnings; only a person with
+  `orders.place` in a dashboard session can confirm one, for exactly the contents they reviewed
+  (content hash), and only then is it placed by hand or handed to the user's automation through
+  the `supplier_order.confirmed` webhook. No key, token or setting confirms. Customer data is kept
+  out of logs, audit entries and AI tools and can be erased. Placing orders by e-mail is not
+  built (REA has no outgoing mail).
 
 Verification of the merged branch:
 
 | Check | Result |
 | --- | --- |
 | gofmt, `go vet`, `sqlc diff`, migration lint, OpenAPI and TypeScript types regenerated | clean |
-| Go tests with PostgreSQL (`REA_REQUIRE_DB_TESTS=1`) | 135 top-level tests passed, 0 failed, 0 skipped |
+| Go tests with PostgreSQL (`REA_REQUIRE_DB_TESTS=1`) | 150 top-level tests passed, 0 failed, 0 skipped |
 | `pnpm -r typecheck` | clean |
 | `@rea/extractor` tests | 3 files, 434 tests passed |
-| Dashboard component tests | 36 files, 140 tests passed |
+| Dashboard component tests | 40 files, 151 tests passed |
 | Extension unit tests | 6 files, 72 tests passed (the extraction tests moved to `@rea/extractor`) |
 | Dashboard and extension builds (extension dist check) | passed |
-| Dashboard Playwright tests against a real API | 10 passed |
+| Dashboard Playwright tests against a real API, including an order from an integration key confirmed, placed and shipped by a person | 11 passed |
 | Extension Playwright tests, including 4 marketplace capture/import tests with no proxy and no outside DNS | 19 passed |
-| Docker images (`api`, `web`), `docker compose up --wait`, `deploy/scripts/smoke-test.sh` | passed: health, setup, sign-in, write, backup (schema version 8), verify, restore, restored data checked; 31 marketplace definitions synced at start-up |
+| Docker images (`api`, `web`), `docker compose up --wait`, `deploy/scripts/smoke-test.sh` | passed: health, setup, sign-in, write, backup (schema version 9), verify, restore, restored data checked; 31 marketplace definitions synced at start-up |
 
 Not verified, and why:
 - Marketplace definitions on real pages: REA's developers did not fetch or scrape the
   marketplaces. Saved real pages should go through the Adapter lab before relying on a definition.
 - Exchange rates are maintained by hand; no rate source was integrated or called.
-- Webhook deliveries were tested against local receivers; no third-party receiver was called.
+- Webhook deliveries (catalog and order events) were tested against local receivers; no
+  third-party receiver or supplier automation was called.
+- No automated accessibility audit (axe or similar) was run on the new screens; they follow the
+  existing patterns and were checked at desktop and phone widths.
 - GitHub Actions only runs on pull requests and `main`, so the workflow has not run on this branch.

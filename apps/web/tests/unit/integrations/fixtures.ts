@@ -15,6 +15,10 @@ export const config: Schemas['IntegrationsConfigDoc'] = {
     { type: 'product.unpublished', description: 'A product left the catalog' },
     { type: 'product.deleted', description: 'A product was deleted' },
   ],
+  order_events: [
+    { type: 'order.received', description: 'A customer order was received' },
+    { type: 'supplier_order.confirmed', description: 'A person confirmed a supplier order' },
+  ],
   webhooks: {
     allow_http_localhost: false, allow_private_networks: false, max_attempts: 10, timeout_seconds: 10, disable_after_failures: 20,
     signature_header: 'X-REA-Signature', timestamp_header: 'X-REA-Timestamp', event_id_header: 'X-REA-Event-Id',

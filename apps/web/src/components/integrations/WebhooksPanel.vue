@@ -18,7 +18,7 @@ import { formatDateTime, relativeTime } from '@/lib/format'
 
 type Webhook = Schemas['WebhookView']
 
-defineProps<{ events: Schemas['EventType'][]; policy: Schemas['WebhookPolicyDoc'] | null }>()
+withDefaults(defineProps<{ events: Schemas['EventType'][]; orderEvents?: Schemas['EventType'][]; policy: Schemas['WebhookPolicyDoc'] | null }>(), { orderEvents: () => [] })
 const toast = useToast()
 const { confirm } = useConfirm()
 const qc = useQueryClient()
@@ -114,7 +114,7 @@ const logFor = ref<Webhook | null>(null)
 <template>
   <div class="space-y-4">
     <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-      <p class="text-sm text-slate-600">REA posts a signed JSON event to each endpoint when a published product changes. Failed deliveries are retried with backoff.</p>
+      <p class="text-sm text-slate-600">REA posts a signed JSON event to each endpoint when a published product changes or, for order events, when an order or supplier order changes. Failed deliveries are retried with backoff.</p>
       <UiButton size="sm" variant="primary" class="shrink-0" @click="open(null)"><Plus class="h-4 w-4" aria-hidden="true" /> New webhook</UiButton>
     </div>
 
@@ -170,7 +170,7 @@ const logFor = ref<Webhook | null>(null)
       </li>
     </ul>
 
-    <WebhookFormModal :open="formOpen" :webhook="editing" :events="events" :policy="policy" @close="formOpen = false" @saved="saved" />
+    <WebhookFormModal :open="formOpen" :webhook="editing" :events="events" :order-events="orderEvents" :policy="policy" @close="formOpen = false" @saved="saved" />
     <UiModal :open="logFor !== null" :title="logFor ? `Deliveries · ${logFor.name}` : 'Deliveries'" size="xl" @close="logFor = null">
       <WebhookDeliveries v-if="logFor" :webhook-id="logFor.id" />
     </UiModal>

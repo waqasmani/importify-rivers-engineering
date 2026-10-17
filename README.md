@@ -40,6 +40,13 @@ telemetry, and AI is optional.
   page code. They have so far been tested only against synthetic fixtures; the **Adapter lab**
   checks them, or your own rule documents, against product pages you saved
   ([docs/marketplaces.md](docs/marketplaces.md)).
+- **Orders, confirm before placing** — your systems send customer orders with an integration key;
+  REA matches the lines to your products and prepares draft purchase orders per supplier with
+  warnings (unmatched lines, stock, missing costs, negative margin, incomplete address). Each one
+  is handed off only after a person with `orders.place` confirms exactly what they reviewed; then
+  it is placed by hand from a placement sheet, or by your own automation through a signed webhook
+  and reported back. Tracking flows back to your systems. REA never buys anything itself, nothing
+  is confirmed automatically, and customer data can be erased.
 - **Browser extension** (Chrome, Manifest V3) — capture pages, import products with site adapters
   (JSON-LD, microdata, Open Graph, Shopify, WooCommerce, Alibaba, marketplace definitions and other
   rules adapters, custom selectors, generic fallback), an element picker, page inspector, quick
@@ -86,6 +93,7 @@ OpenAPI 3 generated from the Go types.
 | [api.md](docs/api.md) | Authentication, conventions, OpenAPI |
 | [pricing.md](docs/pricing.md) | Source price, cost and selling price, pricing rules with worked examples, exchange rates, pricing API |
 | [catalog-api.md](docs/catalog-api.md) | Catalog API, integration keys, change feed sync, webhooks and signature verification |
+| [orders.md](docs/orders.md) | Customer orders, supplier orders, confirm-before-placing, automation callbacks, order webhooks, personal data and erasure |
 | [extension.md](docs/extension.md) | Building, installing and pairing the extension, permissions, troubleshooting |
 | [marketplaces.md](docs/marketplaces.md) | Supported marketplaces, verification status, Adapter lab, rule document reference, updating definitions |
 | [development.md](docs/development.md) | Local development, tests, code generation |

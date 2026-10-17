@@ -1159,6 +1159,8 @@ func entityReadPerm(entityType string) string {
 		return auth.PermProductsRead
 	case "analysis_project", "analysis_source":
 		return auth.PermAnalysisRead
+	case "order", "supplier_order":
+		return auth.PermOrdersRead
 	}
 	return auth.PermAuditRead
 }

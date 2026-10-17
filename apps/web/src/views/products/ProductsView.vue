@@ -4,7 +4,7 @@ import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { refDebounced } from '@vueuse/core'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
-import { ImageOff, Plus, Upload } from 'lucide-vue-next'
+import { ImageOff, Lock, Plus, RefreshCw, Upload } from 'lucide-vue-next'
 import { api, type Schemas } from '@/api/client'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import DataTable, { type Column } from '@/components/ui/DataTable.vue'
@@ -16,6 +16,7 @@ import ExportButton from '@/components/record/ExportButton.vue'
 import CsvImportDialog from '@/components/record/CsvImportDialog.vue'
 import ProductFormModal from '@/components/products/ProductFormModal.vue'
 import BulkProductActions from '@/components/products/BulkProductActions.vue'
+import RepriceDialog from '@/components/products/RepriceDialog.vue'
 import { useListQuery } from '@/composables/useListQuery'
 import { useAuth } from '@/stores/auth'
 import { useSettings } from '@/stores/settings'
@@ -93,6 +94,15 @@ const creating = ref(false)
 const importing = ref(false)
 const filtered = computed(() => FILTERS.some((k) => !!list.filters[k]))
 const exportQuery = computed(() => Object.fromEntries(Object.entries(list.filters).filter(([, v]) => !!v)) as Record<string, string>)
+// Reprice everything the current filters match (the server caps one run at 1000 products).
+const repricingAll = ref(false)
+const repriceFilter = computed<Schemas['RepriceFilter']>(() => {
+  const f = list.filters
+  return {
+    q: f.q ?? '', status: f.status ?? '', review_status: f.review_status ?? '', source_domain: f.source_domain ?? '', category: f.category ?? '',
+    availability: f.availability ?? '', supplier_id: f.supplier_id || null, tag_id: f.tag_id || null,
+  }
+})
 
 function onCreated(p: Schemas['ProductDetail']) {
   void qc.invalidateQueries({ queryKey: ['products'] })
@@ -109,6 +119,7 @@ function onImported() {
     <PageHeader :title="label('product', true)" subtitle="Products stored in REA. Approval changes REA's own review status only; nothing is published to a store.">
       <template #actions>
         <ExportButton v-if="auth.can('data.export')" path="/products/export" :query="exportQuery" name="products" />
+        <UiButton v-if="auth.can('products.write')" :disabled="list.total.value === 0" @click="repricingAll = true"><RefreshCw class="h-4 w-4" aria-hidden="true" /> Reprice{{ filtered ? ' matching' : ' all' }}</UiButton>
         <UiButton v-if="auth.can('data.import') && auth.can('products.write')" @click="importing = true"><Upload class="h-4 w-4" /> Import CSV</UiButton>
         <RouterLink v-if="auth.can('products.write')" to="/imports/new" class="rounded-md border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-xs hover:bg-slate-50">Import from page</RouterLink>
         <UiButton v-if="auth.can('products.write')" variant="primary" @click="creating = true"><Plus class="h-4 w-4" /> New {{ label('product').toLowerCase() }}</UiButton>
@@ -250,7 +261,11 @@ function onImported() {
         </div>
       </template>
       <template #cell-price="{ row }">
-        <span class="whitespace-nowrap">{{ formatMoney(row.price, row.price_currency) }}</span>
+        <span class="inline-flex items-center gap-1 whitespace-nowrap">
+          <Lock v-if="row.price_locked" class="h-3.5 w-3.5 text-sky-600" aria-label="Locked manual price" />
+          {{ formatMoney(row.price, row.price_currency) }}
+        </span>
+        <span v-if="row.pricing_rule_name && !row.price_locked" class="block truncate text-xs text-slate-500" :title="`Pricing rule: ${row.pricing_rule_name}`">{{ row.pricing_rule_name }}</span>
         <span v-if="row.variant_count" class="block text-xs text-slate-500">{{ row.variant_count }} variant{{ row.variant_count === 1 ? '' : 's' }}</span>
       </template>
       <template #cell-margin="{ row }">
@@ -274,6 +289,7 @@ function onImported() {
     <UiPagination :total="list.total.value" :limit="list.limit.value" :offset="list.offset.value" @update:offset="(o) => list.set('offset', String(o))" />
 
     <ProductFormModal :open="creating" @close="creating = false" @saved="onCreated" />
+    <RepriceDialog :open="repricingAll" :filter="repriceFilter" :noun="label('product', true).toLowerCase()" @close="repricingAll = false" @applied="afterBulk" />
     <CsvImportDialog :open="importing" entity-type="product" :label="label('product', true)" @close="importing = false" @imported="onImported" />
   </div>
 </template>

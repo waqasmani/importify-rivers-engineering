@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/vue-query'
 import { api, ApiError, errorMessage, type Schemas } from '@/api/client'
 import UiButton from '@/components/ui/UiButton.vue'
 import EntityPicker from '@/components/record/EntityPicker.vue'
+import RepriceDialog from './RepriceDialog.vue'
 import { useAuth } from '@/stores/auth'
 import { useSettings } from '@/stores/settings'
 import { useToast } from '@/composables/useToast'
@@ -28,6 +29,7 @@ const actions = computed<ActionDef[]>(() =>
   [
     { key: 'set_review', label: 'Set review status', perm: 'imports.review' },
     { key: 'set_status', label: 'Set status', perm: 'products.write' },
+    { key: 'reprice', label: 'Reprice with the pricing rules', perm: 'products.write' },
     { key: 'set_supplier', label: `Set ${label('supplier').toLowerCase()}`, perm: 'products.write' },
     { key: 'add_tag', label: 'Add tag', perm: 'products.write' },
     { key: 'remove_tag', label: 'Remove tag', perm: 'products.write' },
@@ -58,8 +60,14 @@ const ready = computed(() => !!action.value && (!needsValue.value || !!value.val
 const count = computed(() => props.ids.length)
 const noun = computed(() => (count.value === 1 ? label('product').toLowerCase() : label('product', true).toLowerCase()))
 
+const repricing = ref(false)
+
 async function apply() {
   if (!ready.value) return
+  if (action.value === 'reprice') {
+    repricing.value = true
+    return
+  }
   const v = action.value === 'set_supplier' ? (supplier.value ?? '') : value.value
   if (action.value === 'delete') {
     const ok = await confirm({
@@ -124,9 +132,11 @@ async function apply() {
         <option v-for="t in tags.data.value?.items ?? []" :key="t.id" :value="t.id">{{ t.name }}</option>
       </select>
     </div>
-    <UiButton :variant="action === 'delete' ? 'danger' : 'primary'" :disabled="!ready" :loading="busy" @click="apply">Apply</UiButton>
+    <UiButton :variant="action === 'delete' ? 'danger' : 'primary'" :disabled="!ready" :loading="busy" @click="apply">{{ action === 'reprice' ? 'Preview new prices' : 'Apply' }}</UiButton>
+    <p v-if="action === 'reprice'" class="w-full text-xs text-slate-600">Shows the new prices first (dry run). Locked manual prices are kept; nothing is published.</p>
     <p v-if="action === 'set_review'" class="w-full text-xs text-slate-600">Only REA's review status changes (approved drafts become active in REA). Nothing is published or sent anywhere.</p>
     <p v-if="action === 'set_status'" class="w-full text-xs text-slate-600">Products become active only through review approval.</p>
     <p v-if="error" class="w-full text-sm text-red-700" role="alert">{{ error }}</p>
+    <RepriceDialog :open="repricing" :ids="ids" :noun="noun" @close="repricing = false" @applied="action = ''; emit('done', 'reprice')" />
   </div>
 </template>

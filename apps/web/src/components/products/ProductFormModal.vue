@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Create or edit a product (ProductInput). Activation is not offered here: a product becomes active
-// only through the review workflow.
+// only through the review workflow. The selling price comes from the pricing rules unless "Manual
+// price" locks a price entered here.
 import { computed, reactive, ref, watch } from 'vue'
 import { api, type Schemas } from '@/api/client'
 import UiModal from '@/components/ui/UiModal.vue'
@@ -28,7 +29,7 @@ const saving = ref(false)
 
 const form = reactive({
   title: '', source_url: '', brand: '', sku: '', model: '', mpn: '', gtin: '', category: '', availability: 'unknown', status: 'draft',
-  price: '', price_currency: '', cost: '', cost_currency: '', description: '', internal_notes: '',
+  price: '', price_currency: '', cost: '', cost_currency: '', description: '', internal_notes: '', price_locked: false, compare_at_price: '',
   supplier_id: null as string | null, supplier_contact_id: null as string | null, company_id: null as string | null,
   custom_fields: {} as Record<string, unknown>,
 })
@@ -56,6 +57,8 @@ watch(
     form.price_currency = p?.price_currency ?? cur
     form.cost = p?.cost ?? ''
     form.cost_currency = p?.cost_currency ?? (p?.price_currency || cur)
+    form.price_locked = p?.price_locked ?? false
+    form.compare_at_price = p?.compare_at_price ?? ''
     form.description = p?.description ?? ''
     form.internal_notes = p?.internal_notes ?? ''
     form.supplier_id = p?.supplier_id ?? null
@@ -79,6 +82,12 @@ const gtinHint = computed(() => {
   return validGtin(g) ? `Valid GTIN-${g.length}.` : 'This is not a valid GTIN-8, 12, 13 or 14; the server will reject it.'
 })
 const canPickCrm = computed(() => auth.can('crm.read'))
+const costHint = computed(() => {
+  const p = props.product
+  if (p?.source_price && !p.cost_manual) return `Derived from the source price (${p.source_price} ${p.source_currency ?? ''}). Enter another value to set it by hand; clear it to derive it again.`
+  if (p?.source_price) return 'Entered by hand. Clear it to derive the cost from the source price again.'
+  return 'What you pay the supplier; the pricing rules turn it into the selling price.'
+})
 // Number inputs bind numbers; decimals are sent to the API as strings.
 const blank = (s: unknown) => String(s ?? '').trim() || null
 
@@ -96,8 +105,11 @@ async function submit() {
     identifiers: mapFromRows(identifiers.value),
     description: form.description,
     specifications: mapFromRows(specs.value),
-    price: blank(form.price),
-    price_currency: blank(form.price_currency)?.toUpperCase() ?? null,
+    // Without a manual price the rules own price and compare-at price; the stored values are sent back unchanged.
+    price: form.price_locked ? blank(form.price) : (props.product?.price ?? null),
+    price_currency: form.price_locked ? (blank(form.price_currency)?.toUpperCase() ?? null) : (props.product?.price_currency ?? null),
+    price_locked: form.price_locked,
+    compare_at_price: form.price_locked ? blank(form.compare_at_price) : (props.product?.compare_at_price ?? null),
     cost: blank(form.cost),
     cost_currency: blank(form.cost_currency)?.toUpperCase() ?? null,
     availability: form.availability,
@@ -159,21 +171,30 @@ async function submit() {
           </select>
         </FormField>
         <div class="grid grid-cols-[1fr_6rem] gap-3">
-          <FormField v-slot="{ id }" label="Price" :error="errors.price">
-            <input :id="id" v-model="form.price" type="number" min="0" step="any" inputmode="decimal" class="input" :class="{ 'input-invalid': errors.price }" />
+          <FormField v-slot="{ id, describedby }" label="Cost" :error="errors.cost" :hint="costHint">
+            <input :id="id" v-model="form.cost" type="number" min="0" step="any" inputmode="decimal" class="input" :class="{ 'input-invalid': errors.cost }" :aria-describedby="describedby" />
           </FormField>
-          <FormField v-slot="{ id }" label="Currency" :error="errors.price_currency">
-            <input :id="id" v-model="form.price_currency" class="input uppercase" :class="{ 'input-invalid': errors.price_currency }" maxlength="3" />
-          </FormField>
-        </div>
-        <div class="grid grid-cols-[1fr_6rem] gap-3">
-          <FormField v-slot="{ id }" label="Cost" :error="errors.cost">
-            <input :id="id" v-model="form.cost" type="number" min="0" step="any" inputmode="decimal" class="input" :class="{ 'input-invalid': errors.cost }" />
-          </FormField>
-          <FormField v-slot="{ id }" label="Currency" :error="errors.cost_currency">
+          <FormField v-slot="{ id }" label="Cost currency" :error="errors.cost_currency">
             <input :id="id" v-model="form.cost_currency" class="input uppercase" :class="{ 'input-invalid': errors.cost_currency }" maxlength="3" />
           </FormField>
         </div>
+        <fieldset class="space-y-2 sm:col-span-2" data-testid="price-fields">
+          <legend class="sr-only">Selling price</legend>
+          <label class="flex items-center gap-2 text-sm text-slate-700">
+            <input v-model="form.price_locked" type="checkbox" class="rounded border-slate-300" data-testid="price-lock" /> Manual price (pricing rules do not change it)
+          </label>
+          <div class="grid grid-cols-[1fr_6rem_1fr] gap-3">
+            <FormField v-slot="{ id, describedby }" label="Price" :error="errors.price" :hint="form.price_locked ? undefined : 'Set by the pricing rules.'">
+              <input :id="id" v-model="form.price" type="number" min="0" step="any" inputmode="decimal" class="input" :class="{ 'input-invalid': errors.price }" :disabled="!form.price_locked" :aria-describedby="describedby" />
+            </FormField>
+            <FormField v-slot="{ id }" label="Currency" :error="errors.price_currency">
+              <input :id="id" v-model="form.price_currency" class="input uppercase" :class="{ 'input-invalid': errors.price_currency }" maxlength="3" :disabled="!form.price_locked" />
+            </FormField>
+            <FormField v-slot="{ id }" label="Compare-at price" :error="errors.compare_at_price">
+              <input :id="id" v-model="form.compare_at_price" type="number" min="0" step="any" inputmode="decimal" class="input" :disabled="!form.price_locked" />
+            </FormField>
+          </div>
+        </fieldset>
         <FormField v-if="product" v-slot="{ id, describedby }" label="Status" :error="errors.status" hint="Products become active only when approved in review.">
           <select :id="id" v-model="form.status" class="input" :aria-describedby="describedby">
             <option v-for="s in statuses" :key="s" :value="s">{{ titleCase(s) }}</option>

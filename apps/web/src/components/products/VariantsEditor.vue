@@ -1,7 +1,8 @@
 <script setup lang="ts">
-// Product variants: list with add, edit and delete.
+// Product variants: list with add, edit and delete, and each variant's source price, cost and
+// selling price (set by the pricing rules unless locked by hand).
 import { computed, ref } from 'vue'
-import { Pencil, Plus, Trash2 } from 'lucide-vue-next'
+import { Lock, Pencil, Plus, Trash2 } from 'lucide-vue-next'
 import { api, errorMessage, type Schemas } from '@/api/client'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
@@ -9,11 +10,16 @@ import VariantFormModal from './VariantFormModal.vue'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import { formatMoney } from '@/lib/format'
+import { formatAmount } from '@/components/pricing/pricing-utils'
 import { stringMap } from './product-utils'
 
 type Variant = Schemas['ProductVariant']
 
-const props = withDefaults(defineProps<{ productId: string; variants: Variant[]; defaultCurrency?: string | null; canEdit?: boolean }>(), { defaultCurrency: null, canEdit: false })
+const props = withDefaults(
+  defineProps<{ productId: string; variants: Variant[]; plans?: Schemas['VariantPricingPlan'][]; defaultCurrency?: string | null; canEdit?: boolean }>(),
+  { plans: () => [], defaultCurrency: null, canEdit: false },
+)
+const planFor = (id: string) => props.plans.find((x) => x.variant_id === id)?.plan
 const emit = defineEmits<{ changed: [] }>()
 const toast = useToast()
 const { confirm } = useConfirm()
@@ -62,6 +68,8 @@ async function remove(v: Variant) {
           <tr>
             <th scope="col" class="table-th">Variant</th>
             <th scope="col" class="table-th">Options</th>
+            <th scope="col" class="table-th hidden text-right md:table-cell">Source</th>
+            <th scope="col" class="table-th hidden text-right sm:table-cell">Cost</th>
             <th scope="col" class="table-th text-right">Price</th>
             <th scope="col" class="table-th">Availability</th>
             <th v-if="canEdit" scope="col" class="table-th"><span class="sr-only">Actions</span></th>
@@ -82,7 +90,19 @@ async function remove(v: Variant) {
               <span v-for="(val, k) in stringMap(v.options)" :key="k" class="mr-1 mb-1 inline-block rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-700">{{ k }}: {{ val }}</span>
               <span v-if="Object.keys(stringMap(v.options)).length === 0" class="text-slate-400">—</span>
             </td>
-            <td class="table-td text-right whitespace-nowrap">{{ formatMoney(v.price, v.currency) }}</td>
+            <td class="table-td hidden text-right whitespace-nowrap text-slate-500 md:table-cell">{{ formatMoney(v.source_price, v.source_currency) }}</td>
+            <td class="table-td hidden text-right whitespace-nowrap sm:table-cell">
+              <template v-if="v.cost">{{ formatAmount(v.cost, v.cost_currency) }}<span v-if="v.cost_manual" class="block text-xs text-slate-500">by hand</span></template>
+              <span v-else class="text-xs text-slate-500">product cost</span>
+            </td>
+            <td class="table-td text-right whitespace-nowrap" :data-testid="`variant-price-${v.id}`">
+              <span class="inline-flex items-center gap-1">
+                <Lock v-if="v.price_locked" class="h-3.5 w-3.5 text-sky-600" aria-label="Locked manual price" />
+                {{ formatMoney(v.price, v.currency) }}
+              </span>
+              <s v-if="v.compare_at_price" class="block text-xs text-slate-500">{{ formatMoney(v.compare_at_price, v.currency) }}</s>
+              <span v-if="planFor(v.id)?.changed && planFor(v.id)?.status === 'repriced'" class="block text-xs text-amber-700">rules: {{ formatMoney(planFor(v.id)?.evaluation.price, planFor(v.id)?.evaluation.currency) }}</span>
+            </td>
             <td class="table-td"><UiBadge :value="v.availability" /></td>
             <td v-if="canEdit" class="table-td text-right whitespace-nowrap">
               <button type="button" class="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700" :aria-label="`Edit variant ${name(v)}`" @click="open(v)"><Pencil class="h-4 w-4" /></button>

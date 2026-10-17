@@ -16,6 +16,7 @@ import PayloadForm from '@/components/products/PayloadForm.vue'
 import PayloadComparison from '@/components/products/PayloadComparison.vue'
 import DuplicateList from '@/components/products/DuplicateList.vue'
 import ImportResolveForm from '@/components/products/ImportResolveForm.vue'
+import ImportPricingSummary from '@/components/products/ImportPricingSummary.vue'
 import { useAuth } from '@/stores/auth'
 import { useSettings } from '@/stores/settings'
 import { useFieldErrors } from '@/composables/useFieldErrors'
@@ -308,6 +309,8 @@ const steps = ['Product data', 'Check', 'Decide', 'Done']
           </div>
 
           <PayloadComparison :payload="draftToPayload(draft)" :normalized="check.normalized" />
+
+          <ImportPricingSummary v-if="check.pricing" :pricing="check.pricing" />
 
           <DuplicateList v-if="candidates.length" :candidates="candidates" legend="Possible duplicates" />
 

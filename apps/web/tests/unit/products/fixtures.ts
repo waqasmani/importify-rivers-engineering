@@ -4,11 +4,29 @@ import type { Schemas } from '@/api/client'
 export const PRODUCT = '55555555-5555-4555-8555-555555555555'
 export const CAPTURE = '66666666-6666-4666-8666-666666666666'
 export const SUPPLIER = '77777777-7777-4777-8777-777777777777'
+export const RULE = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+
+/** A priced evaluation: 14 EUR × 2.85 = 39.90 → ending .95 = 39.95. */
+export function evaluation(over: Partial<Schemas['PricingEvaluation']> = {}): Schemas['PricingEvaluation'] {
+  return {
+    status: 'priced', message: '', currency: 'EUR', cost: '14', cost_currency: 'EUR', rate: null, base_cost: '14',
+    rule: { id: RULE, name: 'Outdoor markup', is_default: false }, price: '39.95', compare_at_price: null, margin_amount: '25.95', margin_percent: '64.96',
+    steps: [
+      { kind: 'cost', label: 'Cost', amount: '14' },
+      { kind: 'multiplier', label: '× 2.85 multiplier', amount: '39.9' },
+      { kind: 'rounding', label: 'Rounded to the nearest price ending in .95', amount: '39.95' },
+      { kind: 'price', label: 'Selling price', amount: '39.95' },
+    ],
+    warnings: [], ...over,
+  }
+}
 
 export function variant(over: Partial<Schemas['ProductVariant']> = {}): Schemas['ProductVariant'] {
   return {
     id: '88888888-8888-4888-8888-888888888881', product_id: PRODUCT, title: 'Forest', sku: 'TB-F', options: { Color: 'Forest' }, price: '39.95', currency: 'EUR',
-    availability: 'in_stock', image_url: null, position: 0, created_at: '2026-10-01T10:00:00Z', updated_at: '2026-10-01T10:00:00Z', ...over,
+    availability: 'in_stock', image_url: null, position: 0, created_at: '2026-10-01T10:00:00Z', updated_at: '2026-10-01T10:00:00Z',
+    source_price: '14', source_currency: 'EUR', cost: '14', cost_currency: 'EUR', cost_manual: false, compare_at_price: null, price_locked: false,
+    pricing_rule_id: RULE, priced_at: '2026-10-01T10:00:00Z', ...over,
   }
 }
 
@@ -22,6 +40,13 @@ export function productDetail(over: Partial<Schemas['ProductDetail']> = {}): Sch
     first_seen_at: '2026-10-01T10:00:00Z', last_checked_at: '2026-10-01T10:00:00Z', extraction_method: 'json-ld', extraction_confidence: '0.92', captured_page_id: CAPTURE,
     source_evidence: { price: 'offers.price = 39.95' }, internal_notes: '', custom_fields: {}, created_by: null, created_at: '2026-10-01T10:00:00Z', updated_at: '2026-10-01T10:00:00Z',
     primary_image_url: null, variant_count: 1, tags: [], variants: [variant()], images: [], suppliers: [],
+    source_price: '14', source_currency: 'EUR', cost_manual: false, compare_at_price: null, price_locked: false, pricing_rule_id: RULE,
+    priced_at: '2026-10-01T10:00:00Z', pricing_rule_name: 'Outdoor markup',
+    pricing: {
+      base_currency: 'EUR', product: { status: 'repriced', changed: false, evaluation: evaluation() },
+      variants: [{ variant_id: '88888888-8888-4888-8888-888888888881', plan: { status: 'repriced', changed: false, evaluation: evaluation() } }],
+      rule_names: { [RULE]: 'Outdoor markup' },
+    },
     imports: [
       {
         id: '99999999-9999-4999-8999-999999999999', source: 'extension', status: 'imported', decision: 'create_new', payload: { field_confidence: { title: 0.98, price: 0.6 } },

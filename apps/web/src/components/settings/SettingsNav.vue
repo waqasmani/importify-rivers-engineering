@@ -20,6 +20,7 @@ const links: Link[] = [
   { to: '/settings/pipelines', label: 'Pipelines', perm: 'settings.manage' },
   { to: '/settings/fields', label: 'Custom fields', perm: 'settings.manage' },
   { to: '/settings/tags', label: 'Tags', perm: 'crm.write' },
+  { to: '/settings/pricing', label: 'Pricing', perm: 'settings.manage' },
   { to: '/settings/adapters', label: 'Source adapters', perm: 'products.read' },
   { to: '/settings/ai', label: 'AI providers', perm: 'ai.configure' },
   { to: '/settings/extension', label: 'Browser extension' },

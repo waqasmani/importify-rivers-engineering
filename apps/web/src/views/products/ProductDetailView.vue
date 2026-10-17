@@ -20,11 +20,12 @@ import ReviewPanel from '@/components/products/ReviewPanel.vue'
 import ProvenancePanel from '@/components/products/ProvenancePanel.vue'
 import ProductDuplicatesPanel from '@/components/products/ProductDuplicatesPanel.vue'
 import ProductFormModal from '@/components/products/ProductFormModal.vue'
+import PriceBreakdown from '@/components/products/PriceBreakdown.vue'
 import { useAuth } from '@/stores/auth'
 import { useSettings } from '@/stores/settings'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
-import { formatMoney, titleCase } from '@/lib/format'
+import { titleCase } from '@/lib/format'
 import { asRecord, safeHref, stringMap, validGtin, REVIEW_LABELS } from '@/components/products/product-utils'
 
 type Detail = Schemas['ProductDetail']
@@ -47,14 +48,6 @@ const specs = computed(() => Object.entries(stringMap(p.value?.specifications)))
 const identifiers = computed(() => Object.entries(stringMap(p.value?.identifiers)).filter(([k]) => k !== 'gtin_unverified'))
 const unverifiedGtin = computed(() => stringMap(p.value?.identifiers).gtin_unverified ?? '')
 const gtinValid = computed(() => validGtin(p.value?.gtin))
-const marginNote = computed(() => {
-  const x = p.value
-  if (!x) return ''
-  if (x.margin_percent !== null) return ''
-  if (x.price && x.cost && x.price_currency !== x.cost_currency) return 'Not calculated: price and cost use different currencies.'
-  if (!x.price || !x.cost) return 'Needs both a price and a cost.'
-  return ''
-})
 const customFields = computed(() => asRecord(p.value?.custom_fields))
 
 function refresh() {
@@ -140,22 +133,7 @@ async function remove() {
             <ImageGallery :product-id="p.id" :images="p.images" :title="p.title" :can-edit="canWrite" @changed="refresh" />
 
             <section class="card p-4" aria-labelledby="pricing-heading" data-testid="pricing">
-              <h2 id="pricing-heading" class="text-sm font-semibold text-slate-800">Pricing</h2>
-              <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <dt class="text-xs font-medium text-slate-500">Price</dt>
-                  <dd class="text-lg font-semibold text-slate-900">{{ formatMoney(p.price, p.price_currency) }}</dd>
-                </div>
-                <div>
-                  <dt class="text-xs font-medium text-slate-500">Cost</dt>
-                  <dd class="text-lg font-semibold text-slate-900">{{ formatMoney(p.cost, p.cost_currency) }}</dd>
-                </div>
-                <div class="col-span-2">
-                  <dt class="text-xs font-medium text-slate-500">Margin</dt>
-                  <dd v-if="p.margin_percent !== null" class="text-slate-900">{{ Number(p.margin_percent).toFixed(2) }}% · {{ formatMoney(p.margin_amount, p.price_currency) }}</dd>
-                  <dd v-else class="text-slate-500">{{ marginNote || '—' }}</dd>
-                </div>
-              </dl>
+              <PriceBreakdown :product="p" :can-edit="canWrite" @updated="onSaved" @repriced="refresh" />
 
               <h3 class="mt-5 text-sm font-semibold text-slate-800">Identifiers</h3>
               <dl class="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 text-sm" data-testid="identifiers">
@@ -196,7 +174,7 @@ async function remove() {
             </table>
           </section>
 
-          <VariantsEditor :product-id="p.id" :variants="p.variants" :default-currency="p.price_currency" :can-edit="canWrite" @changed="refresh" />
+          <VariantsEditor :product-id="p.id" :variants="p.variants" :plans="p.pricing.variants" :default-currency="p.price_currency" :can-edit="canWrite" @changed="refresh" />
           <SupplierLinks :product-id="p.id" :default-currency="p.cost_currency || p.price_currency" :can-edit="canWrite" @changed="onSuppliersChanged" />
           <ProductDuplicatesPanel :product-id="p.id" :title="p.title" :can-merge="auth.can('products.delete') && canWrite" @merged="onMerged" />
         </div>

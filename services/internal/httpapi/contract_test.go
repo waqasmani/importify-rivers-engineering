@@ -146,6 +146,6 @@ func TestCommittedOpenAPIIsCurrent(t *testing.T) {
 	}
 	got, err := os.ReadFile(path)
 	if err != nil || !bytes.Equal(got, want) {
-		t.Fatalf("packages/api-types/openapi.json is out of date; run `make openapi` (REA_UPDATE_OPENAPI=1 go test ./services/internal/httpapi -run TestCommittedOpenAPIIsCurrent)")
+		t.Fatalf("packages/api-types/openapi.json is out of date; run `make generate` (REA_UPDATE_OPENAPI=1 go test ./services/internal/httpapi -run TestCommittedOpenAPIIsCurrent)")
 	}
 }

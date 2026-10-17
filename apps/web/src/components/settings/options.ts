@@ -105,7 +105,7 @@ export const AUDIT_ACTION_PREFIXES = [
 ] as const
 
 /** Display order of permission groups. */
-export const PERMISSION_GROUP_ORDER = ['CRM', 'Products', 'Analysis', 'AI', 'Data', 'Browser extension', 'Administration', 'Other']
+export const PERMISSION_GROUP_ORDER = ['CRM', 'Products', 'Orders', 'Analysis', 'AI', 'Data', 'Browser extension', 'Administration', 'Other']
 
 /** Permissions grouped for display, groups in PERMISSION_GROUP_ORDER and codes alphabetical. */
 export function groupPermissions<T extends { code: string }>(perms: T[]): { name: string; items: T[] }[] {
@@ -122,7 +122,7 @@ export function permissionGroup(code: string): string {
   const area = code.split('.')[0] ?? code
   return (
     {
-      crm: 'CRM', products: 'Products', imports: 'Products', captures: 'Products', analysis: 'Analysis', ai: 'AI', data: 'Data',
+      crm: 'CRM', products: 'Products', imports: 'Products', captures: 'Products', orders: 'Orders', analysis: 'Analysis', ai: 'AI', data: 'Data',
       audit: 'Administration', users: 'Administration', settings: 'Administration', backups: 'Administration', extension: 'Browser extension',
     } as Record<string, string>
   )[area] ?? 'Other'

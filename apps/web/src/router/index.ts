@@ -50,6 +50,12 @@ const appRoutes: RouteRecordRaw[] = [
   { path: 'captures', name: 'captures', component: v('products/CapturesView'), meta: { perm: 'products.read', title: 'Captured pages' } },
   { path: 'captures/:id', name: 'capture', component: v('products/CaptureDetailView'), meta: { perm: 'products.read', title: 'Captured page' }, props: true },
 
+  // Orders
+  { path: 'orders', name: 'orders', component: v('orders/OrdersView'), meta: { perm: 'orders.read', title: 'Orders' } },
+  { path: 'orders/new', name: 'order-new', component: v('orders/NewOrderView'), meta: { perm: 'orders.write', title: 'New order' } },
+  { path: 'orders/:id', name: 'order', component: v('orders/OrderDetailView'), meta: { perm: 'orders.read', title: 'Order' }, props: true },
+  { path: 'supplier-orders', name: 'supplier-orders', component: v('orders/SupplierOrdersView'), meta: { perm: 'orders.read', title: 'Supplier orders' } },
+
   // Analysis
   { path: 'analysis', name: 'analysis', component: v('analysis/ProjectsView'), meta: { perm: 'analysis.read', title: 'Analysis' } },
   { path: 'analysis/new', name: 'analysis-new', component: v('analysis/NewAnalysisView'), meta: { perm: 'analysis.write', title: 'New analysis' } },

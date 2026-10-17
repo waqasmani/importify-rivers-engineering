@@ -12,6 +12,8 @@ export type EntityType =
   | 'analysis_project'
   | 'analysis_source'
   | 'finding'
+  | 'order'
+  | 'supplier_order'
 
 export interface EntityMeta {
   singular: string
@@ -37,6 +39,8 @@ export const ENTITY: Record<EntityType, EntityMeta> = {
   analysis_project: { singular: 'Analysis project', plural: 'Analysis projects', path: '/analysis', read: 'analysis.read', write: 'analysis.write', delete: 'analysis.delete' },
   analysis_source: { singular: 'Source', plural: 'Sources', path: '/analysis/sources', read: 'analysis.read', write: 'analysis.write', delete: 'analysis.delete' },
   finding: { singular: 'Finding', plural: 'Findings', read: 'analysis.read', write: 'analysis.write', delete: 'analysis.delete' },
+  order: { singular: 'Order', plural: 'Orders', path: '/orders', read: 'orders.read', write: 'orders.write', delete: 'orders.write' },
+  supplier_order: { singular: 'Supplier order', plural: 'Supplier orders', read: 'orders.read', write: 'orders.write', delete: 'orders.write' },
 }
 
 export function entityLink(type: string | null | undefined, id: string | null | undefined): string | undefined {

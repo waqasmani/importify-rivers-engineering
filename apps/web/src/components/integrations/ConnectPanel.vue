@@ -4,10 +4,11 @@
 import { computed } from 'vue'
 import type { Schemas } from '@/api/client'
 import CopyButton from '@/components/settings/CopyButton.vue'
-import { curlSnippets, verifySnippets } from './snippets'
+import { curlSnippets, orderSnippets, verifySnippets } from './snippets'
 
 const props = defineProps<{ config: Schemas['IntegrationsConfigDoc'] }>()
 const curl = computed(() => curlSnippets(props.config.api_base_url))
+const orderCurl = computed(() => orderSnippets(props.config.api_base_url))
 const verify = computed(() => verifySnippets(props.config.webhooks.signature_header, props.config.webhooks.timestamp_header))
 </script>
 
@@ -27,6 +28,25 @@ const verify = computed(() => verifySnippets(props.config.webhooks.signature_hea
     <section aria-labelledby="curl-heading" class="space-y-3">
       <h3 id="curl-heading" class="text-sm font-semibold text-slate-900">Examples</h3>
       <div v-for="s in curl" :key="s.key" class="space-y-1" :data-testid="`snippet-${s.key}`">
+        <div class="flex items-center justify-between gap-2">
+          <p class="text-sm font-medium text-slate-800">{{ s.title }}</p>
+          <CopyButton :value="s.code" :label="`Copy: ${s.title}`" />
+        </div>
+        <p class="text-xs text-slate-500">{{ s.description }}</p>
+        <pre class="overflow-x-auto rounded-md bg-slate-900 p-3 font-mono text-xs text-slate-100">{{ s.code }}</pre>
+      </div>
+    </section>
+
+    <section aria-labelledby="orders-heading" class="space-y-3">
+      <h3 id="orders-heading" class="text-sm font-semibold text-slate-900">Send customer orders</h3>
+      <ol class="list-decimal space-y-1 pl-5 text-sm text-slate-700">
+        <li>Create an integration key with <code class="text-xs">orders.write</code> and send each customer order to <code class="text-xs">POST /orders</code>.</li>
+        <li>REA matches the lines to your products and prepares draft supplier orders per supplier.</li>
+        <li>A person reviews and confirms each supplier order in REA. Nothing is handed off for placement before that, and no setting or key can skip it.</li>
+        <li>Manual suppliers: the person places the order on the supplier’s site and records it. Automated suppliers: your automation receives <code class="text-xs">supplier_order.confirmed</code> and reports back.</li>
+      </ol>
+      <p class="text-xs text-slate-500">Orders contain personal data (names, e-mail addresses, phone numbers and addresses); order webhooks carry it too.</p>
+      <div v-for="s in orderCurl" :key="s.key" class="space-y-1" :data-testid="`snippet-${s.key}`">
         <div class="flex items-center justify-between gap-2">
           <p class="text-sm font-medium text-slate-800">{{ s.title }}</p>
           <CopyButton :value="s.code" :label="`Copy: ${s.title}`" />

@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"os"
 	"os/exec"
 	"strings"
 	"testing"
@@ -51,8 +52,14 @@ func TestFullExportExcludesSecrets(t *testing.T) {
 }
 
 func TestBackupsWithPgDump(t *testing.T) {
-	if _, err := exec.LookPath("pg_dump"); err != nil {
-		t.Skip("pg_dump not installed")
+	// The API runs REA_PG_DUMP (default "pg_dump"); its major version must be at least the
+	// server's, so CI points it at the PostgreSQL 18 client.
+	bin := os.Getenv("REA_PG_DUMP")
+	if bin == "" {
+		bin = "pg_dump"
+	}
+	if _, err := exec.LookPath(bin); err != nil {
+		t.Skip(bin + " not installed")
 	}
 	e := newEnv(t)
 	b := e.owner.Do("POST", "/api/v1/admin/backups", map[string]any{}).Must(t, 201)

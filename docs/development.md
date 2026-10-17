@@ -42,6 +42,9 @@ make lint             # gofmt, go vet, migration lint, TypeScript
 ```
 
 Database tests clone a migrated template database per test, so they are isolated and parallel.
+The backup test runs `REA_PG_DUMP` (default `pg_dump`), whose major version must be at least the
+server's: with PostgreSQL 18 install `postgresql-client-18` and set
+`REA_PG_DUMP=/usr/lib/postgresql/18/bin/pg_dump`, as CI does.
 Without `REA_TEST_DATABASE_URL` they are skipped; CI sets `REA_REQUIRE_DB_TESTS=1` so a missing
 database fails instead. Fixtures for product pages, OpenAPI, HAR files and documents live in
 `testdata/fixtures` and are shared by the Go and extension tests.

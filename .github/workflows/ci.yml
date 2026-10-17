@@ -35,6 +35,12 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
+      - name: PostgreSQL 18 client tools (pg_dump must not be older than the server)
+        run: |
+          sudo apt-get install -y -qq postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y -qq postgresql-client-18
+          /usr/lib/postgresql/18/bin/pg_dump --version
       - name: gofmt
         run: test -z "$(gofmt -l services db)" || (gofmt -l services db && exit 1)
       - name: go vet
@@ -43,6 +49,8 @@ jobs:
         run: go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1 diff
       - name: Tests (unit, integration, OpenAPI contract, migration lint and rollback, security regressions)
         run: go test -count=1 ./...
+        env:
+          REA_PG_DUMP: /usr/lib/postgresql/18/bin/pg_dump
 
   web-and-extension:
     name: Dashboard and extension (typecheck, unit, build)

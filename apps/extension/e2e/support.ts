@@ -33,7 +33,9 @@ async function extensionWorker(context: BrowserContext): Promise<Worker> {
 export async function launchExtension(dir: string): Promise<Launched> {
   const profile = await mkdtemp(path.join(os.tmpdir(), 'rea-ext-profile-'))
   const context = await chromium.launchPersistentContext(profile, {
-    executablePath: CHROMIUM,
+    // Without an explicit binary, headless mode would pick chromium-headless-shell, which cannot
+    // load extensions; the "chromium" channel selects Playwright's full Chromium build (CI).
+    ...(CHROMIUM ? { executablePath: CHROMIUM } : { channel: 'chromium' }),
     headless: true,
     args: ['--headless=new', `--disable-extensions-except=${dir}`, `--load-extension=${dir}`, '--no-first-run', '--no-default-browser-check'],
   })

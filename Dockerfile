@@ -94,5 +94,7 @@ CMD ["serve"]
 # ---- Web server ----
 FROM ${CADDY_IMAGE} AS web
 COPY deploy/proxy/Caddyfile /etc/caddy/Caddyfile
+COPY --chmod=755 deploy/proxy/caddy-entrypoint.sh /usr/local/bin/rea-caddy
 COPY --from=web-build /src/apps/web/dist /srv/rea
 EXPOSE 80 443
+CMD ["rea-caddy"]

@@ -7,7 +7,8 @@
 #   :80                 plain HTTP, when another reverse proxy terminates TLS in front of this one
 {
 	admin localhost:2019
-	email {$REA_ACME_EMAIL:}
+	# Optional options such as the ACME e-mail, written by caddy-entrypoint.sh.
+	import /config/rea-global*.caddy
 	servers {
 		trusted_proxies static {$REA_UPSTREAM_TRUSTED_PROXIES:private_ranges}
 	}

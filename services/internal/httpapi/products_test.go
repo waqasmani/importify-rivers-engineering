@@ -214,6 +214,9 @@ func TestSelectorAdapters(t *testing.T) {
 	c.Do("POST", "/api/v1/adapters", map[string]any{"key": "bad", "name": "Bad", "domain_patterns": []string{"*"}, "selectors": map[string]string{"title": "<script>"}}).Must(t, 422)
 	ext, _ := e.pairExtension()
 	cfg := ext.Do("GET", "/api/v1/extension/config", nil).Must(t, 200)
+	if cfg.Str("user.role_key") != "admin" || cfg.Str("user.role_name") == "" {
+		t.Fatalf("extension config must name the user's role: %s", cfg.Body)
+	}
 	found := false
 	for _, a := range cfg.Get("adapters").([]any) {
 		found = found || a.(map[string]any)["key"] == "acme-store"

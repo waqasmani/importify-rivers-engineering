@@ -349,6 +349,18 @@ func userView(u store.User) UserView {
 		IsActive: u.IsActive, LastLoginAt: u.LastLoginAt, LockedUntil: u.LockedUntil, CreatedAt: u.CreatedAt}
 }
 
+// userViewWithRole is userView plus the role's key and name, for responses shown to people.
+func (s *Server) userViewWithRole(ctx context.Context, q *store.Queries, u store.User) UserView {
+	uv := userView(u)
+	if q == nil {
+		q = s.db.Queries
+	}
+	if role, err := q.GetRole(ctx, u.RoleID); err == nil {
+		uv.RoleKey, uv.RoleName = role.Key, role.Name
+	}
+	return uv
+}
+
 func (s *Server) handleMe(w http.ResponseWriter, r *http.Request) error {
 	return s.handleMeFor(w, r, principal(r).User, false)
 }
@@ -654,7 +666,7 @@ func (s *Server) handleGetUser(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	return ok(w, userView(u))
+	return ok(w, s.userViewWithRole(r.Context(), nil, u))
 }
 
 type createUserInput struct {
@@ -701,7 +713,7 @@ func (s *Server) handleCreateUser(w http.ResponseWriter, r *http.Request) error 
 	if err != nil {
 		return err
 	}
-	return created(w, userView(u))
+	return created(w, s.userViewWithRole(r.Context(), nil, u))
 }
 
 type updateUserInput struct {
@@ -768,7 +780,7 @@ func (s *Server) handleUpdateUser(w http.ResponseWriter, r *http.Request) error 
 	if err != nil {
 		return err
 	}
-	return ok(w, userView(u))
+	return ok(w, s.userViewWithRole(r.Context(), nil, u))
 }
 
 // handleUnlockUser clears a sign-in lockout caused by repeated failed passwords.

@@ -85,7 +85,11 @@ func TestUserAdminSearchEmailAndUnlock(t *testing.T) {
 	if n := e.owner.Do("GET", "/api/v1/users?q=%25", nil).Must(t, 200).Get("total"); n != float64(0) {
 		t.Fatalf("a literal %% must not act as a wildcard, got %v users", n)
 	}
-	roleID := e.owner.Do("GET", "/api/v1/users/"+id, nil).Must(t, 200).Str("role_id")
+	got := e.owner.Do("GET", "/api/v1/users/"+id, nil).Must(t, 200)
+	roleID := got.Str("role_id")
+	if got.Str("role_key") != "member" || got.Str("role_name") == "" {
+		t.Fatalf("user responses must name the role: %s", got.Body)
+	}
 
 	// E-mail can be changed by an administrator; omitting it keeps the current address.
 	upd := map[string]any{"display_name": "Member", "role_id": roleID, "is_active": true, "email": "renamed@example.com"}

@@ -59,7 +59,7 @@ func (s *Server) issueDeviceTokens(r *http.Request, q *store.Queries, user store
 	refresh := auth.NewToken(auth.PrefixRefresh)
 	now := time.Now()
 	tp := tokenPair{AccessToken: access, AccessTokenExpiresAt: now.Add(s.cfg.AccessTokenTTL), RefreshToken: refresh,
-		RefreshTokenExpiresAt: now.Add(s.cfg.RefreshTokenTTL), DeviceID: device.ID, User: userView(user),
+		RefreshTokenExpiresAt: now.Add(s.cfg.RefreshTokenTTL), DeviceID: device.ID, User: s.userViewWithRole(r.Context(), q, user),
 		ServerVersion: s.cfg.Version, Organization: s.orgName(r.Context())}
 	if _, err := q.CreateAPICredential(r.Context(), store.CreateAPICredentialParams{UserID: user.ID, DeviceID: &device.ID,
 		Name: device.Name + " (access)", Kind: "access", TokenHash: auth.HashToken(access), TokenPrefix: auth.DisplayPrefix(access),
@@ -261,7 +261,7 @@ func (s *Server) handleExtensionConfig(w http.ResponseWriter, r *http.Request) e
 		return err
 	}
 	return ok(w, map[string]any{
-		"user":           userView(p.User),
+		"user":           s.userViewWithRole(r.Context(), nil, p.User),
 		"permissions":    p.PermList(),
 		"device_id":      p.DeviceID,
 		"server_version": s.cfg.Version,

@@ -13,25 +13,25 @@ import (
 // (product, variant, options, quantity, source link, expected cost), where it ships to, the note to
 // the supplier, and the warnings that were shown.
 type Content struct {
-	SupplierOrderID   uuid.UUID        `json:"supplier_order_id"`
-	SupplierID        *uuid.UUID       `json:"supplier_id"`
-	SupplierName      string           `json:"supplier_name"`
-	SourceDomain      string           `json:"source_domain"`
-	PlacementMethod   string           `json:"placement_method"`
-	Items             []Item           `json:"items"`
-	ExpectedCostTotal *decimal.Decimal `json:"expected_cost_total"`
-	CostCurrency      *string          `json:"cost_currency"`
-	ShipTo            Address          `json:"ship_to"`
-	NoteToSupplier    string           `json:"note_to_supplier"`
-	Warnings          []string         `json:"warnings"`
+	SupplierOrderID   uuid.UUID           `json:"supplier_order_id"`
+	SupplierID        *uuid.UUID          `json:"supplier_id"`
+	SupplierName      string              `json:"supplier_name"`
+	SourceDomain      string              `json:"source_domain"`
+	PlacementMethod   string              `json:"placement_method"`
+	Items             []SupplierOrderItem `json:"items"`
+	ExpectedCostTotal *decimal.Decimal    `json:"expected_cost_total"`
+	CostCurrency      *string             `json:"cost_currency"`
+	ShipTo            PostalAddress       `json:"ship_to"`
+	NoteToSupplier    string              `json:"note_to_supplier"`
+	Warnings          []string            `json:"warnings"`
 }
 
-// ContentHash returns the hex SHA-256 of the canonical JSON of c. Item options are maps, which
+// ContentHash returns the hex SHA-256 of the canonical JSON of c. SupplierOrderItem options are maps, which
 // encoding/json writes with sorted keys; decimals are written in their shortest form, so the hash
 // does not depend on how the database pads numerics.
 func ContentHash(c Content) string {
 	norm := c
-	norm.Items = make([]Item, len(c.Items))
+	norm.Items = make([]SupplierOrderItem, len(c.Items))
 	for i, it := range c.Items {
 		if it.Options == nil {
 			it.Options = map[string]string{}

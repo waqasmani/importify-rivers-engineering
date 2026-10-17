@@ -85,8 +85,8 @@ func Open(status string) bool {
 	return status == SODraft || status == SOConfirmed || status == SOFailed
 }
 
-// Address is a shipping address. Country is an ISO 3166-1 alpha-2 code.
-type Address struct {
+// PostalAddress is a shipping address. Country is an ISO 3166-1 alpha-2 code.
+type PostalAddress struct {
 	Name       string `json:"name"`
 	Company    string `json:"company"`
 	Line1      string `json:"line1"`
@@ -100,37 +100,37 @@ type Address struct {
 
 // Shippable reports whether the address names a recipient, a street and a country: the minimum
 // a supplier order can be confirmed with.
-func (a Address) Shippable() bool {
+func (a PostalAddress) Shippable() bool {
 	return strings.TrimSpace(a.Name) != "" && strings.TrimSpace(a.Line1) != "" && a.Country != ""
 }
 
 // Complete reports whether the address also has a city and postal code.
-func (a Address) Complete() bool {
+func (a PostalAddress) Complete() bool {
 	return a.Shippable() && strings.TrimSpace(a.City) != "" && strings.TrimSpace(a.PostalCode) != ""
 }
 
 // Erased returns the address with every personal field replaced. The country is kept.
-func (a Address) Erased() Address {
+func (a PostalAddress) Erased() PostalAddress {
 	e := func(s string) string {
 		if s == "" {
 			return ""
 		}
 		return ErasedMarker
 	}
-	return Address{Name: e(a.Name), Company: e(a.Company), Line1: e(a.Line1), Line2: e(a.Line2), City: e(a.City), Region: e(a.Region),
+	return PostalAddress{Name: e(a.Name), Company: e(a.Company), Line1: e(a.Line1), Line2: e(a.Line2), City: e(a.City), Region: e(a.Region),
 		PostalCode: e(a.PostalCode), Country: a.Country, Phone: e(a.Phone)}
 }
 
-// Customer identifies the person who ordered.
-type Customer struct {
+// CustomerContact identifies the person who ordered.
+type CustomerContact struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
 	Phone string `json:"phone"`
 }
 
-// Item is one thing to buy from a supplier: the REA product (and variant) a customer order line
+// SupplierOrderItem is one thing to buy from a supplier: the REA product (and variant) a customer order line
 // resolved to, with the snapshot taken when the supplier order was prepared.
-type Item struct {
+type SupplierOrderItem struct {
 	LineID         uuid.UUID         `json:"line_id"`
 	Position       int32             `json:"position"`
 	ExternalLineID string            `json:"external_line_id"`
@@ -148,7 +148,7 @@ type Item struct {
 }
 
 // LineCost returns quantity × expected unit cost, or nil without a cost.
-func (it Item) LineCost() *decimal.Decimal {
+func (it SupplierOrderItem) LineCost() *decimal.Decimal {
 	if it.ExpectedUnitCost == nil {
 		return nil
 	}
@@ -157,7 +157,7 @@ func (it Item) LineCost() *decimal.Decimal {
 }
 
 // Total returns the expected cost of all items when every item has a cost in one currency.
-func Total(items []Item) (*decimal.Decimal, *string) {
+func Total(items []SupplierOrderItem) (*decimal.Decimal, *string) {
 	if len(items) == 0 {
 		return nil, nil
 	}

@@ -90,7 +90,7 @@ type lineSnapshot struct {
 	variantTitle string
 	sku          string
 	options      map[string]string
-	item         *orders.Item
+	item         *orders.SupplierOrderItem
 }
 
 func groupKey(sn lineSnapshot) string {
@@ -209,7 +209,7 @@ func (s *Server) prepareOrder(ctx context.Context, q *store.Queries, r *http.Req
 	for _, gk := range order {
 		members := groups[gk]
 		first := members[0].snap
-		items := make([]orders.Item, 0, len(members))
+		items := make([]orders.SupplierOrderItem, 0, len(members))
 		for _, m := range members {
 			it := *m.snap.item
 			it.LineID, it.Position, it.ExternalLineID, it.Quantity = m.line.ID, m.line.Position, m.line.ExternalLineID, m.line.Quantity
@@ -314,7 +314,7 @@ func sourcingSnapshot(p store.OrderProductsByIDsRow, v *store.ProductVariant) li
 			sn.placement = m
 		}
 	}
-	item := orders.Item{Title: p.Title, SKU: p.Sku, Options: map[string]string{}, ExpectedUnitCost: p.Cost, CostCurrency: p.CostCurrency, SourceURL: sn.sourceURL}
+	item := orders.SupplierOrderItem{Title: p.Title, SKU: p.Sku, Options: map[string]string{}, ExpectedUnitCost: p.Cost, CostCurrency: p.CostCurrency, SourceURL: sn.sourceURL}
 	if v != nil {
 		sn.variantTitle, sn.options = v.Title, optionsOf(v.Options)
 		item.VariantTitle, item.Options = v.Title, sn.options

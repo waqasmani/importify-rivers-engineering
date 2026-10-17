@@ -3333,17 +3333,6 @@ export interface components {
                 [key: string]: string;
             };
         };
-        Address: {
-            city: string;
-            company: string;
-            country: string;
-            line1: string;
-            line2: string;
-            name: string;
-            phone: string;
-            postal_code: string;
-            region: string;
-        };
         AffectedDoc: {
             /** Format: int64 */
             affected: number;
@@ -3921,6 +3910,12 @@ export interface components {
             acknowledge_warnings: boolean;
             content_hash: string;
         };
+        ConfirmationWarning: {
+            code: string;
+            /** Format: uuid */
+            line_id: string | null;
+            message: string;
+        };
         ContactInput: {
             /** Format: uuid */
             company_id: string | null;
@@ -4080,7 +4075,7 @@ export interface components {
             position: number;
             required: boolean;
         };
-        Customer: {
+        CustomerContact: {
             email: string;
             name: string;
             phone: string;
@@ -4189,154 +4184,6 @@ export interface components {
         };
         ErrorDoc: {
             error: components["schemas"]["APIError"];
-        };
-        Event: {
-            /** Format: uuid */
-            id: string;
-            /** Format: date-time */
-            occurred_at: string;
-            order: components["schemas"]["EventOrder"];
-            previous_status: string;
-            supplier_order: components["schemas"]["EventSupplierOrder"] | null;
-            type: string;
-        };
-        EventCosts: {
-            /**
-             * Format: decimal
-             * @example 12.50
-             */
-            actual_cost: string | null;
-            actual_currency: string | null;
-            cost_currency: string | null;
-            /**
-             * Format: decimal
-             * @example 12.50
-             */
-            expected_cost_total: string | null;
-        };
-        EventItem: {
-            cost?: components["schemas"]["EventItemCost"] | null;
-            /** Format: uuid */
-            line_id: string;
-            options: {
-                [key: string]: string;
-            };
-            /** Format: uuid */
-            product_id: string | null;
-            /** Format: int32 */
-            quantity: number;
-            sku: string;
-            source_url: string | null;
-            title: string;
-            /** Format: uuid */
-            variant_id: string | null;
-            variant_title: string;
-        };
-        EventItemCost: {
-            cost_currency: string | null;
-            /**
-             * Format: decimal
-             * @example 12.50
-             */
-            expected_unit_cost: string | null;
-        };
-        EventLine: {
-            cancelled: boolean;
-            external_line_id: string;
-            /** Format: uuid */
-            id: string;
-            /** Format: int32 */
-            position: number;
-            /** Format: uuid */
-            product_id: string | null;
-            /** Format: int32 */
-            quantity: number;
-            resolution: string;
-            sku: string;
-            /** Format: uuid */
-            supplier_order_id: string | null;
-            title: string;
-            /**
-             * Format: decimal
-             * @example 12.50
-             */
-            unit_price: string | null;
-            /** Format: uuid */
-            variant_id: string | null;
-        };
-        EventOrder: {
-            /** Format: date-time */
-            cancelled_at: string | null;
-            channel: string;
-            currency: string;
-            customer: components["schemas"]["Customer"];
-            customer_erased: boolean;
-            customer_note: string;
-            external_id: string;
-            /** Format: uuid */
-            id: string;
-            lines: components["schemas"]["EventLine"][];
-            needs_attention: boolean;
-            number: string;
-            /** Format: date-time */
-            ordered_at: string;
-            shipping_address: components["schemas"]["Address"];
-            /**
-             * Format: decimal
-             * @example 12.50
-             */
-            shipping_amount: string | null;
-            status: string;
-            /**
-             * Format: decimal
-             * @example 12.50
-             */
-            subtotal: string | null;
-            /**
-             * Format: decimal
-             * @example 12.50
-             */
-            tax_amount: string | null;
-            /**
-             * Format: decimal
-             * @example 12.50
-             */
-            total: string | null;
-        };
-        EventSupplierOrder: {
-            /** Format: int32 */
-            attempt: number;
-            cancel_reason: string;
-            /** Format: date-time */
-            cancelled_at: string | null;
-            carrier: string;
-            /** Format: date-time */
-            confirmed_at: string | null;
-            costs?: components["schemas"]["EventCosts"] | null;
-            /** Format: date-time */
-            delivered_at: string | null;
-            /** Format: date-time */
-            failed_at: string | null;
-            failure_reason: string;
-            /** Format: uuid */
-            id: string;
-            items: components["schemas"]["EventItem"][];
-            note_to_supplier: string;
-            number: string;
-            /** Format: date-time */
-            placed_at: string | null;
-            placement_method: string;
-            ship_to: components["schemas"]["Address"];
-            /** Format: date-time */
-            shipped_at: string | null;
-            source_domain: string;
-            status: string;
-            /** Format: uuid */
-            supplier_id: string | null;
-            supplier_name: string;
-            supplier_order_number: string;
-            tracking_number: string;
-            tracking_url: string | null;
         };
         EventType: {
             description: string;
@@ -4624,32 +4471,6 @@ export interface components {
             order_events: components["schemas"]["EventType"][];
             scopes: components["schemas"]["IntegrationScope"][];
             webhooks: components["schemas"]["WebhookPolicyDoc"];
-        };
-        Item: {
-            cost_currency: string | null;
-            /**
-             * Format: decimal
-             * @example 12.50
-             */
-            expected_unit_cost: string | null;
-            external_line_id: string;
-            /** Format: uuid */
-            line_id: string;
-            options: {
-                [key: string]: string;
-            };
-            /** Format: int32 */
-            position: number;
-            /** Format: uuid */
-            product_id: string | null;
-            /** Format: int32 */
-            quantity: number;
-            sku: string;
-            source_url: string | null;
-            title: string;
-            /** Format: uuid */
-            variant_id: string | null;
-            variant_title: string;
         };
         Lead: {
             /** Format: uuid */
@@ -5393,7 +5214,7 @@ export interface components {
             /** Format: date-time */
             created_at: string;
             currency: string;
-            customer: components["schemas"]["Customer"];
+            customer: components["schemas"]["CustomerContact"];
             /** Format: date-time */
             customer_erased_at: string | null;
             customer_note: string;
@@ -5408,7 +5229,7 @@ export interface components {
             number: string;
             /** Format: date-time */
             ordered_at: string;
-            shipping_address: components["schemas"]["Address"];
+            shipping_address: components["schemas"]["PostalAddress"];
             /**
              * Format: decimal
              * @example 12.50
@@ -5557,7 +5378,7 @@ export interface components {
             /** Format: date-time */
             created_at: string;
             currency: string;
-            customer: components["schemas"]["Customer"];
+            customer: components["schemas"]["CustomerContact"];
             /** Format: date-time */
             customer_erased_at: string | null;
             customer_note: string;
@@ -5572,7 +5393,7 @@ export interface components {
             number: string;
             /** Format: date-time */
             ordered_at: string;
-            shipping_address: components["schemas"]["Address"];
+            shipping_address: components["schemas"]["PostalAddress"];
             /**
              * Format: decimal
              * @example 12.50
@@ -5610,6 +5431,16 @@ export interface components {
             offset: number;
             /** Format: int64 */
             total: number;
+        };
+        OrderWebhookEvent: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            occurred_at: string;
+            order: components["schemas"]["WebhookOrder"];
+            previous_status: string;
+            supplier_order: components["schemas"]["WebhookSupplierOrder"] | null;
+            type: string;
         };
         OrganizationSettings: {
             name: string;
@@ -5762,6 +5593,17 @@ export interface components {
             currency?: string;
             note?: string;
             supplier_order_number: string;
+        };
+        PostalAddress: {
+            city: string;
+            company: string;
+            country: string;
+            line1: string;
+            line2: string;
+            name: string;
+            phone: string;
+            postal_code: string;
+            region: string;
         };
         PriceSnapshot: {
             /**
@@ -7054,6 +6896,32 @@ export interface components {
             tag_ids?: string[];
             website: string | null;
         };
+        SupplierOrderItem: {
+            cost_currency: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            expected_unit_cost: string | null;
+            external_line_id: string;
+            /** Format: uuid */
+            line_id: string;
+            options: {
+                [key: string]: string;
+            };
+            /** Format: int32 */
+            position: number;
+            /** Format: uuid */
+            product_id: string | null;
+            /** Format: int32 */
+            quantity: number;
+            sku: string;
+            source_url: string | null;
+            title: string;
+            /** Format: uuid */
+            variant_id: string | null;
+            variant_title: string;
+        };
         SupplierOrderListItem: {
             /** Format: date-time */
             confirmed_at: string | null;
@@ -7192,7 +7060,7 @@ export interface components {
             failure_reason: string;
             /** Format: uuid */
             id: string;
-            items: components["schemas"]["Item"][];
+            items: components["schemas"]["SupplierOrderItem"][];
             note_to_supplier: string;
             number: string;
             order_external_id: string;
@@ -7204,7 +7072,7 @@ export interface components {
             placed_by: string;
             placement_method: string;
             placement_note: string;
-            ship_to: components["schemas"]["Address"];
+            ship_to: components["schemas"]["PostalAddress"];
             /** Format: date-time */
             shipped_at: string | null;
             source_domain: string;
@@ -7217,7 +7085,7 @@ export interface components {
             tracking_url: string | null;
             /** Format: date-time */
             updated_at: string;
-            warnings: components["schemas"]["Warning"][];
+            warnings: components["schemas"]["ConfirmationWarning"][];
         };
         SupplierProduct: {
             /**
@@ -7561,12 +7429,6 @@ export interface components {
             /** Format: uuid */
             variant_id: string;
         };
-        Warning: {
-            code: string;
-            /** Format: uuid */
-            line_id: string | null;
-            message: string;
-        };
         WebhookCreatedDoc: {
             secret: string;
             webhook: components["schemas"]["WebhookView"];
@@ -7674,6 +7536,77 @@ export interface components {
             name: string;
             url: string;
         };
+        WebhookItemCost: {
+            cost_currency: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            expected_unit_cost: string | null;
+        };
+        WebhookOrder: {
+            /** Format: date-time */
+            cancelled_at: string | null;
+            channel: string;
+            currency: string;
+            customer: components["schemas"]["CustomerContact"];
+            customer_erased: boolean;
+            customer_note: string;
+            external_id: string;
+            /** Format: uuid */
+            id: string;
+            lines: components["schemas"]["WebhookOrderLine"][];
+            needs_attention: boolean;
+            number: string;
+            /** Format: date-time */
+            ordered_at: string;
+            shipping_address: components["schemas"]["PostalAddress"];
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            shipping_amount: string | null;
+            status: string;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            subtotal: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            tax_amount: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            total: string | null;
+        };
+        WebhookOrderLine: {
+            cancelled: boolean;
+            external_line_id: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            position: number;
+            /** Format: uuid */
+            product_id: string | null;
+            /** Format: int32 */
+            quantity: number;
+            resolution: string;
+            sku: string;
+            /** Format: uuid */
+            supplier_order_id: string | null;
+            title: string;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            unit_price: string | null;
+            /** Format: uuid */
+            variant_id: string | null;
+        };
         WebhookPolicyDoc: {
             allow_http_localhost: boolean;
             allow_private_networks: boolean;
@@ -7686,6 +7619,73 @@ export interface components {
             /** Format: int32 */
             timeout_seconds: number;
             timestamp_header: string;
+        };
+        WebhookSupplierOrder: {
+            /** Format: int32 */
+            attempt: number;
+            cancel_reason: string;
+            /** Format: date-time */
+            cancelled_at: string | null;
+            carrier: string;
+            /** Format: date-time */
+            confirmed_at: string | null;
+            costs?: components["schemas"]["WebhookSupplierOrderCosts"] | null;
+            /** Format: date-time */
+            delivered_at: string | null;
+            /** Format: date-time */
+            failed_at: string | null;
+            failure_reason: string;
+            /** Format: uuid */
+            id: string;
+            items: components["schemas"]["WebhookSupplierOrderItem"][];
+            note_to_supplier: string;
+            number: string;
+            /** Format: date-time */
+            placed_at: string | null;
+            placement_method: string;
+            ship_to: components["schemas"]["PostalAddress"];
+            /** Format: date-time */
+            shipped_at: string | null;
+            source_domain: string;
+            status: string;
+            /** Format: uuid */
+            supplier_id: string | null;
+            supplier_name: string;
+            supplier_order_number: string;
+            tracking_number: string;
+            tracking_url: string | null;
+        };
+        WebhookSupplierOrderCosts: {
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            actual_cost: string | null;
+            actual_currency: string | null;
+            cost_currency: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            expected_cost_total: string | null;
+        };
+        WebhookSupplierOrderItem: {
+            cost?: components["schemas"]["WebhookItemCost"] | null;
+            /** Format: uuid */
+            line_id: string;
+            options: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            product_id: string | null;
+            /** Format: int32 */
+            quantity: number;
+            sku: string;
+            source_url: string | null;
+            title: string;
+            /** Format: uuid */
+            variant_id: string | null;
+            variant_title: string;
         };
         WebhookView: {
             /** Format: int32 */

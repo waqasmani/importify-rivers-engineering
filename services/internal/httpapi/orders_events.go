@@ -17,30 +17,30 @@ import (
 
 // orderEvent builds the payload of an order event with costs; endpoints without include_costs get
 // WithoutCosts.
-func orderEvent(typ string, o store.Order, lines []store.OrderLine, so *store.SupplierOrder, previous string) orders.Event {
-	ev := orders.Event{ID: uuid.New(), Type: typ, OccurredAt: time.Now().UTC(), PreviousStatus: previous}
-	eo := orders.EventOrder{ID: o.ID, Number: o.Number, Channel: o.Channel, ExternalID: o.ExternalID, Status: o.Status, NeedsAttention: o.NeedsAttention,
+func orderEvent(typ string, o store.Order, lines []store.OrderLine, so *store.SupplierOrder, previous string) orders.OrderWebhookEvent {
+	ev := orders.OrderWebhookEvent{ID: uuid.New(), Type: typ, OccurredAt: time.Now().UTC(), PreviousStatus: previous}
+	eo := orders.WebhookOrder{ID: o.ID, Number: o.Number, Channel: o.Channel, ExternalID: o.ExternalID, Status: o.Status, NeedsAttention: o.NeedsAttention,
 		OrderedAt: o.OrderedAt, Currency: o.Currency, Subtotal: o.Subtotal, ShippingAmount: o.ShippingAmount, TaxAmount: o.TaxAmount, Total: o.Total,
-		Customer:        orders.Customer{Name: o.CustomerName, Email: o.CustomerEmail, Phone: o.CustomerPhone},
+		Customer:        orders.CustomerContact{Name: o.CustomerName, Email: o.CustomerEmail, Phone: o.CustomerPhone},
 		ShippingAddress: orderAddress(o), CustomerNote: o.CustomerNote, CustomerErased: o.CustomerErasedAt != nil, CancelledAt: o.CancelledAt,
-		Lines: []orders.EventLine{}}
+		Lines: []orders.WebhookOrderLine{}}
 	for _, l := range lines {
-		eo.Lines = append(eo.Lines, orders.EventLine{ID: l.ID, Position: l.Position, ExternalLineID: l.ExternalLineID, SKU: l.Sku, Title: l.Title,
+		eo.Lines = append(eo.Lines, orders.WebhookOrderLine{ID: l.ID, Position: l.Position, ExternalLineID: l.ExternalLineID, SKU: l.Sku, Title: l.Title,
 			Quantity: l.Quantity, UnitPrice: l.UnitPrice, ProductID: l.ProductID, VariantID: l.VariantID, Resolution: l.Resolution,
 			SupplierOrderID: l.SupplierOrderID, Cancelled: l.CancelledAt != nil})
 	}
 	ev.Order = eo
 	if so != nil {
-		eso := &orders.EventSupplierOrder{ID: so.ID, Number: so.Number, Status: so.Status, PlacementMethod: so.PlacementMethod, SupplierID: so.SupplierID,
-			SupplierName: so.SupplierName, SourceDomain: so.SourceDomain, Attempt: so.Attempt, Items: []orders.EventItem{}, ShipTo: soAddress(*so),
+		eso := &orders.WebhookSupplierOrder{ID: so.ID, Number: so.Number, Status: so.Status, PlacementMethod: so.PlacementMethod, SupplierID: so.SupplierID,
+			SupplierName: so.SupplierName, SourceDomain: so.SourceDomain, Attempt: so.Attempt, Items: []orders.WebhookSupplierOrderItem{}, ShipTo: soAddress(*so),
 			NoteToSupplier: so.NoteToSupplier, ConfirmedAt: so.ConfirmedAt, SupplierOrderNumber: so.SupplierOrderNumber, PlacedAt: so.PlacedAt,
 			FailureReason: so.FailureReason, FailedAt: so.FailedAt, Carrier: so.Carrier, TrackingNumber: so.TrackingNumber, TrackingURL: so.TrackingUrl,
 			ShippedAt: so.ShippedAt, DeliveredAt: so.DeliveredAt, CancelledAt: so.CancelledAt, CancelReason: so.CancelReason,
-			Costs: &orders.EventCosts{ExpectedCostTotal: so.ExpectedCostTotal, CostCurrency: so.CostCurrency, ActualCost: so.ActualCost, ActualCurrency: so.ActualCurrency}}
+			Costs: &orders.WebhookSupplierOrderCosts{ExpectedCostTotal: so.ExpectedCostTotal, CostCurrency: so.CostCurrency, ActualCost: so.ActualCost, ActualCurrency: so.ActualCurrency}}
 		for _, it := range itemsOf(so.Items) {
-			eso.Items = append(eso.Items, orders.EventItem{LineID: it.LineID, ProductID: it.ProductID, VariantID: it.VariantID, SKU: it.SKU, Title: it.Title,
+			eso.Items = append(eso.Items, orders.WebhookSupplierOrderItem{LineID: it.LineID, ProductID: it.ProductID, VariantID: it.VariantID, SKU: it.SKU, Title: it.Title,
 				VariantTitle: it.VariantTitle, Options: it.Options, Quantity: it.Quantity, SourceURL: it.SourceURL,
-				Cost: &orders.EventItemCost{ExpectedUnitCost: it.ExpectedUnitCost, CostCurrency: it.CostCurrency}})
+				Cost: &orders.WebhookItemCost{ExpectedUnitCost: it.ExpectedUnitCost, CostCurrency: it.CostCurrency}})
 		}
 		ev.SupplierOrder = eso
 	}
@@ -98,7 +98,7 @@ func (s *Server) eraseWebhookPayloads(ctx context.Context, q *store.Queries, ord
 	}
 	n := 0
 	for _, row := range rows {
-		var ev orders.Event
+		var ev orders.OrderWebhookEvent
 		if err := json.Unmarshal(row.Payload, &ev); err != nil {
 			// Not an order payload: replace it entirely rather than keep data that cannot be checked.
 			if err := q.SetWebhookDeliveryPayload(ctx, store.SetWebhookDeliveryPayloadParams{ID: row.ID, Payload: json.RawMessage(`{"erased":true}`)}); err != nil {

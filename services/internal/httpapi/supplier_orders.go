@@ -29,48 +29,48 @@ import (
 // SupplierOrderView is a supplier (purchase) order with everything needed to review, confirm and
 // place it. Ship-to is personal data.
 type SupplierOrderView struct {
-	ID              uuid.UUID     `json:"id"`
-	Number          string        `json:"number"`
-	OrderID         uuid.UUID     `json:"order_id"`
-	OrderNumber     string        `json:"order_number"`
-	OrderExternalID string        `json:"order_external_id"`
-	Status          string        `json:"status"`
-	PlacementMethod string        `json:"placement_method"` // manual | automation
-	SupplierID      *uuid.UUID    `json:"supplier_id"`
-	SupplierName    string        `json:"supplier_name"`
-	SourceDomain    string        `json:"source_domain"`
-	Items           []orders.Item `json:"items"`
+	ID              uuid.UUID                  `json:"id"`
+	Number          string                     `json:"number"`
+	OrderID         uuid.UUID                  `json:"order_id"`
+	OrderNumber     string                     `json:"order_number"`
+	OrderExternalID string                     `json:"order_external_id"`
+	Status          string                     `json:"status"`
+	PlacementMethod string                     `json:"placement_method"` // manual | automation
+	SupplierID      *uuid.UUID                 `json:"supplier_id"`
+	SupplierName    string                     `json:"supplier_name"`
+	SourceDomain    string                     `json:"source_domain"`
+	Items           []orders.SupplierOrderItem `json:"items"`
 	// ExpectedCostTotal is set when every item has a cost in one currency.
-	ExpectedCostTotal *decimal.Decimal `json:"expected_cost_total"`
-	CostCurrency      *string          `json:"cost_currency"`
-	ShipTo            orders.Address   `json:"ship_to"`
-	NoteToSupplier    string           `json:"note_to_supplier"`
+	ExpectedCostTotal *decimal.Decimal     `json:"expected_cost_total"`
+	CostCurrency      *string              `json:"cost_currency"`
+	ShipTo            orders.PostalAddress `json:"ship_to"`
+	NoteToSupplier    string               `json:"note_to_supplier"`
 	// ContentHash covers the supplier, placement method, items, ship-to, note and warnings. For a
 	// draft it is the hash of the current contents: send it back to confirm. Afterwards it is the
 	// hash that was confirmed.
-	ContentHash         string           `json:"content_hash"`
-	Warnings            []orders.Warning `json:"warnings"`
-	ConfirmedAt         *time.Time       `json:"confirmed_at"`
-	ConfirmedBy         string           `json:"confirmed_by"`
-	Attempt             int32            `json:"attempt"`
-	SupplierOrderNumber string           `json:"supplier_order_number"`
-	ActualCost          *decimal.Decimal `json:"actual_cost"`
-	ActualCurrency      *string          `json:"actual_currency"`
-	PlacementNote       string           `json:"placement_note"`
-	PlacedAt            *time.Time       `json:"placed_at"`
-	PlacedBy            string           `json:"placed_by"`
-	FailureReason       string           `json:"failure_reason"`
-	FailedAt            *time.Time       `json:"failed_at"`
-	Carrier             string           `json:"carrier"`
-	TrackingNumber      string           `json:"tracking_number"`
-	TrackingURL         *string          `json:"tracking_url"`
-	ShippedAt           *time.Time       `json:"shipped_at"`
-	DeliveredAt         *time.Time       `json:"delivered_at"`
-	CancelledAt         *time.Time       `json:"cancelled_at"`
-	CancelledBy         string           `json:"cancelled_by"`
-	CancelReason        string           `json:"cancel_reason"`
-	CreatedAt           time.Time        `json:"created_at"`
-	UpdatedAt           time.Time        `json:"updated_at"`
+	ContentHash         string                       `json:"content_hash"`
+	Warnings            []orders.ConfirmationWarning `json:"warnings"`
+	ConfirmedAt         *time.Time                   `json:"confirmed_at"`
+	ConfirmedBy         string                       `json:"confirmed_by"`
+	Attempt             int32                        `json:"attempt"`
+	SupplierOrderNumber string                       `json:"supplier_order_number"`
+	ActualCost          *decimal.Decimal             `json:"actual_cost"`
+	ActualCurrency      *string                      `json:"actual_currency"`
+	PlacementNote       string                       `json:"placement_note"`
+	PlacedAt            *time.Time                   `json:"placed_at"`
+	PlacedBy            string                       `json:"placed_by"`
+	FailureReason       string                       `json:"failure_reason"`
+	FailedAt            *time.Time                   `json:"failed_at"`
+	Carrier             string                       `json:"carrier"`
+	TrackingNumber      string                       `json:"tracking_number"`
+	TrackingURL         *string                      `json:"tracking_url"`
+	ShippedAt           *time.Time                   `json:"shipped_at"`
+	DeliveredAt         *time.Time                   `json:"delivered_at"`
+	CancelledAt         *time.Time                   `json:"cancelled_at"`
+	CancelledBy         string                       `json:"cancelled_by"`
+	CancelReason        string                       `json:"cancel_reason"`
+	CreatedAt           time.Time                    `json:"created_at"`
+	UpdatedAt           time.Time                    `json:"updated_at"`
 }
 
 // SupplierOrderListItem is a supplier order in the queues.
@@ -107,8 +107,8 @@ type supplierOrderQueuesDoc struct {
 	Failed           int64 `json:"failed"`
 }
 
-func soAddress(so store.SupplierOrder) orders.Address {
-	return orders.Address{Name: so.ShipName, Company: so.ShipCompany, Line1: so.ShipLine1, Line2: so.ShipLine2, City: so.ShipCity,
+func soAddress(so store.SupplierOrder) orders.PostalAddress {
+	return orders.PostalAddress{Name: so.ShipName, Company: so.ShipCompany, Line1: so.ShipLine1, Line2: so.ShipLine2, City: so.ShipCity,
 		Region: so.ShipRegion, PostalCode: so.ShipPostalCode, Country: so.ShipCountry, Phone: so.ShipPhone}
 }
 
@@ -181,7 +181,7 @@ func (s *Server) loadWarnEnv(ctx context.Context, q *store.Queries, sos []store.
 	return env, nil
 }
 
-func (env warnEnv) warnings(so store.SupplierOrder, items []orders.Item) []orders.Warning {
+func (env warnEnv) warnings(so store.SupplierOrder, items []orders.SupplierOrderItem) []orders.ConfirmationWarning {
 	o := env.orders[so.OrderID]
 	sale := map[uuid.UUID]*decimal.Decimal{}
 	unassigned := 0
@@ -195,7 +195,7 @@ func (env warnEnv) warnings(so store.SupplierOrder, items []orders.Item) []order
 		SalePrices: sale, SaleCurrency: o.Currency, Rates: env.rates, UnassignedLines: unassigned, PossibleDuplicate: env.duplicates[so.OrderID]})
 }
 
-func contentOf(so store.SupplierOrder, items []orders.Item, ws []orders.Warning) orders.Content {
+func contentOf(so store.SupplierOrder, items []orders.SupplierOrderItem, ws []orders.ConfirmationWarning) orders.Content {
 	return orders.Content{SupplierOrderID: so.ID, SupplierID: so.SupplierID, SupplierName: so.SupplierName, SourceDomain: so.SourceDomain,
 		PlacementMethod: so.PlacementMethod, Items: items, ExpectedCostTotal: so.ExpectedCostTotal, CostCurrency: so.CostCurrency,
 		ShipTo: soAddress(so), NoteToSupplier: so.NoteToSupplier, Warnings: orders.WarningKeys(ws)}
@@ -204,7 +204,7 @@ func contentOf(so store.SupplierOrder, items []orders.Item, ws []orders.Warning)
 // soView builds the full view; warnings and the hash of a draft are computed from the current data.
 func (env warnEnv) soView(so store.SupplierOrder) SupplierOrderView {
 	items := itemsOf(so.Items)
-	ws := []orders.Warning{}
+	ws := []orders.ConfirmationWarning{}
 	if so.Status != orders.SOCancelled {
 		ws = env.warnings(so, items)
 	}

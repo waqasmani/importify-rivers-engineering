@@ -10,7 +10,7 @@ import (
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/pricing"
 )
 
-// Warning codes shown before a supplier order is confirmed. Confirming with warnings requires an
+// ConfirmationWarning codes shown before a supplier order is confirmed. Confirming with warnings requires an
 // explicit acknowledgement ("I reviewed the warnings").
 const (
 	WarnUnmatchedLines    = "unmatched_lines"
@@ -26,9 +26,9 @@ const (
 	WarnPossibleDuplicate = "possible_duplicate"
 )
 
-// Warning is one reason to look twice before confirming. LineID names the customer order line
+// ConfirmationWarning is one reason to look twice before confirming. LineID names the customer order line
 // when the warning is about one item.
-type Warning struct {
+type ConfirmationWarning struct {
 	Code    string     `json:"code"`
 	Message string     `json:"message"`
 	LineID  *uuid.UUID `json:"line_id"`
@@ -45,8 +45,8 @@ type ProductState struct {
 
 // WarningInput is everything Warnings looks at.
 type WarningInput struct {
-	Items  []Item
-	ShipTo Address
+	Items  []SupplierOrderItem
+	ShipTo PostalAddress
 	// Current products and variants by ID; an item whose product is absent was deleted.
 	Products     map[uuid.UUID]ProductState
 	Variants     map[uuid.UUID]string // availability
@@ -65,10 +65,10 @@ var badAvailability = map[string]string{
 }
 
 // Warnings returns the warnings of a supplier order, ordered by line and code.
-func Warnings(in WarningInput) []Warning {
-	out := []Warning{}
+func Warnings(in WarningInput) []ConfirmationWarning {
+	out := []ConfirmationWarning{}
 	add := func(code string, line *uuid.UUID, msg string) {
-		out = append(out, Warning{Code: code, Message: msg, LineID: line})
+		out = append(out, ConfirmationWarning{Code: code, Message: msg, LineID: line})
 	}
 	if in.UnassignedLines > 0 {
 		add(WarnUnmatchedLines, nil, fmt.Sprintf("%d line(s) of the customer order are not in any supplier order. Map or cancel them, or they will not be ordered.", in.UnassignedLines))
@@ -162,7 +162,7 @@ func saleBelowCost(sale decimal.Decimal, saleCur string, cost decimal.Decimal, c
 }
 
 // WarningKeys returns a stable description of the warnings for the content hash.
-func WarningKeys(ws []Warning) []string {
+func WarningKeys(ws []ConfirmationWarning) []string {
 	out := make([]string, 0, len(ws))
 	for _, w := range ws {
 		out = append(out, w.Code+":"+lineKey(w.LineID))

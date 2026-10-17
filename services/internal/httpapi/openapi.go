@@ -589,7 +589,7 @@ func webhookDoc(g *schemaGen) map[string]any {
 			"supplier order, and only for suppliers with automated placement; cost fields are present only for endpoints with include_costs.",
 		"parameters": params,
 		"requestBody": map[string]any{"required": true, "content": map[string]any{"application/json": map[string]any{
-			"schema": g.schema(reflect.TypeOf(orders.Event{}))}}},
+			"schema": g.schema(reflect.TypeOf(orders.OrderWebhookEvent{}))}}},
 		"responses": map[string]any{"200": map[string]any{"description": "Any 2xx status acknowledges the delivery"}},
 	}}, "catalogEvent": map[string]any{"post": map[string]any{
 		"summary": "Catalog event delivered to a registered endpoint",

@@ -61,11 +61,11 @@ func sampleContent() Content {
 	return Content{
 		SupplierOrderID: uuid.MustParse("6a0e6d8e-6f43-4b5e-9d11-1f8c7c1a0002"), SupplierName: "Ningbo Flasks", SourceDomain: "supplier.example",
 		PlacementMethod: PlacementManual,
-		Items: []Item{{LineID: uuid.MustParse("6a0e6d8e-6f43-4b5e-9d11-1f8c7c1a0003"), ProductID: &pid, SKU: "FL-1", Title: "Flask",
+		Items: []SupplierOrderItem{{LineID: uuid.MustParse("6a0e6d8e-6f43-4b5e-9d11-1f8c7c1a0003"), ProductID: &pid, SKU: "FL-1", Title: "Flask",
 			Options: map[string]string{"Size": "1 L", "Color": "Black"}, Quantity: 2, SourceURL: str("https://supplier.example/p/1"),
 			ExpectedUnitCost: dec("11.2000"), CostCurrency: str("EUR")}},
 		ExpectedCostTotal: dec("22.4000"), CostCurrency: str("EUR"),
-		ShipTo: Address{Name: "Ada", Line1: "1 Main St", City: "Berlin", PostalCode: "10115", Country: "DE"},
+		ShipTo: PostalAddress{Name: "Ada", Line1: "1 Main St", City: "Berlin", PostalCode: "10115", Country: "DE"},
 	}
 }
 
@@ -95,7 +95,7 @@ func TestContentHashIsCanonical(t *testing.T) {
 		"note":      func(c *Content) { c.NoteToSupplier = "Gift wrap" },
 		"supplier":  func(c *Content) { s := uuid.New(); c.SupplierID = &s },
 		"warnings":  func(c *Content) { c.Warnings = []string{WarnMissingCost + ":"} },
-		"new item":  func(c *Content) { c.Items = append(c.Items, Item{LineID: uuid.New(), Quantity: 1}) },
+		"new item":  func(c *Content) { c.Items = append(c.Items, SupplierOrderItem{LineID: uuid.New(), Quantity: 1}) },
 		"total":     func(c *Content) { c.ExpectedCostTotal = nil },
 		"so id":     func(c *Content) { c.SupplierOrderID = uuid.New() },
 		"recipient": func(c *Content) { c.ShipTo.Name = "Bob" },
@@ -112,7 +112,7 @@ func TestContentHashIsCanonical(t *testing.T) {
 func TestWarnings(t *testing.T) {
 	pid, pid2, vid := uuid.New(), uuid.New(), uuid.New()
 	l1, l2, l3 := uuid.New(), uuid.New(), uuid.New()
-	items := []Item{
+	items := []SupplierOrderItem{
 		{LineID: l1, ProductID: &pid, VariantID: &vid, Title: "Flask", VariantTitle: "Black", Quantity: 1, SourceURL: str("https://s.example/1"),
 			ExpectedUnitCost: dec("12"), CostCurrency: str("EUR")},
 		{LineID: l2, ProductID: &pid2, Title: "Mug", Quantity: 1, SourceURL: nil},
@@ -120,7 +120,7 @@ func TestWarnings(t *testing.T) {
 	}
 	in := WarningInput{
 		Items:  items,
-		ShipTo: Address{Name: "Ada", Line1: "1 Main St", Country: "DE"},
+		ShipTo: PostalAddress{Name: "Ada", Line1: "1 Main St", Country: "DE"},
 		Products: map[uuid.UUID]ProductState{
 			pid:  {Published: true, Status: "active", ReviewStatus: "approved", Availability: "in_stock", HasVariants: true},
 			pid2: {Published: false, Status: "draft", ReviewStatus: "pending", Availability: "unknown", HasVariants: true},
@@ -159,7 +159,7 @@ func TestWarnings(t *testing.T) {
 		t.Fatal("converted margin not checked")
 	}
 
-	clean := WarningInput{Items: items[:1], ShipTo: Address{Name: "Ada", Line1: "1 Main St", City: "Berlin", PostalCode: "10115", Country: "DE"},
+	clean := WarningInput{Items: items[:1], ShipTo: PostalAddress{Name: "Ada", Line1: "1 Main St", City: "Berlin", PostalCode: "10115", Country: "DE"},
 		Products:   map[uuid.UUID]ProductState{pid: {Published: true, Availability: "in_stock", HasVariants: true}},
 		Variants:   map[uuid.UUID]string{vid: "in_stock"},
 		SalePrices: map[uuid.UUID]*decimal.Decimal{l1: dec("20")}, SaleCurrency: "EUR"}
@@ -169,14 +169,14 @@ func TestWarnings(t *testing.T) {
 }
 
 func TestTotal(t *testing.T) {
-	sum, cur := Total([]Item{{Quantity: 2, ExpectedUnitCost: dec("1.5"), CostCurrency: str("EUR")}, {Quantity: 1, ExpectedUnitCost: dec("3"), CostCurrency: str("EUR")}})
+	sum, cur := Total([]SupplierOrderItem{{Quantity: 2, ExpectedUnitCost: dec("1.5"), CostCurrency: str("EUR")}, {Quantity: 1, ExpectedUnitCost: dec("3"), CostCurrency: str("EUR")}})
 	if sum == nil || sum.String() != "6" || *cur != "EUR" {
 		t.Fatalf("total %v %v", sum, cur)
 	}
-	if s, _ := Total([]Item{{Quantity: 1, ExpectedUnitCost: dec("1"), CostCurrency: str("EUR")}, {Quantity: 1, ExpectedUnitCost: dec("1"), CostCurrency: str("USD")}}); s != nil {
+	if s, _ := Total([]SupplierOrderItem{{Quantity: 1, ExpectedUnitCost: dec("1"), CostCurrency: str("EUR")}, {Quantity: 1, ExpectedUnitCost: dec("1"), CostCurrency: str("USD")}}); s != nil {
 		t.Fatal("mixed currencies must not sum")
 	}
-	if s, _ := Total([]Item{{Quantity: 1}}); s != nil {
+	if s, _ := Total([]SupplierOrderItem{{Quantity: 1}}); s != nil {
 		t.Fatal("a missing cost must not sum")
 	}
 }
@@ -195,11 +195,11 @@ func TestValidCountry(t *testing.T) {
 }
 
 func TestEventErasureAndCosts(t *testing.T) {
-	ev := Event{Type: EventSOConfirmed, Order: EventOrder{Customer: Customer{Name: "Ada Lovelace", Email: "ada@example.com", Phone: "+49 30 1"},
-		ShippingAddress: Address{Name: "Ada Lovelace", Line1: "1 Analytical St", City: "London", PostalCode: "N1", Country: "GB"}, CustomerNote: "Ring twice"},
-		SupplierOrder: &EventSupplierOrder{ShipTo: Address{Name: "Ada Lovelace", Line1: "1 Analytical St", Country: "GB"}, NoteToSupplier: "For Ada",
-			TrackingNumber: "TRK1", Costs: &EventCosts{ExpectedCostTotal: dec("3")},
-			Items: []EventItem{{Title: "Flask", Cost: &EventItemCost{ExpectedUnitCost: dec("3")}}}}}
+	ev := OrderWebhookEvent{Type: EventSOConfirmed, Order: WebhookOrder{Customer: CustomerContact{Name: "Ada Lovelace", Email: "ada@example.com", Phone: "+49 30 1"},
+		ShippingAddress: PostalAddress{Name: "Ada Lovelace", Line1: "1 Analytical St", City: "London", PostalCode: "N1", Country: "GB"}, CustomerNote: "Ring twice"},
+		SupplierOrder: &WebhookSupplierOrder{ShipTo: PostalAddress{Name: "Ada Lovelace", Line1: "1 Analytical St", Country: "GB"}, NoteToSupplier: "For Ada",
+			TrackingNumber: "TRK1", Costs: &WebhookSupplierOrderCosts{ExpectedCostTotal: dec("3")},
+			Items: []WebhookSupplierOrderItem{{Title: "Flask", Cost: &WebhookItemCost{ExpectedUnitCost: dec("3")}}}}}
 	b, _ := json.Marshal(ev.Erased())
 	for _, secret := range []string{"Ada", "ada@example.com", "+49", "Analytical", "London", "Ring twice"} {
 		if strings.Contains(string(b), secret) {

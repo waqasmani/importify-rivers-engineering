@@ -75,49 +75,6 @@
         ],
         "type": "object"
       },
-      "Address": {
-        "properties": {
-          "city": {
-            "type": "string"
-          },
-          "company": {
-            "type": "string"
-          },
-          "country": {
-            "type": "string"
-          },
-          "line1": {
-            "type": "string"
-          },
-          "line2": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "phone": {
-            "type": "string"
-          },
-          "postal_code": {
-            "type": "string"
-          },
-          "region": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "city",
-          "company",
-          "country",
-          "line1",
-          "line2",
-          "name",
-          "phone",
-          "postal_code",
-          "region"
-        ],
-        "type": "object"
-      },
       "AffectedDoc": {
         "properties": {
           "affected": {
@@ -2121,6 +2078,27 @@
         ],
         "type": "object"
       },
+      "ConfirmationWarning": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "line_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "line_id",
+          "message"
+        ],
+        "type": "object"
+      },
       "ContactInput": {
         "properties": {
           "company_id": {
@@ -2679,7 +2657,7 @@
         ],
         "type": "object"
       },
-      "Customer": {
+      "CustomerContact": {
         "properties": {
           "email": {
             "type": "string"
@@ -3041,447 +3019,6 @@
         },
         "required": [
           "error"
-        ],
-        "type": "object"
-      },
-      "Event": {
-        "properties": {
-          "id": {
-            "format": "uuid",
-            "type": "string"
-          },
-          "occurred_at": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "order": {
-            "$ref": "#/components/schemas/EventOrder"
-          },
-          "previous_status": {
-            "type": "string"
-          },
-          "supplier_order": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/EventSupplierOrder"
-              }
-            ],
-            "nullable": true
-          },
-          "type": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "occurred_at",
-          "order",
-          "previous_status",
-          "supplier_order",
-          "type"
-        ],
-        "type": "object"
-      },
-      "EventCosts": {
-        "properties": {
-          "actual_cost": {
-            "example": "12.50",
-            "format": "decimal",
-            "nullable": true,
-            "type": "string"
-          },
-          "actual_currency": {
-            "nullable": true,
-            "type": "string"
-          },
-          "cost_currency": {
-            "nullable": true,
-            "type": "string"
-          },
-          "expected_cost_total": {
-            "example": "12.50",
-            "format": "decimal",
-            "nullable": true,
-            "type": "string"
-          }
-        },
-        "required": [
-          "actual_cost",
-          "actual_currency",
-          "cost_currency",
-          "expected_cost_total"
-        ],
-        "type": "object"
-      },
-      "EventItem": {
-        "properties": {
-          "cost": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/EventItemCost"
-              }
-            ],
-            "nullable": true
-          },
-          "line_id": {
-            "format": "uuid",
-            "type": "string"
-          },
-          "options": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
-          },
-          "product_id": {
-            "format": "uuid",
-            "nullable": true,
-            "type": "string"
-          },
-          "quantity": {
-            "format": "int32",
-            "type": "integer"
-          },
-          "sku": {
-            "type": "string"
-          },
-          "source_url": {
-            "nullable": true,
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "variant_id": {
-            "format": "uuid",
-            "nullable": true,
-            "type": "string"
-          },
-          "variant_title": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "line_id",
-          "options",
-          "product_id",
-          "quantity",
-          "sku",
-          "source_url",
-          "title",
-          "variant_id",
-          "variant_title"
-        ],
-        "type": "object"
-      },
-      "EventItemCost": {
-        "properties": {
-          "cost_currency": {
-            "nullable": true,
-            "type": "string"
-          },
-          "expected_unit_cost": {
-            "example": "12.50",
-            "format": "decimal",
-            "nullable": true,
-            "type": "string"
-          }
-        },
-        "required": [
-          "cost_currency",
-          "expected_unit_cost"
-        ],
-        "type": "object"
-      },
-      "EventLine": {
-        "properties": {
-          "cancelled": {
-            "type": "boolean"
-          },
-          "external_line_id": {
-            "type": "string"
-          },
-          "id": {
-            "format": "uuid",
-            "type": "string"
-          },
-          "position": {
-            "format": "int32",
-            "type": "integer"
-          },
-          "product_id": {
-            "format": "uuid",
-            "nullable": true,
-            "type": "string"
-          },
-          "quantity": {
-            "format": "int32",
-            "type": "integer"
-          },
-          "resolution": {
-            "type": "string"
-          },
-          "sku": {
-            "type": "string"
-          },
-          "supplier_order_id": {
-            "format": "uuid",
-            "nullable": true,
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "unit_price": {
-            "example": "12.50",
-            "format": "decimal",
-            "nullable": true,
-            "type": "string"
-          },
-          "variant_id": {
-            "format": "uuid",
-            "nullable": true,
-            "type": "string"
-          }
-        },
-        "required": [
-          "cancelled",
-          "external_line_id",
-          "id",
-          "position",
-          "product_id",
-          "quantity",
-          "resolution",
-          "sku",
-          "supplier_order_id",
-          "title",
-          "unit_price",
-          "variant_id"
-        ],
-        "type": "object"
-      },
-      "EventOrder": {
-        "properties": {
-          "cancelled_at": {
-            "format": "date-time",
-            "nullable": true,
-            "type": "string"
-          },
-          "channel": {
-            "type": "string"
-          },
-          "currency": {
-            "type": "string"
-          },
-          "customer": {
-            "$ref": "#/components/schemas/Customer"
-          },
-          "customer_erased": {
-            "type": "boolean"
-          },
-          "customer_note": {
-            "type": "string"
-          },
-          "external_id": {
-            "type": "string"
-          },
-          "id": {
-            "format": "uuid",
-            "type": "string"
-          },
-          "lines": {
-            "items": {
-              "$ref": "#/components/schemas/EventLine"
-            },
-            "type": "array"
-          },
-          "needs_attention": {
-            "type": "boolean"
-          },
-          "number": {
-            "type": "string"
-          },
-          "ordered_at": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "shipping_address": {
-            "$ref": "#/components/schemas/Address"
-          },
-          "shipping_amount": {
-            "example": "12.50",
-            "format": "decimal",
-            "nullable": true,
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "subtotal": {
-            "example": "12.50",
-            "format": "decimal",
-            "nullable": true,
-            "type": "string"
-          },
-          "tax_amount": {
-            "example": "12.50",
-            "format": "decimal",
-            "nullable": true,
-            "type": "string"
-          },
-          "total": {
-            "example": "12.50",
-            "format": "decimal",
-            "nullable": true,
-            "type": "string"
-          }
-        },
-        "required": [
-          "cancelled_at",
-          "channel",
-          "currency",
-          "customer",
-          "customer_erased",
-          "customer_note",
-          "external_id",
-          "id",
-          "lines",
-          "needs_attention",
-          "number",
-          "ordered_at",
-          "shipping_address",
-          "shipping_amount",
-          "status",
-          "subtotal",
-          "tax_amount",
-          "total"
-        ],
-        "type": "object"
-      },
-      "EventSupplierOrder": {
-        "properties": {
-          "attempt": {
-            "format": "int32",
-            "type": "integer"
-          },
-          "cancel_reason": {
-            "type": "string"
-          },
-          "cancelled_at": {
-            "format": "date-time",
-            "nullable": true,
-            "type": "string"
-          },
-          "carrier": {
-            "type": "string"
-          },
-          "confirmed_at": {
-            "format": "date-time",
-            "nullable": true,
-            "type": "string"
-          },
-          "costs": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/EventCosts"
-              }
-            ],
-            "nullable": true
-          },
-          "delivered_at": {
-            "format": "date-time",
-            "nullable": true,
-            "type": "string"
-          },
-          "failed_at": {
-            "format": "date-time",
-            "nullable": true,
-            "type": "string"
-          },
-          "failure_reason": {
-            "type": "string"
-          },
-          "id": {
-            "format": "uuid",
-            "type": "string"
-          },
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/EventItem"
-            },
-            "type": "array"
-          },
-          "note_to_supplier": {
-            "type": "string"
-          },
-          "number": {
-            "type": "string"
-          },
-          "placed_at": {
-            "format": "date-time",
-            "nullable": true,
-            "type": "string"
-          },
-          "placement_method": {
-            "type": "string"
-          },
-          "ship_to": {
-            "$ref": "#/components/schemas/Address"
-          },
-          "shipped_at": {
-            "format": "date-time",
-            "nullable": true,
-            "type": "string"
-          },
-          "source_domain": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "supplier_id": {
-            "format": "uuid",
-            "nullable": true,
-            "type": "string"
-          },
-          "supplier_name": {
-            "type": "string"
-          },
-          "supplier_order_number": {
-            "type": "string"
-          },
-          "tracking_number": {
-            "type": "string"
-          },
-          "tracking_url": {
-            "nullable": true,
-            "type": "string"
-          }
-        },
-        "required": [
-          "attempt",
-          "cancel_reason",
-          "cancelled_at",
-          "carrier",
-          "confirmed_at",
-          "delivered_at",
-          "failed_at",
-          "failure_reason",
-          "id",
-          "items",
-          "note_to_supplier",
-          "number",
-          "placed_at",
-          "placement_method",
-          "ship_to",
-          "shipped_at",
-          "source_domain",
-          "status",
-          "supplier_id",
-          "supplier_name",
-          "supplier_order_number",
-          "tracking_number",
-          "tracking_url"
         ],
         "type": "object"
       },
@@ -4497,80 +4034,6 @@
           "order_events",
           "scopes",
           "webhooks"
-        ],
-        "type": "object"
-      },
-      "Item": {
-        "properties": {
-          "cost_currency": {
-            "nullable": true,
-            "type": "string"
-          },
-          "expected_unit_cost": {
-            "example": "12.50",
-            "format": "decimal",
-            "nullable": true,
-            "type": "string"
-          },
-          "external_line_id": {
-            "type": "string"
-          },
-          "line_id": {
-            "format": "uuid",
-            "type": "string"
-          },
-          "options": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
-          },
-          "position": {
-            "format": "int32",
-            "type": "integer"
-          },
-          "product_id": {
-            "format": "uuid",
-            "nullable": true,
-            "type": "string"
-          },
-          "quantity": {
-            "format": "int32",
-            "type": "integer"
-          },
-          "sku": {
-            "type": "string"
-          },
-          "source_url": {
-            "nullable": true,
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "variant_id": {
-            "format": "uuid",
-            "nullable": true,
-            "type": "string"
-          },
-          "variant_title": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "cost_currency",
-          "expected_unit_cost",
-          "external_line_id",
-          "line_id",
-          "options",
-          "position",
-          "product_id",
-          "quantity",
-          "sku",
-          "source_url",
-          "title",
-          "variant_id",
-          "variant_title"
         ],
         "type": "object"
       },
@@ -6904,7 +6367,7 @@
             "type": "string"
           },
           "customer": {
-            "$ref": "#/components/schemas/Customer"
+            "$ref": "#/components/schemas/CustomerContact"
           },
           "customer_erased_at": {
             "format": "date-time",
@@ -6949,7 +6412,7 @@
             "type": "string"
           },
           "shipping_address": {
-            "$ref": "#/components/schemas/Address"
+            "$ref": "#/components/schemas/PostalAddress"
           },
           "shipping_amount": {
             "example": "12.50",
@@ -7347,7 +6810,7 @@
             "type": "string"
           },
           "customer": {
-            "$ref": "#/components/schemas/Customer"
+            "$ref": "#/components/schemas/CustomerContact"
           },
           "customer_erased_at": {
             "format": "date-time",
@@ -7384,7 +6847,7 @@
             "type": "string"
           },
           "shipping_address": {
-            "$ref": "#/components/schemas/Address"
+            "$ref": "#/components/schemas/PostalAddress"
           },
           "shipping_amount": {
             "example": "12.50",
@@ -7484,6 +6947,44 @@
           "limit",
           "offset",
           "total"
+        ],
+        "type": "object"
+      },
+      "OrderWebhookEvent": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "order": {
+            "$ref": "#/components/schemas/WebhookOrder"
+          },
+          "previous_status": {
+            "type": "string"
+          },
+          "supplier_order": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WebhookSupplierOrder"
+              }
+            ],
+            "nullable": true
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "occurred_at",
+          "order",
+          "previous_status",
+          "supplier_order",
+          "type"
         ],
         "type": "object"
       },
@@ -7987,6 +7488,49 @@
         },
         "required": [
           "supplier_order_number"
+        ],
+        "type": "object"
+      },
+      "PostalAddress": {
+        "properties": {
+          "city": {
+            "type": "string"
+          },
+          "company": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "line1": {
+            "type": "string"
+          },
+          "line2": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "postal_code": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "city",
+          "company",
+          "country",
+          "line1",
+          "line2",
+          "name",
+          "phone",
+          "postal_code",
+          "region"
         ],
         "type": "object"
       },
@@ -11809,6 +11353,80 @@
         ],
         "type": "object"
       },
+      "SupplierOrderItem": {
+        "properties": {
+          "cost_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "expected_unit_cost": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "external_line_id": {
+            "type": "string"
+          },
+          "line_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "options": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "position": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "product_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "quantity": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "source_url": {
+            "nullable": true,
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "variant_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "variant_title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cost_currency",
+          "expected_unit_cost",
+          "external_line_id",
+          "line_id",
+          "options",
+          "position",
+          "product_id",
+          "quantity",
+          "sku",
+          "source_url",
+          "title",
+          "variant_id",
+          "variant_title"
+        ],
+        "type": "object"
+      },
       "SupplierOrderListItem": {
         "properties": {
           "confirmed_at": {
@@ -12207,7 +11825,7 @@
           },
           "items": {
             "items": {
-              "$ref": "#/components/schemas/Item"
+              "$ref": "#/components/schemas/SupplierOrderItem"
             },
             "type": "array"
           },
@@ -12242,7 +11860,7 @@
             "type": "string"
           },
           "ship_to": {
-            "$ref": "#/components/schemas/Address"
+            "$ref": "#/components/schemas/PostalAddress"
           },
           "shipped_at": {
             "format": "date-time",
@@ -12279,7 +11897,7 @@
           },
           "warnings": {
             "items": {
-              "$ref": "#/components/schemas/Warning"
+              "$ref": "#/components/schemas/ConfirmationWarning"
             },
             "type": "array"
           }
@@ -13430,27 +13048,6 @@
         ],
         "type": "object"
       },
-      "Warning": {
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "line_id": {
-            "format": "uuid",
-            "nullable": true,
-            "type": "string"
-          },
-          "message": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "code",
-          "line_id",
-          "message"
-        ],
-        "type": "object"
-      },
       "WebhookCreatedDoc": {
         "properties": {
           "secret": {
@@ -13788,6 +13385,190 @@
         ],
         "type": "object"
       },
+      "WebhookItemCost": {
+        "properties": {
+          "cost_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "expected_unit_cost": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "cost_currency",
+          "expected_unit_cost"
+        ],
+        "type": "object"
+      },
+      "WebhookOrder": {
+        "properties": {
+          "cancelled_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/CustomerContact"
+          },
+          "customer_erased": {
+            "type": "boolean"
+          },
+          "customer_note": {
+            "type": "string"
+          },
+          "external_id": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/WebhookOrderLine"
+            },
+            "type": "array"
+          },
+          "needs_attention": {
+            "type": "boolean"
+          },
+          "number": {
+            "type": "string"
+          },
+          "ordered_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "shipping_address": {
+            "$ref": "#/components/schemas/PostalAddress"
+          },
+          "shipping_amount": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "subtotal": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "tax_amount": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "total": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "cancelled_at",
+          "channel",
+          "currency",
+          "customer",
+          "customer_erased",
+          "customer_note",
+          "external_id",
+          "id",
+          "lines",
+          "needs_attention",
+          "number",
+          "ordered_at",
+          "shipping_address",
+          "shipping_amount",
+          "status",
+          "subtotal",
+          "tax_amount",
+          "total"
+        ],
+        "type": "object"
+      },
+      "WebhookOrderLine": {
+        "properties": {
+          "cancelled": {
+            "type": "boolean"
+          },
+          "external_line_id": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "position": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "product_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "quantity": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "resolution": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "supplier_order_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "unit_price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "variant_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "cancelled",
+          "external_line_id",
+          "id",
+          "position",
+          "product_id",
+          "quantity",
+          "resolution",
+          "sku",
+          "supplier_order_id",
+          "title",
+          "unit_price",
+          "variant_id"
+        ],
+        "type": "object"
+      },
       "WebhookPolicyDoc": {
         "properties": {
           "allow_http_localhost": {
@@ -13827,6 +13608,225 @@
           "signature_header",
           "timeout_seconds",
           "timestamp_header"
+        ],
+        "type": "object"
+      },
+      "WebhookSupplierOrder": {
+        "properties": {
+          "attempt": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "cancel_reason": {
+            "type": "string"
+          },
+          "cancelled_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "carrier": {
+            "type": "string"
+          },
+          "confirmed_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "costs": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WebhookSupplierOrderCosts"
+              }
+            ],
+            "nullable": true
+          },
+          "delivered_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "failed_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "failure_reason": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/WebhookSupplierOrderItem"
+            },
+            "type": "array"
+          },
+          "note_to_supplier": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "placed_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "placement_method": {
+            "type": "string"
+          },
+          "ship_to": {
+            "$ref": "#/components/schemas/PostalAddress"
+          },
+          "shipped_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "source_domain": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "supplier_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "supplier_name": {
+            "type": "string"
+          },
+          "supplier_order_number": {
+            "type": "string"
+          },
+          "tracking_number": {
+            "type": "string"
+          },
+          "tracking_url": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "attempt",
+          "cancel_reason",
+          "cancelled_at",
+          "carrier",
+          "confirmed_at",
+          "delivered_at",
+          "failed_at",
+          "failure_reason",
+          "id",
+          "items",
+          "note_to_supplier",
+          "number",
+          "placed_at",
+          "placement_method",
+          "ship_to",
+          "shipped_at",
+          "source_domain",
+          "status",
+          "supplier_id",
+          "supplier_name",
+          "supplier_order_number",
+          "tracking_number",
+          "tracking_url"
+        ],
+        "type": "object"
+      },
+      "WebhookSupplierOrderCosts": {
+        "properties": {
+          "actual_cost": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "actual_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "cost_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "expected_cost_total": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "actual_cost",
+          "actual_currency",
+          "cost_currency",
+          "expected_cost_total"
+        ],
+        "type": "object"
+      },
+      "WebhookSupplierOrderItem": {
+        "properties": {
+          "cost": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WebhookItemCost"
+              }
+            ],
+            "nullable": true
+          },
+          "line_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "options": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "product_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "quantity": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "source_url": {
+            "nullable": true,
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "variant_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "variant_title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "line_id",
+          "options",
+          "product_id",
+          "quantity",
+          "sku",
+          "source_url",
+          "title",
+          "variant_id",
+          "variant_title"
         ],
         "type": "object"
       },
@@ -26812,7 +26812,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Event"
+                "$ref": "#/components/schemas/OrderWebhookEvent"
               }
             }
           },

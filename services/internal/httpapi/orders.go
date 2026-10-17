@@ -128,20 +128,20 @@ type OrderView struct {
 	// IntegrationKeyID is the key the order was received with (channel api).
 	IntegrationKeyID *uuid.UUID `json:"integration_key_id"`
 	// Source is who submitted it: the integration key's or the person's name at intake.
-	Source          string           `json:"source"`
-	Status          string           `json:"status"`
-	NeedsAttention  bool             `json:"needs_attention"`
-	Currency        string           `json:"currency"`
-	Subtotal        *decimal.Decimal `json:"subtotal"`
-	ShippingAmount  *decimal.Decimal `json:"shipping_amount"`
-	TaxAmount       *decimal.Decimal `json:"tax_amount"`
-	Total           *decimal.Decimal `json:"total"`
-	Customer        orders.Customer  `json:"customer"`
-	ShippingAddress orders.Address   `json:"shipping_address"`
-	CustomerNote    string           `json:"customer_note"`
-	OrderedAt       time.Time        `json:"ordered_at"`
-	CancelledAt     *time.Time       `json:"cancelled_at"`
-	CancelReason    string           `json:"cancel_reason"`
+	Source          string                 `json:"source"`
+	Status          string                 `json:"status"`
+	NeedsAttention  bool                   `json:"needs_attention"`
+	Currency        string                 `json:"currency"`
+	Subtotal        *decimal.Decimal       `json:"subtotal"`
+	ShippingAmount  *decimal.Decimal       `json:"shipping_amount"`
+	TaxAmount       *decimal.Decimal       `json:"tax_amount"`
+	Total           *decimal.Decimal       `json:"total"`
+	Customer        orders.CustomerContact `json:"customer"`
+	ShippingAddress orders.PostalAddress   `json:"shipping_address"`
+	CustomerNote    string                 `json:"customer_note"`
+	OrderedAt       time.Time              `json:"ordered_at"`
+	CancelledAt     *time.Time             `json:"cancelled_at"`
+	CancelReason    string                 `json:"cancel_reason"`
 	// CustomerErasedAt is set once the customer's personal data was erased.
 	CustomerErasedAt *time.Time `json:"customer_erased_at"`
 	CreatedAt        time.Time  `json:"created_at"`
@@ -244,8 +244,8 @@ type OrderDetail struct {
 	Events         []OrderEventView       `json:"events"`
 }
 
-func orderAddress(o store.Order) orders.Address {
-	return orders.Address{Name: o.ShipName, Company: o.ShipCompany, Line1: o.ShipLine1, Line2: o.ShipLine2, City: o.ShipCity,
+func orderAddress(o store.Order) orders.PostalAddress {
+	return orders.PostalAddress{Name: o.ShipName, Company: o.ShipCompany, Line1: o.ShipLine1, Line2: o.ShipLine2, City: o.ShipCity,
 		Region: o.ShipRegion, PostalCode: o.ShipPostalCode, Country: o.ShipCountry, Phone: o.ShipPhone}
 }
 
@@ -253,7 +253,7 @@ func orderView(o store.Order) OrderView {
 	return OrderView{ID: o.ID, Number: o.Number, Channel: o.Channel, ExternalID: o.ExternalID, IntegrationKeyID: o.IntegrationKeyID,
 		Source: o.SourceLabel, Status: o.Status, NeedsAttention: o.NeedsAttention, Currency: o.Currency, Subtotal: o.Subtotal,
 		ShippingAmount: o.ShippingAmount, TaxAmount: o.TaxAmount, Total: o.Total,
-		Customer:        orders.Customer{Name: o.CustomerName, Email: o.CustomerEmail, Phone: o.CustomerPhone},
+		Customer:        orders.CustomerContact{Name: o.CustomerName, Email: o.CustomerEmail, Phone: o.CustomerPhone},
 		ShippingAddress: orderAddress(o), CustomerNote: o.CustomerNote, OrderedAt: o.OrderedAt, CancelledAt: o.CancelledAt,
 		CancelReason: o.CancelReason, CustomerErasedAt: o.CustomerErasedAt, CreatedAt: o.CreatedAt, UpdatedAt: o.UpdatedAt}
 }
@@ -289,8 +289,8 @@ func lineView(l store.OrderLine, people bool) OrderLineView {
 	return v
 }
 
-func itemsOf(raw json.RawMessage) []orders.Item {
-	items := []orders.Item{}
+func itemsOf(raw json.RawMessage) []orders.SupplierOrderItem {
+	items := []orders.SupplierOrderItem{}
 	_ = json.Unmarshal(raw, &items)
 	for i := range items {
 		if items[i].Options == nil {
@@ -425,8 +425,8 @@ type orderInput struct {
 	Lines           []orderLineInput   `json:"lines"`
 }
 
-func (a orderAddressInput) address() orders.Address {
-	return orders.Address{Name: a.Name, Company: a.Company, Line1: a.Line1, Line2: a.Line2, City: a.City, Region: a.Region,
+func (a orderAddressInput) address() orders.PostalAddress {
+	return orders.PostalAddress{Name: a.Name, Company: a.Company, Line1: a.Line1, Line2: a.Line2, City: a.City, Region: a.Region,
 		PostalCode: a.PostalCode, Country: a.Country, Phone: a.Phone}
 }
 

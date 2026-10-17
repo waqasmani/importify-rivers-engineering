@@ -123,9 +123,6 @@ describe('AiToolsPanel', () => {
       'GET /ai/jobs/job1': { job: { id: 'job1', status: 'queued', tool: 'summarize', provider_name: 'Cloud', model: 'm', entity_type: 'company', external_data_confirmed: true }, tool: tools.items[0], ai_generated_notice: 'AI-generated' },
     })
     const Host = defineComponent({ render: () => h('div', [h(AiToolsPanel, { entityType: 'company', entityId: ID }), h(ConfirmHost)]) })
-    // happy-dom lacks <dialog>.showModal; the confirm host only needs it to exist.
-    HTMLDialogElement.prototype.showModal ??= function (this: HTMLDialogElement) { this.setAttribute('open', '') }
-    HTMLDialogElement.prototype.close ??= function (this: HTMLDialogElement) { this.removeAttribute('open') }
     const { wrapper } = await mountView(Host)
     await wrapper.findAll('button').find((b) => b.text().startsWith('Run'))!.trigger('click')
     await settle()

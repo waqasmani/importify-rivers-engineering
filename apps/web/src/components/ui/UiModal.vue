@@ -27,7 +27,7 @@ const widths = { sm: 'max-w-md', md: 'max-w-xl', lg: 'max-w-3xl', xl: 'max-w-5xl
   <dialog
     ref="dialog"
     :aria-labelledby="titleId"
-    :class="['w-[calc(100%-2rem)] rounded-lg bg-white p-0 shadow-xl', widths[size]]"
+    :class="['m-auto w-[calc(100%-2rem)] rounded-lg bg-white p-0 shadow-xl', widths[size]]"
     @cancel.prevent="emit('close')"
     @close="open && emit('close')"
   >

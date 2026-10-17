@@ -1,0 +1,41 @@
+{
+  "key": "wish",
+  "name": "Wish",
+  "region": "cross_border",
+  "description": "Wish product pages: name, description, images, merchant, retail price and colour/size variations from the embedded window.__PRELOADED_STATE__.",
+  "domains": ["wish.com", "*.wish.com"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/wish.html",
+    "fixture_url": "https://www.wish.com/product/64a1b2c3d4e5f6a7b8c9d0e1",
+    "note": "Assumes window.__PRELOADED_STATE__ = { productPage: { product: { name, description, images[].url, merchant, commerce { retailPrice, variations[] { sku, color, size, price {amount, currencyCode}, inventory } }, rating } } }. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "product_signal": { "any": [{ "source": "state", "path": "productPage.product.name" }] },
+    "sources": { "state": { "kind": "script_marker", "marker": "window.__PRELOADED_STATE__" } },
+    "fields": {
+      "title": [{ "source": "state", "path": "productPage.product.name", "transforms": ["trim"] }, { "css": "h1.ProductTitle" }],
+      "description": [{ "source": "state", "path": "productPage.product.description" }],
+      "price": [{ "source": "state", "path": "productPage.product.commerce.variations[0].price" }],
+      "list_price": [{ "source": "state", "path": "productPage.product.commerce.retailPrice" }],
+      "images": [{ "source": "state", "path": "productPage.product.images[*].url" }],
+      "supplier_name": [{ "source": "state", "path": "productPage.product.merchant.displayName" }],
+      "supplier_url": [{ "source": "state", "path": "productPage.product.merchant.url" }],
+      "shipping": [{ "source": "state", "path": "productPage.product.commerce.shipping.text" }],
+      "rating": [{ "source": "state", "path": "productPage.product.rating.average" }],
+      "rating_count": [{ "source": "state", "path": "productPage.product.rating.count" }]
+    },
+    "variants": {
+      "mode": "list",
+      "source": "state",
+      "path": "productPage.product.commerce.variations",
+      "sku": "sku",
+      "price": "price",
+      "stock": "inventory",
+      "options": { "Color": "color", "Size": "size" }
+    }
+  }
+}

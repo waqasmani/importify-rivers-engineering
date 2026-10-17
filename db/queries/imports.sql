@@ -63,18 +63,37 @@ SELECT * FROM source_adapters WHERE enabled ORDER BY priority, key;
 -- name: GetSourceAdapter :one
 SELECT * FROM source_adapters WHERE id = $1;
 
+-- name: GetSourceAdapterByKey :one
+SELECT * FROM source_adapters WHERE key = $1;
+
 -- name: CreateSourceAdapter :one
-INSERT INTO source_adapters (key, name, kind, domain_patterns, enabled, priority, selectors, description)
-VALUES ($1, $2, 'selector', $3, $4, $5, $6, $7) RETURNING *;
+INSERT INTO source_adapters (key, name, kind, domain_patterns, enabled, priority, selectors, rules, description)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *;
 
 -- name: UpdateSourceAdapter :one
-UPDATE source_adapters SET name = $2, domain_patterns = CASE WHEN kind = 'builtin' THEN domain_patterns ELSE $3 END,
-  enabled = $4, priority = $5, selectors = CASE WHEN kind = 'builtin' THEN selectors ELSE $6 END,
+-- Shipped adapters keep their name, domains and definition; only enabling, priority and
+-- description change.
+UPDATE source_adapters SET name = CASE WHEN shipped THEN name ELSE $2 END,
+  domain_patterns = CASE WHEN shipped THEN domain_patterns ELSE $3 END,
+  enabled = $4, priority = $5, selectors = CASE WHEN shipped THEN selectors ELSE $6 END,
+  rules = CASE WHEN shipped THEN rules ELSE $8 END,
   description = $7, version = version + 1
 WHERE id = $1 RETURNING *;
 
 -- name: DeleteSourceAdapter :execrows
-DELETE FROM source_adapters WHERE id = $1 AND kind = 'selector';
+DELETE FROM source_adapters WHERE id = $1 AND NOT shipped;
+
+-- name: InsertShippedRulesAdapter :one
+INSERT INTO source_adapters (key, name, kind, domain_patterns, enabled, priority, rules, description, shipped,
+  definition_version, region, verification)
+VALUES ($1, $2, 'rules', $3, true, $4, $5, $6, true, $7, $8, $9) RETURNING *;
+
+-- name: UpgradeShippedRulesAdapter :one
+-- A newer shipped definition replaces name, domains, rules, region and verification while the
+-- administrator's enabled flag, priority and description are kept.
+UPDATE source_adapters SET name = $2, domain_patterns = $3, rules = $4, definition_version = $5, region = $6,
+  verification = $7, version = version + 1
+WHERE key = $1 AND shipped AND kind = 'rules' AND definition_version < $5 RETURNING *;
 
 -- name: ListImportsForProduct :many
 SELECT * FROM product_imports WHERE product_id = $1 OR duplicate_of_id = $1 ORDER BY created_at DESC LIMIT 50;

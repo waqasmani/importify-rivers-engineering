@@ -1,0 +1,24 @@
+{
+  "name": "@rea/extractor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Product extraction from a DOM Document: site adapters, declarative marketplace rules and field merging (shared by the extension and the dashboard)",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@rea/api-types": "workspace:*",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "happy-dom": "21.0.3",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
+}

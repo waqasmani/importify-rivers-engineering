@@ -147,17 +147,19 @@ func (q *Queries) CreateProductImport(ctx context.Context, arg CreateProductImpo
 }
 
 const createSourceAdapter = `-- name: CreateSourceAdapter :one
-INSERT INTO source_adapters (key, name, kind, domain_patterns, enabled, priority, selectors, description)
-VALUES ($1, $2, 'selector', $3, $4, $5, $6, $7) RETURNING id, key, name, kind, domain_patterns, enabled, priority, selectors, description, version, created_at, updated_at
+INSERT INTO source_adapters (key, name, kind, domain_patterns, enabled, priority, selectors, rules, description)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id, key, name, kind, domain_patterns, enabled, priority, selectors, description, version, created_at, updated_at, rules, shipped, definition_version, region, verification
 `
 
 type CreateSourceAdapterParams struct {
 	Key            string          `json:"key"`
 	Name           string          `json:"name"`
+	Kind           string          `json:"kind"`
 	DomainPatterns []string        `json:"domain_patterns"`
 	Enabled        bool            `json:"enabled"`
 	Priority       int32           `json:"priority"`
 	Selectors      json.RawMessage `json:"selectors"`
+	Rules          json.RawMessage `json:"rules"`
 	Description    string          `json:"description"`
 }
 
@@ -165,10 +167,12 @@ func (q *Queries) CreateSourceAdapter(ctx context.Context, arg CreateSourceAdapt
 	row := q.db.QueryRow(ctx, createSourceAdapter,
 		arg.Key,
 		arg.Name,
+		arg.Kind,
 		arg.DomainPatterns,
 		arg.Enabled,
 		arg.Priority,
 		arg.Selectors,
+		arg.Rules,
 		arg.Description,
 	)
 	var i SourceAdapter
@@ -185,6 +189,11 @@ func (q *Queries) CreateSourceAdapter(ctx context.Context, arg CreateSourceAdapt
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Rules,
+		&i.Shipped,
+		&i.DefinitionVersion,
+		&i.Region,
+		&i.Verification,
 	)
 	return i, err
 }
@@ -202,7 +211,7 @@ func (q *Queries) DeleteCapturedPage(ctx context.Context, id uuid.UUID) (int64, 
 }
 
 const deleteSourceAdapter = `-- name: DeleteSourceAdapter :execrows
-DELETE FROM source_adapters WHERE id = $1 AND kind = 'selector'
+DELETE FROM source_adapters WHERE id = $1 AND NOT shipped
 `
 
 func (q *Queries) DeleteSourceAdapter(ctx context.Context, id uuid.UUID) (int64, error) {
@@ -273,7 +282,7 @@ func (q *Queries) GetProductImport(ctx context.Context, id uuid.UUID) (ProductIm
 }
 
 const getSourceAdapter = `-- name: GetSourceAdapter :one
-SELECT id, key, name, kind, domain_patterns, enabled, priority, selectors, description, version, created_at, updated_at FROM source_adapters WHERE id = $1
+SELECT id, key, name, kind, domain_patterns, enabled, priority, selectors, description, version, created_at, updated_at, rules, shipped, definition_version, region, verification FROM source_adapters WHERE id = $1
 `
 
 func (q *Queries) GetSourceAdapter(ctx context.Context, id uuid.UUID) (SourceAdapter, error) {
@@ -292,6 +301,93 @@ func (q *Queries) GetSourceAdapter(ctx context.Context, id uuid.UUID) (SourceAda
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Rules,
+		&i.Shipped,
+		&i.DefinitionVersion,
+		&i.Region,
+		&i.Verification,
+	)
+	return i, err
+}
+
+const getSourceAdapterByKey = `-- name: GetSourceAdapterByKey :one
+SELECT id, key, name, kind, domain_patterns, enabled, priority, selectors, description, version, created_at, updated_at, rules, shipped, definition_version, region, verification FROM source_adapters WHERE key = $1
+`
+
+func (q *Queries) GetSourceAdapterByKey(ctx context.Context, key string) (SourceAdapter, error) {
+	row := q.db.QueryRow(ctx, getSourceAdapterByKey, key)
+	var i SourceAdapter
+	err := row.Scan(
+		&i.ID,
+		&i.Key,
+		&i.Name,
+		&i.Kind,
+		&i.DomainPatterns,
+		&i.Enabled,
+		&i.Priority,
+		&i.Selectors,
+		&i.Description,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Rules,
+		&i.Shipped,
+		&i.DefinitionVersion,
+		&i.Region,
+		&i.Verification,
+	)
+	return i, err
+}
+
+const insertShippedRulesAdapter = `-- name: InsertShippedRulesAdapter :one
+INSERT INTO source_adapters (key, name, kind, domain_patterns, enabled, priority, rules, description, shipped,
+  definition_version, region, verification)
+VALUES ($1, $2, 'rules', $3, true, $4, $5, $6, true, $7, $8, $9) RETURNING id, key, name, kind, domain_patterns, enabled, priority, selectors, description, version, created_at, updated_at, rules, shipped, definition_version, region, verification
+`
+
+type InsertShippedRulesAdapterParams struct {
+	Key               string          `json:"key"`
+	Name              string          `json:"name"`
+	DomainPatterns    []string        `json:"domain_patterns"`
+	Priority          int32           `json:"priority"`
+	Rules             json.RawMessage `json:"rules"`
+	Description       string          `json:"description"`
+	DefinitionVersion int32           `json:"definition_version"`
+	Region            string          `json:"region"`
+	Verification      json.RawMessage `json:"verification"`
+}
+
+func (q *Queries) InsertShippedRulesAdapter(ctx context.Context, arg InsertShippedRulesAdapterParams) (SourceAdapter, error) {
+	row := q.db.QueryRow(ctx, insertShippedRulesAdapter,
+		arg.Key,
+		arg.Name,
+		arg.DomainPatterns,
+		arg.Priority,
+		arg.Rules,
+		arg.Description,
+		arg.DefinitionVersion,
+		arg.Region,
+		arg.Verification,
+	)
+	var i SourceAdapter
+	err := row.Scan(
+		&i.ID,
+		&i.Key,
+		&i.Name,
+		&i.Kind,
+		&i.DomainPatterns,
+		&i.Enabled,
+		&i.Priority,
+		&i.Selectors,
+		&i.Description,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Rules,
+		&i.Shipped,
+		&i.DefinitionVersion,
+		&i.Region,
+		&i.Verification,
 	)
 	return i, err
 }
@@ -387,7 +483,7 @@ func (q *Queries) ListCapturedPages(ctx context.Context, arg ListCapturedPagesPa
 }
 
 const listEnabledSourceAdapters = `-- name: ListEnabledSourceAdapters :many
-SELECT id, key, name, kind, domain_patterns, enabled, priority, selectors, description, version, created_at, updated_at FROM source_adapters WHERE enabled ORDER BY priority, key
+SELECT id, key, name, kind, domain_patterns, enabled, priority, selectors, description, version, created_at, updated_at, rules, shipped, definition_version, region, verification FROM source_adapters WHERE enabled ORDER BY priority, key
 `
 
 func (q *Queries) ListEnabledSourceAdapters(ctx context.Context) ([]SourceAdapter, error) {
@@ -412,6 +508,11 @@ func (q *Queries) ListEnabledSourceAdapters(ctx context.Context) ([]SourceAdapte
 			&i.Version,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Rules,
+			&i.Shipped,
+			&i.DefinitionVersion,
+			&i.Region,
+			&i.Verification,
 		); err != nil {
 			return nil, err
 		}
@@ -543,7 +644,7 @@ func (q *Queries) ListProductImports(ctx context.Context, arg ListProductImports
 }
 
 const listSourceAdapters = `-- name: ListSourceAdapters :many
-SELECT id, key, name, kind, domain_patterns, enabled, priority, selectors, description, version, created_at, updated_at FROM source_adapters ORDER BY priority, key
+SELECT id, key, name, kind, domain_patterns, enabled, priority, selectors, description, version, created_at, updated_at, rules, shipped, definition_version, region, verification FROM source_adapters ORDER BY priority, key
 `
 
 func (q *Queries) ListSourceAdapters(ctx context.Context) ([]SourceAdapter, error) {
@@ -568,6 +669,11 @@ func (q *Queries) ListSourceAdapters(ctx context.Context) ([]SourceAdapter, erro
 			&i.Version,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Rules,
+			&i.Shipped,
+			&i.DefinitionVersion,
+			&i.Region,
+			&i.Verification,
 		); err != nil {
 			return nil, err
 		}
@@ -643,10 +749,12 @@ func (q *Queries) ResolveProductImport(ctx context.Context, arg ResolveProductIm
 }
 
 const updateSourceAdapter = `-- name: UpdateSourceAdapter :one
-UPDATE source_adapters SET name = $2, domain_patterns = CASE WHEN kind = 'builtin' THEN domain_patterns ELSE $3 END,
-  enabled = $4, priority = $5, selectors = CASE WHEN kind = 'builtin' THEN selectors ELSE $6 END,
+UPDATE source_adapters SET name = CASE WHEN shipped THEN name ELSE $2 END,
+  domain_patterns = CASE WHEN shipped THEN domain_patterns ELSE $3 END,
+  enabled = $4, priority = $5, selectors = CASE WHEN shipped THEN selectors ELSE $6 END,
+  rules = CASE WHEN shipped THEN rules ELSE $8 END,
   description = $7, version = version + 1
-WHERE id = $1 RETURNING id, key, name, kind, domain_patterns, enabled, priority, selectors, description, version, created_at, updated_at
+WHERE id = $1 RETURNING id, key, name, kind, domain_patterns, enabled, priority, selectors, description, version, created_at, updated_at, rules, shipped, definition_version, region, verification
 `
 
 type UpdateSourceAdapterParams struct {
@@ -657,8 +765,11 @@ type UpdateSourceAdapterParams struct {
 	Priority       int32           `json:"priority"`
 	Selectors      json.RawMessage `json:"selectors"`
 	Description    string          `json:"description"`
+	Rules          json.RawMessage `json:"rules"`
 }
 
+// Shipped adapters keep their name, domains and definition; only enabling, priority and
+// description change.
 func (q *Queries) UpdateSourceAdapter(ctx context.Context, arg UpdateSourceAdapterParams) (SourceAdapter, error) {
 	row := q.db.QueryRow(ctx, updateSourceAdapter,
 		arg.ID,
@@ -668,6 +779,7 @@ func (q *Queries) UpdateSourceAdapter(ctx context.Context, arg UpdateSourceAdapt
 		arg.Priority,
 		arg.Selectors,
 		arg.Description,
+		arg.Rules,
 	)
 	var i SourceAdapter
 	err := row.Scan(
@@ -683,6 +795,62 @@ func (q *Queries) UpdateSourceAdapter(ctx context.Context, arg UpdateSourceAdapt
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Rules,
+		&i.Shipped,
+		&i.DefinitionVersion,
+		&i.Region,
+		&i.Verification,
+	)
+	return i, err
+}
+
+const upgradeShippedRulesAdapter = `-- name: UpgradeShippedRulesAdapter :one
+UPDATE source_adapters SET name = $2, domain_patterns = $3, rules = $4, definition_version = $5, region = $6,
+  verification = $7, version = version + 1
+WHERE key = $1 AND shipped AND kind = 'rules' AND definition_version < $5 RETURNING id, key, name, kind, domain_patterns, enabled, priority, selectors, description, version, created_at, updated_at, rules, shipped, definition_version, region, verification
+`
+
+type UpgradeShippedRulesAdapterParams struct {
+	Key               string          `json:"key"`
+	Name              string          `json:"name"`
+	DomainPatterns    []string        `json:"domain_patterns"`
+	Rules             json.RawMessage `json:"rules"`
+	DefinitionVersion int32           `json:"definition_version"`
+	Region            string          `json:"region"`
+	Verification      json.RawMessage `json:"verification"`
+}
+
+// A newer shipped definition replaces name, domains, rules, region and verification while the
+// administrator's enabled flag, priority and description are kept.
+func (q *Queries) UpgradeShippedRulesAdapter(ctx context.Context, arg UpgradeShippedRulesAdapterParams) (SourceAdapter, error) {
+	row := q.db.QueryRow(ctx, upgradeShippedRulesAdapter,
+		arg.Key,
+		arg.Name,
+		arg.DomainPatterns,
+		arg.Rules,
+		arg.DefinitionVersion,
+		arg.Region,
+		arg.Verification,
+	)
+	var i SourceAdapter
+	err := row.Scan(
+		&i.ID,
+		&i.Key,
+		&i.Name,
+		&i.Kind,
+		&i.DomainPatterns,
+		&i.Enabled,
+		&i.Priority,
+		&i.Selectors,
+		&i.Description,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Rules,
+		&i.Shipped,
+		&i.DefinitionVersion,
+		&i.Region,
+		&i.Verification,
 	)
 	return i, err
 }

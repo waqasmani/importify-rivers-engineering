@@ -41,11 +41,13 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package.json apps/web/
 COPY apps/extension/package.json apps/extension/
 COPY packages/api-types/package.json packages/api-types/
+COPY packages/extractor/package.json packages/extractor/
 RUN --mount=type=bind,source=deploy/docker/with-ca.sh,target=/usr/local/bin/with-ca \
     --mount=type=secret,id=extra_ca \
     --mount=type=cache,target=/root/.local/share/pnpm/store \
     with-ca pnpm install --frozen-lockfile
 COPY packages/api-types ./packages/api-types
+COPY packages/extractor ./packages/extractor
 COPY testdata ./testdata
 
 FROM js-deps AS web-build

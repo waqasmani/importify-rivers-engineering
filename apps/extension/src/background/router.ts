@@ -1,5 +1,6 @@
 // Handles validated requests from extension pages and messages from the injected content script.
 import type { Schemas } from '@rea/api-types'
+import { adaptersFromApi } from '@rea/extractor'
 import type { PendingContextDoc, RequestOf, ResponseMap, Status, SummarizeResult, TabInfo } from '../shared/contract'
 import { ApiError, ExtError, notConnected, toUiError } from '../shared/errors'
 import {
@@ -7,7 +8,7 @@ import {
   type Prefs, type UiError, type UiEvent, type UiRequest, type UiResponse,
 } from '../shared/messages'
 import { classifySender, type SenderLike } from '../shared/sender'
-import { adaptersFromConfig, BUILTIN_ADAPTERS, type ExtensionConfig, type ExtractOptions } from '../shared/types'
+import { BUILTIN_ADAPTERS, type ExtensionConfig, type ExtractOptions } from '../shared/types'
 import { ApiClient, AuthManager } from './auth'
 import { extractFromTab, startPickerInTab, stopPickerInTab } from './capture'
 import {
@@ -95,7 +96,7 @@ async function extractOptions(): Promise<ExtractOptions> {
   const enabled = !!cap?.store_html_snapshots && p.snapshotEnabled
   const maxKb = Math.min(p.snapshotMaxKb, cap?.max_snapshot_kb ?? 0)
   return {
-    adapters: config ? adaptersFromConfig(config.data.adapters) : BUILTIN_ADAPTERS,
+    adapters: config ? adaptersFromApi(config.data.adapters) : BUILTIN_ADAPTERS,
     snapshot: { enabled: enabled && maxKb > 0, maxBytes: Math.max(0, maxKb) * 1024 },
   }
 }

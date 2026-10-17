@@ -49,6 +49,8 @@ const appRoutes: RouteRecordRaw[] = [
   { path: 'products/:id', name: 'product', component: v('products/ProductDetailView'), meta: { perm: 'products.read', title: 'Product' }, props: true },
   { path: 'captures', name: 'captures', component: v('products/CapturesView'), meta: { perm: 'products.read', title: 'Captured pages' } },
   { path: 'captures/:id', name: 'capture', component: v('products/CaptureDetailView'), meta: { perm: 'products.read', title: 'Captured page' }, props: true },
+  { path: 'marketplaces', name: 'marketplaces', component: v('products/MarketplacesView'), meta: { perm: 'products.read', title: 'Marketplaces' } },
+  { path: 'adapter-lab', name: 'adapter-lab', component: v('products/AdapterLabView'), meta: { perm: 'products.read', title: 'Adapter lab' } },
 
   // Analysis
   { path: 'analysis', name: 'analysis', component: v('analysis/ProjectsView'), meta: { perm: 'analysis.read', title: 'Analysis' } },

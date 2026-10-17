@@ -19,7 +19,7 @@ export default defineConfig({
   webServer: external
     ? undefined
     : {
-        command: `bash ../../deploy/scripts/e2e-api.sh ${port} rea_ext_e2e`,
+        command: `bash ../../deploy/scripts/e2e-api.sh ${port} ${process.env['REA_E2E_DB'] ?? 'rea_ext_e2e'}`,
         url: `http://127.0.0.1:${port}/readyz`,
         reuseExistingServer: false,
         timeout: 120_000,

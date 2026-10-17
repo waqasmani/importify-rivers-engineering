@@ -1,6 +1,6 @@
 // Element picker: highlights elements under the pointer inside a closed shadow-root overlay and
 // assigns the clicked element to a product field. Form fields are never captured. Escape exits.
-import { baseUrl, cssPath, imageSrc, isFormControl, multilineText, tableRows, text, truncate } from './dom'
+import { baseUrl, cssPath, imageSrc, isFormControl, multilineText, tableRows, text, truncate } from '@rea/extractor'
 import { PICK_FIELD_LABELS, PICK_FIELDS, type PickField, type PickerOptions, type Selection } from '../shared/types'
 
 export type PickerMessage =

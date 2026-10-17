@@ -75,3 +75,48 @@ Known limitations (documented in the UI):
 - Tasks attach notes and activity to their linked record rather than having their own.
 - Dismissing a duplicate suggestion lasts until the page reloads; merging is persistent.
 - Personal API tokens cannot carry administrative scopes.
+
+## Phase 10 — Dropshipping import platform (2026-10-17)
+Products are saved in REA and reached by other systems through its REST API; there are no store
+plugins. Built in three parallel branches and merged:
+
+- **Marketplace support** — `packages/extractor` (`@rea/extractor`, the extension's extraction code
+  plus a declarative `rules` adapter engine), `db/marketplaces/*.json` (31 definitions),
+  `services/internal/marketplaces` (Go validation mirroring the TypeScript schema, start-up sync
+  that keeps an administrator's enabled flag, priority and description), migration
+  `00008_marketplace_rules`, the Marketplaces page and Adapter lab, `docs/marketplaces.md`. Every
+  definition has been tested only against a synthetic fixture page
+  (`testdata/fixtures/marketplaces/`), never against live marketplace pages; the dashboard shows
+  that status per definition.
+- **Pricing** — `services/internal/pricing`, migration `00006_pricing`, Settings → Pricing, price
+  breakdowns on imports and products, bulk reprice with dry run, `docs/pricing.md`. At merge the
+  backfill was changed so prices of products created by hand or from CSV stay locked selling
+  prices without an invented source price (`TestPricingMigrationBackfill`).
+- **Catalog API and webhooks** — `services/internal/catalog`, `services/internal/webhooks`,
+  migration `00007_catalog_api`, Settings → Integrations, `docs/catalog-api.md`. At merge the
+  catalog gained `compare_at_price` and source prices, variants gained a sourcing block hidden
+  without `catalog.read_costs`, and pricing bookkeeping columns were excluded from change capture
+  so a reprice that changes no price emits nothing (`TestCatalogPricingAndSourcingFields`, which
+  fails against the original triggers).
+
+Verification of the merged branch:
+
+| Check | Result |
+| --- | --- |
+| gofmt, `go vet`, `sqlc diff`, migration lint, OpenAPI and TypeScript types regenerated | clean |
+| Go tests with PostgreSQL (`REA_REQUIRE_DB_TESTS=1`) | 135 top-level tests passed, 0 failed, 0 skipped |
+| `pnpm -r typecheck` | clean |
+| `@rea/extractor` tests | 3 files, 434 tests passed |
+| Dashboard component tests | 36 files, 140 tests passed |
+| Extension unit tests | 6 files, 72 tests passed (the extraction tests moved to `@rea/extractor`) |
+| Dashboard and extension builds (extension dist check) | passed |
+| Dashboard Playwright tests against a real API | 10 passed |
+| Extension Playwright tests, including 4 marketplace capture/import tests with no proxy and no outside DNS | 19 passed |
+| Docker images (`api`, `web`), `docker compose up --wait`, `deploy/scripts/smoke-test.sh` | passed: health, setup, sign-in, write, backup (schema version 8), verify, restore, restored data checked; 31 marketplace definitions synced at start-up |
+
+Not verified, and why:
+- Marketplace definitions on real pages: REA's developers did not fetch or scrape the
+  marketplaces. Saved real pages should go through the Adapter lab before relying on a definition.
+- Exchange rates are maintained by hand; no rate source was integrated or called.
+- Webhook deliveries were tested against local receivers; no third-party receiver was called.
+- GitHub Actions only runs on pull requests and `main`, so the workflow has not run on this branch.

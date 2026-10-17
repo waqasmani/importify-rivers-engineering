@@ -1,0 +1,40 @@
+{
+  "key": "jd",
+  "name": "JD.com",
+  "region": "china",
+  "description": "JD.com item pages: title, images and colour/size SKUs from the pageConfig object literal, plus the rendered price, breadcrumb, store and parameter table. Prices are in CNY.",
+  "domains": ["jd.com", "*.jd.com", "jd.hk", "*.jd.hk"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/jd.html",
+    "fixture_url": "https://item.jd.com/100012345678.html",
+    "note": "Assumes var pageConfig = { product: { skuid, name, imageList (paths under img*.360buyimg.com/n0/), colorSize[] } } and that the price is rendered in .p-price .price (JD loads it after the page, so it is present in saved pages only once shown). Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency": "CNY",
+    "product_signal": { "any": [{ "source": "page_config", "path": "product.skuid" }] },
+    "sources": { "page_config": { "kind": "script_marker", "marker": "var pageConfig" } },
+    "fields": {
+      "title": [
+        { "source": "page_config", "path": "product.name", "transforms": ["trim"] },
+        { "css": ".sku-name" }
+      ],
+      "sku": [{ "source": "page_config", "path": "product.skuid" }],
+      "brand": [{ "css": "#parameter-brand li a" }],
+      "model": [{ "css": ".Ptable-item dl.clearfix:nth-of-type(2) dd" }],
+      "price": [{ "css": ".summary-price .p-price .price" }, { "css": ".p-price .price" }],
+      "category": [{ "css": ".crumb .item a", "all": true }],
+      "images": [
+        { "source": "page_config", "path": "product.imageList", "transforms": [{ "prefix": "https://img14.360buyimg.com/n0/" }] },
+        { "css": "#spec-list img", "transforms": ["image_original"] }
+      ],
+      "specifications": [{ "css": ".Ptable-item dl.clearfix", "pairs": { "name": "dt", "value": "dd" } }],
+      "supplier_name": [{ "css": ".J-hove-wrap .name a" }],
+      "supplier_url": [{ "css": ".J-hove-wrap .name a", "attr": "href" }]
+    },
+    "variants": { "mode": "list", "source": "page_config", "path": "product.colorSize", "sku": "skuId", "options_rest": { "exclude": ["skuId"] } }
+  }
+}

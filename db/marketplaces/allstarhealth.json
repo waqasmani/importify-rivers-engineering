@@ -1,0 +1,31 @@
+{
+  "key": "allstarhealth",
+  "name": "AllStarHealth",
+  "region": "north_america",
+  "description": "AllStarHealth product pages: visible name, brand link, our price and retail price, stock status, main image, UPC and supplement facts table.",
+  "domains": ["allstarhealth.com", "*.allstarhealth.com"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/allstarhealth.html",
+    "fixture_url": "https://www.allstarhealth.com/f/brightwell-vitamin_d3_5000_iu.htm",
+    "note": "Assumes h1.product-name, .brand-link a, .price-box .our-price/.retail-price, .stock-status, img#main-image, p.upc and table.supplement-facts; prices are USD. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency": "USD",
+    "product_signal": { "all": [{ "css": "h1.product-name" }, { "css": ".price-box" }] },
+    "fields": {
+      "title": [{ "css": "h1.product-name" }],
+      "description": [{ "meta": "description" }],
+      "brand": [{ "css": ".brand-link a" }],
+      "gtin": [{ "css": "p.upc" }],
+      "price": [{ "css": ".price-box .our-price" }],
+      "list_price": [{ "css": ".price-box .retail-price" }],
+      "availability": [{ "css": ".stock-status", "transforms": ["lowercase"] }],
+      "images": [{ "css": "img#main-image" }],
+      "specifications": [{ "css": "table.supplement-facts", "table": true }]
+    }
+  }
+}

@@ -2,7 +2,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { PackagePlus, Plus, Search, Trash2 } from 'lucide-vue-next'
 import type { ImportRequestMsg, UiError } from '../../shared/messages'
-import { parsePrice } from '../../shared/price'
+import { parsePrice } from '@rea/extractor'
 import type { FieldInfo, FieldKey, Payload, Schemas, Selection } from '../../shared/types'
 import { asUiError, call } from '../bridge'
 import { percent } from '../format'

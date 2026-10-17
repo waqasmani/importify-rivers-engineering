@@ -641,18 +641,23 @@ type SavedFilter struct {
 }
 
 type SourceAdapter struct {
-	ID             uuid.UUID       `json:"id"`
-	Key            string          `json:"key"`
-	Name           string          `json:"name"`
-	Kind           string          `json:"kind"`
-	DomainPatterns []string        `json:"domain_patterns"`
-	Enabled        bool            `json:"enabled"`
-	Priority       int32           `json:"priority"`
-	Selectors      json.RawMessage `json:"selectors"`
-	Description    string          `json:"description"`
-	Version        int32           `json:"version"`
-	CreatedAt      time.Time       `json:"created_at"`
-	UpdatedAt      time.Time       `json:"updated_at"`
+	ID                uuid.UUID       `json:"id"`
+	Key               string          `json:"key"`
+	Name              string          `json:"name"`
+	Kind              string          `json:"kind"`
+	DomainPatterns    []string        `json:"domain_patterns"`
+	Enabled           bool            `json:"enabled"`
+	Priority          int32           `json:"priority"`
+	Selectors         json.RawMessage `json:"selectors"`
+	Description       string          `json:"description"`
+	Version           int32           `json:"version"`
+	CreatedAt         time.Time       `json:"created_at"`
+	UpdatedAt         time.Time       `json:"updated_at"`
+	Rules             json.RawMessage `json:"rules"`
+	Shipped           bool            `json:"shipped"`
+	DefinitionVersion int32           `json:"definition_version"`
+	Region            string          `json:"region"`
+	Verification      json.RawMessage `json:"verification"`
 }
 
 type Supplier struct {

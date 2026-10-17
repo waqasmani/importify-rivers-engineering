@@ -1,0 +1,44 @@
+{
+  "key": "bedbathandbeyond",
+  "name": "Bed Bath & Beyond",
+  "region": "north_america",
+  "description": "Bed Bath & Beyond product pages: name, brand, sale and list price, images (relative to the image CDN), category, specifications and size/colour options from the Next.js __NEXT_DATA__ product.",
+  "domains": ["bedbathandbeyond.com", "*.bedbathandbeyond.com"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/bedbathandbeyond.html",
+    "fixture_url": "https://www.bedbathandbeyond.com/Bedding/Linen-Blend-Duvet-Cover-Set/55667788/product.html",
+    "note": "Assumes script#__NEXT_DATA__ with props.pageProps.product { name, brand.name, price { salePrice, listPrice, currency }, images[].cdnPath (relative), categoryPath, options[] { sku, attributes{}, price, inStock }, specifications }. The image CDN host is an assumption. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency": "USD",
+    "product_signal": { "any": [{ "source": "next", "path": "props.pageProps.product.name" }] },
+    "sources": { "next": { "kind": "script_json", "selector": "script#__NEXT_DATA__" } },
+    "fields": {
+      "title": [{ "source": "next", "path": "props.pageProps.product.name", "transforms": ["trim"] }, { "css": "h1[data-testid='product-title']" }],
+      "description": [{ "source": "next", "path": "props.pageProps.product.description" }],
+      "brand": [{ "source": "next", "path": "props.pageProps.product.brand.name" }],
+      "sku": [{ "source": "next", "path": "props.pageProps.product.id" }],
+      "currency": [{ "source": "next", "path": "props.pageProps.product.price.currency" }],
+      "price": [{ "source": "next", "path": "props.pageProps.product.price.salePrice" }],
+      "list_price": [{ "source": "next", "path": "props.pageProps.product.price.listPrice" }],
+      "category": [{ "source": "next", "path": "props.pageProps.product.categoryPath" }],
+      "images": [{ "source": "next", "path": "props.pageProps.product.images[*].cdnPath", "transforms": [{ "prefix": "https://ak1.ostkcdn.com/" }] }],
+      "specifications": [{ "source": "next", "path": "props.pageProps.product.specifications", "entry": { "name": "name", "value": "value" } }],
+      "rating": [{ "source": "next", "path": "props.pageProps.product.reviews.rating" }],
+      "rating_count": [{ "source": "next", "path": "props.pageProps.product.reviews.count" }]
+    },
+    "variants": {
+      "mode": "list",
+      "source": "next",
+      "path": "props.pageProps.product.options",
+      "sku": "sku",
+      "price": "price",
+      "stock": "inStock",
+      "option_list": { "path": "attributes", "name": "$key", "value": "" }
+    }
+  }
+}

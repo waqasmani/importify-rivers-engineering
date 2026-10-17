@@ -1,0 +1,44 @@
+{
+  "key": "nordstrom",
+  "name": "Nordstrom",
+  "region": "north_america",
+  "description": "Nordstrom and Nordstrom Rack product pages: title, brand, style number, prices, images by colour, category, details and colour/size SKUs from the embedded window.__INITIAL_CONFIG__ view data.",
+  "domains": ["nordstrom.com", "*.nordstrom.com", "nordstromrack.com", "*.nordstromrack.com"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/nordstrom.html",
+    "fixture_url": "https://www.nordstrom.com/s/merino-wool-crewneck-sweater/7712345",
+    "note": "Assumes window.__INITIAL_CONFIG__ = { viewData: { productTitle, brand.brandName, styleNumber, price.style.currentMinPrice/regularMinPrice.formattedPrice, mediaExperiences.carouselsByColor[].orderedShots[].url, skus.byId{}, categoryPath, details.features } }. Prices are USD. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency": "USD",
+    "product_signal": { "any": [{ "source": "config", "path": "viewData.productTitle" }] },
+    "sources": { "config": { "kind": "script_marker", "marker": "window.__INITIAL_CONFIG__" } },
+    "fields": {
+      "title": [{ "source": "config", "path": "viewData.productTitle", "transforms": ["trim"] }, { "css": "h1.product-title" }],
+      "description": [{ "source": "config", "path": "viewData.description", "transforms": ["strip_html"] }],
+      "brand": [{ "source": "config", "path": "viewData.brand.brandName" }],
+      "model": [{ "source": "config", "path": "viewData.styleNumber" }],
+      "sku": [{ "source": "config", "path": "viewData.id" }],
+      "price": [{ "source": "config", "path": "viewData.price.style.currentMinPrice.formattedPrice" }],
+      "list_price": [{ "source": "config", "path": "viewData.price.style.regularMinPrice.formattedPrice" }],
+      "category": [{ "source": "config", "path": "viewData.categoryPath[*].name" }],
+      "images": [{ "source": "config", "path": "viewData.mediaExperiences.carouselsByColor[*].orderedShots[*].url" }],
+      "specifications": [{ "source": "config", "path": "viewData.details.features", "entry": { "name": "label", "value": "value" } }],
+      "rating": [{ "source": "config", "path": "viewData.reviews.averageRating" }],
+      "rating_count": [{ "source": "config", "path": "viewData.reviews.count" }]
+    },
+    "variants": {
+      "mode": "list",
+      "source": "config",
+      "path": "viewData.skus.byId",
+      "sku": "id",
+      "price": "displayPrice",
+      "stock": "isAvailable",
+      "options": { "Color": "colorDisplayValue", "Size": "sizeDisplayValue" }
+    }
+  }
+}

@@ -52,14 +52,17 @@ typecheck:
 	pnpm -r typecheck
 
 # ---- tests ----
-.PHONY: test test-go test-web test-extension e2e
-test: test-go test-web test-extension ## Run all unit and integration tests (needs PostgreSQL, see docs/development.md)
+.PHONY: test test-go test-web test-extractor test-extension e2e
+test: test-go test-web test-extractor test-extension ## Run all unit and integration tests (needs PostgreSQL, see docs/development.md)
 
 test-go: ## Go unit + database integration + API contract tests
 	REA_TEST_DATABASE_URL="$(TEST_DATABASE_URL)" REA_REQUIRE_DB_TESTS=1 go test -count=1 ./...
 
 test-web: ## Vue component tests
 	pnpm --filter @rea/web test
+
+test-extractor: ## Extraction package tests: adapters, rules engine, every marketplace fixture
+	pnpm --filter @rea/extractor test
 
 test-extension: ## Extension unit tests
 	pnpm --filter @rea/extension test

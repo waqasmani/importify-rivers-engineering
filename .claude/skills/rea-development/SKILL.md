@@ -19,6 +19,8 @@ are in `references/rules.md`; check every change against them.
 | `services/internal/{analysis,ai,products,pricing,normalize,safefetch,safearchive,htmlx,auth,worker}` | domain packages |
 | `db/migrations` | goose migrations, embedded, applied at start-up |
 | `packages/api-types` | committed `openapi.json` + generated TypeScript (`Schemas['Name']`) |
+| `packages/extractor` | `@rea/extractor`: DOM-only product extraction (adapters, rules engine, merge) shared by extension and dashboard |
+| `db/marketplaces`, `services/internal/marketplaces` | shipped marketplace definitions (rules adapters), Go validation mirror, start-up sync |
 | `apps/web` | Vue 3 dashboard (see `docs/web-conventions.md`) |
 | `apps/extension` | Chrome MV3 extension |
 | `deploy` | Compose stack, Caddy/nginx, `init-env.sh`, `backup.sh`, `verify-backup.sh`, `restore.sh`, `smoke-test.sh`, `dev-api.sh` |
@@ -29,7 +31,7 @@ are in `references/rules.md`; check every change against them.
 make deps                                   # go mod download + pnpm install
 export REA_TEST_DATABASE_URL='postgres://rea:rea@127.0.0.1:5432/rea?sslmode=disable'
 make test-go                                # Go unit + DB integration + contract + migration tests
-make test-web test-extension                # Vitest suites
+make test-web test-extractor test-extension # Vitest suites
 make lint                                   # gofmt, vet, migration lint, TypeScript
 make generate                               # sqlc + openapi.json + TS types after API changes
 make dev-api   # API :8080, setup token "dev-setup-token"

@@ -1,0 +1,32 @@
+{
+  "key": "snapdeal",
+  "name": "Snapdeal",
+  "region": "south_asia",
+  "description": "Snapdeal product pages: visible title, price and MRP, large slider images, details list and seller, with JSON-LD for brand and SKU. Values Snapdeal keeps in hidden inputs are never read. Prices are in INR.",
+  "domains": ["snapdeal.com", "*.snapdeal.com"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/snapdeal.html",
+    "fixture_url": "https://www.snapdeal.com/product/strider-mens-running-shoes-grey/123456789",
+    "note": "Assumes h1.pdp-e-i-head, .payBlkBig, .pdpCutPrice, #bx-slider-left-image-panel img[bigsrc], .dtls-list li 'Name: value' items, .pdp-e-seller-info-name a and a JSON-LD Product. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency": "INR",
+    "product_signal": { "any": [{ "css": "h1.pdp-e-i-head" }] },
+    "sources": { "ld": { "kind": "json_ld", "types": ["Product"] } },
+    "fields": {
+      "title": [{ "css": "h1.pdp-e-i-head" }, { "source": "ld", "path": "name" }],
+      "brand": [{ "source": "ld", "path": "brand.name" }],
+      "sku": [{ "source": "ld", "path": "sku" }],
+      "price": [{ "css": ".pdp-e-i-PAY .payBlkBig" }, { "source": "ld", "path": "offers.price" }],
+      "list_price": [{ "css": ".pdpCutPrice" }],
+      "images": [{ "css": "#bx-slider-left-image-panel img", "attr": "bigsrc", "all": true }],
+      "specifications": [{ "css": ".dtls-list li", "all": true }],
+      "supplier_name": [{ "css": ".pdp-e-seller-info-name a" }],
+      "supplier_url": [{ "css": ".pdp-e-seller-info-name a", "attr": "href" }]
+    }
+  }
+}

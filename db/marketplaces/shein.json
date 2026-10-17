@@ -1,0 +1,45 @@
+{
+  "key": "shein",
+  "name": "SHEIN",
+  "region": "cross_border",
+  "description": "SHEIN product pages: name, SKU, sale and retail price, images, category, details and size SKUs from the embedded productIntroData; the currency follows the regional site.",
+  "domains": ["shein.com", "*.shein.com", "shein.co.uk", "*.shein.co.uk"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/shein.html",
+    "fixture_url": "https://us.shein.com/Ribbed-Knit-Crew-Neck-Sweater-p-23456789.html",
+    "note": "Assumes productIntroData = { detail { goods_name, goods_sn, salePrice/retailPrice.amountWithSymbol, productDetails[] }, goods_imgs { main_image, detail_image[] }.origin_image, currentCat, attrSizeList.sale_attr_list.<goods_id>.sku_list[] }. '$' prices take the currency of the regional host. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency_by_host": {
+      "shein.com": "USD", "us.shein.com": "USD", "ca.shein.com": "CAD", "au.shein.com": "AUD", "nz.shein.com": "NZD", "mx.shein.com": "MXN",
+      "shein.co.uk": "GBP", "de.shein.com": "EUR", "fr.shein.com": "EUR", "es.shein.com": "EUR", "it.shein.com": "EUR", "nl.shein.com": "EUR",
+      "se.shein.com": "SEK", "pl.shein.com": "PLN", "ar.shein.com": "SAR", "sg.shein.com": "SGD", "ph.shein.com": "PHP", "br.shein.com": "BRL"
+    },
+    "product_signal": { "any": [{ "source": "intro", "path": "detail.goods_name" }] },
+    "sources": { "intro": { "kind": "script_marker", "marker": "productIntroData" } },
+    "fields": {
+      "title": [{ "source": "intro", "path": "detail.goods_name", "transforms": ["trim"] }, { "css": "h1.product-intro__head-name" }],
+      "sku": [{ "source": "intro", "path": "detail.goods_sn" }],
+      "price": [{ "source": "intro", "path": "detail.salePrice.amountWithSymbol" }, { "source": "intro", "path": "detail.salePrice.amount" }],
+      "list_price": [{ "source": "intro", "path": "detail.retailPrice.amountWithSymbol" }],
+      "category": [{ "source": "intro", "path": "currentCat.cat_name" }],
+      "images": [{ "source": "intro", "path": "goods_imgs.*.origin_image", "transforms": ["protocol_fix"] }],
+      "specifications": [{ "source": "intro", "path": "detail.productDetails", "entry": { "name": "attr_name", "value": "attr_value" } }],
+      "rating": [{ "source": "intro", "path": "commentInfo.comment_rank_average" }],
+      "rating_count": [{ "source": "intro", "path": "commentInfo.comment_num" }]
+    },
+    "variants": {
+      "mode": "list",
+      "source": "intro",
+      "path": "attrSizeList.sale_attr_list.*.sku_list[*]",
+      "sku": "sku_code",
+      "price": "price.salePrice.amountWithSymbol",
+      "stock": "stock",
+      "option_list": { "path": "sku_sale_attr", "name": "attr_name", "value": "attr_value_name" }
+    }
+  }
+}

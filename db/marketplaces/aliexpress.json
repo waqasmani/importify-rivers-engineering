@@ -1,0 +1,80 @@
+{
+  "key": "aliexpress",
+  "name": "AliExpress",
+  "region": "cross_border",
+  "description": "AliExpress item pages: product, price, SKU, image and seller data from the embedded window.runParams state, with options joined to SKU prices by property value ids.",
+  "domains": ["aliexpress.com", "*.aliexpress.com", "aliexpress.us", "*.aliexpress.us"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/aliexpress.html",
+    "fixture_url": "https://www.aliexpress.com/item/1005001234567890.html",
+    "note": "Assumes item pages assign window.runParams = { data: { productInfoComponent, priceComponent.skuPriceList, skuComponent.productSKUPropertyList (skuPropIds join), imageComponent, sellerComponent, productPropComponent } } and falls back to the older titleModule/priceModule names, the h1 and Open Graph. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "product_signal": {
+      "any": [
+        { "source": "run_params", "path": "data.productInfoComponent.subject" },
+        { "source": "run_params", "path": "data.titleModule.subject" }
+      ]
+    },
+    "sources": {
+      "run_params": { "kind": "script_marker", "marker": "window.runParams" }
+    },
+    "fields": {
+      "title": [
+        { "source": "run_params", "path": "data.productInfoComponent.subject", "transforms": ["trim"] },
+        { "source": "run_params", "path": "data.titleModule.subject", "transforms": ["trim"] },
+        { "css": "h1[data-pl='product-title']" },
+        { "meta": "og:title" }
+      ],
+      "description": [{ "meta": "description" }],
+      "brand": [{ "source": "run_params", "path": "data.productPropComponent.props[?attrName='Brand Name'].attrValue" }],
+      "model": [{ "source": "run_params", "path": "data.productPropComponent.props[?attrName='Model Number'].attrValue" }],
+      "price": [
+        { "source": "run_params", "path": "data.priceComponent.discountPrice.minActivityAmount" },
+        { "source": "run_params", "path": "data.priceComponent.origPrice.minAmount" },
+        { "source": "run_params", "path": "data.priceModule.minActivityAmount" },
+        { "css": ".product-price-current" }
+      ],
+      "list_price": [{ "source": "run_params", "path": "data.priceComponent.origPrice.minAmount" }],
+      "availability": [{ "source": "run_params", "path": "data.inventoryComponent.totalAvailQuantity", "transforms": ["stock"] }],
+      "category": [{ "source": "run_params", "path": "data.breadcrumbComponent.pathList[*].name" }],
+      "images": [
+        { "source": "run_params", "path": "data.imageComponent.imagePathList", "transforms": ["protocol_fix", "image_original"] },
+        { "source": "run_params", "path": "data.imageModule.imagePathList", "transforms": ["protocol_fix", "image_original"] },
+        { "meta": "og:image" }
+      ],
+      "specifications": [{ "source": "run_params", "path": "data.productPropComponent.props", "entry": { "name": "attrName", "value": "attrValue" } }],
+      "supplier_name": [{ "source": "run_params", "path": "data.sellerComponent.storeName" }],
+      "supplier_url": [{ "source": "run_params", "path": "data.sellerComponent.storeURL" }],
+      "shipping": [{ "source": "run_params", "path": "data.shippingComponent.summary" }],
+      "rating": [{ "source": "run_params", "path": "data.feedbackComponent.evarageStar" }],
+      "rating_count": [{ "source": "run_params", "path": "data.feedbackComponent.totalValidNum" }]
+    },
+    "variants": {
+      "mode": "property_join",
+      "properties": {
+        "source": "run_params",
+        "path": "data.skuComponent.productSKUPropertyList",
+        "id": "skuPropertyId",
+        "name": "skuPropertyName",
+        "values": "skuPropertyValues",
+        "value_id": "propertyValueId",
+        "value_name": "propertyValueDisplayName",
+        "value_image": { "path": "skuPropertyImagePath", "transforms": ["protocol_fix", "image_original"] }
+      },
+      "skus": {
+        "source": "run_params",
+        "path": "data.priceComponent.skuPriceList",
+        "ids": "skuPropIds",
+        "separator": ",",
+        "sku": "skuId",
+        "price": "skuVal.skuActivityAmount",
+        "stock": "skuVal.availQuantity"
+      }
+    }
+  }
+}

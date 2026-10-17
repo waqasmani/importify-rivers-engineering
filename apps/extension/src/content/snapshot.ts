@@ -2,7 +2,7 @@
 // of the page: scripts, frames, event handlers, form values, password and hidden inputs,
 // token-like attributes and meta tags are removed before anything leaves the page. The server
 // sanitizes again and stores the result as inert text.
-import { isSensitiveName } from '../shared/sensitive'
+import { isSensitiveName } from '@rea/extractor'
 import type { SnapshotInfo } from '../shared/types'
 
 const DROP = 'script, noscript, iframe, frame, frameset, object, embed, applet, template, portal, base, link[rel~="import"], link[rel~="modulepreload"], link[rel~="preload"][as="script"]'

@@ -62,6 +62,19 @@ client `@/api/client` (`api.get/post/...`, `ApiError`, CSRF header). Lists via
 MV3 with pinned key (ID `olceibeplclcegianhjffambadoakkno`, public key in
 `apps/extension/manifest-key.txt`), permissions activeTab, scripting, storage, contextMenus,
 sidePanel; optional host permissions per site. `src/background` (service worker) holds tokens and
-talks to the API; `src/content` is injected on demand (adapters in `extract/`, `picker.ts`,
-`snapshot.ts`) and never sees credentials; `src/ui` is the Vue side panel/popup; `src/shared`
-holds zod message schemas. Build with `scripts/build.mjs`, verified by `scripts/check-dist.mjs`.
+talks to the API; `src/content` is injected on demand (`extract.ts` = `@rea/extractor` + snapshot,
+`picker.ts`, `snapshot.ts`) and never sees credentials; `src/ui` is the Vue side panel/popup;
+`src/shared` holds zod message schemas. Build with `scripts/build.mjs`, verified by
+`scripts/check-dist.mjs`.
+
+## Extraction and marketplaces
+`packages/extractor` (`@rea/extractor`, DOM APIs only, no Node/Chrome APIs) holds every adapter
+(`src/adapters/*`), `merge.ts`, `inspect.ts`, `page.ts` (`analyzePage`, `domainMatches`) and the
+rules engine (`src/rules/`: `schema.ts` zod schema, `json.ts` brace scanner + object-literal parser,
+`path.ts`, `transforms.ts`, `engine.ts`). Adapter kinds: `builtin` (code), `selector` (CSS map),
+`rules` (rule document). Marketplace definitions are `db/marketplaces/<key>.json`, embedded by
+`db.Marketplaces`, validated by `services/internal/marketplaces` (Go mirror of the zod schema; shared
+cases in `testdata/rules/validation-cases.json`) and upserted at API start-up (`SyncShipped`: insert
+missing, upgrade on newer `version` keeping `enabled`/`priority`/`description`). `source_adapters`
+has `rules`, `shipped`, `definition_version`, `region`, `verification`. Dashboard: Products →
+Marketplaces and Adapter lab (`DOMParser`, inert). See `docs/marketplaces.md`.

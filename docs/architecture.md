@@ -42,6 +42,8 @@ flowchart LR
 | `services/internal/worker` | Job loop for analysis runs, AI jobs and retention. |
 | `db/migrations` | Goose migrations, embedded into the binary and applied at start-up. |
 | `packages/api-types` | OpenAPI document generated from Go types plus TypeScript types for the clients. |
+| `packages/extractor` | `@rea/extractor`: product extraction from a DOM `Document` (site adapters, the rules engine for marketplace definitions, field merging), shared by the extension and the dashboard. |
+| `services/internal/marketplaces`, `db/marketplaces` | Shipped marketplace definitions (rules adapters), their validation and their sync into `source_adapters` at start-up. See [marketplaces.md](marketplaces.md). |
 | `apps/web` | Dashboard (Vue 3, TypeScript, Vite, Tailwind CSS, Vue Router, Pinia, TanStack Query, VueUse). |
 | `apps/extension` | Chrome extension (Manifest V3, TypeScript, Vue side panel). |
 | `deploy` | Compose stack, Caddy and nginx configuration, operator scripts, systemd unit. |
@@ -112,6 +114,7 @@ applies them. See [security.md](security.md) for data-sharing controls.
 ## Browser extension
 
 The service worker owns the server connection and tokens. The content script is injected on
-demand, runs site adapters (JSON-LD, microdata, Open Graph, Shopify, WooCommerce, Alibaba,
-server-defined selector adapters, generic fallback) and returns data through validated
-messages. See [extension.md](extension.md).
+demand, runs the adapters from `@rea/extractor` (JSON-LD, microdata, Open Graph, Shopify,
+WooCommerce, Alibaba, marketplace definitions and other rules adapters, server-defined selector
+adapters, generic fallback) and returns data through validated messages. See
+[extension.md](extension.md) and [marketplaces.md](marketplaces.md).

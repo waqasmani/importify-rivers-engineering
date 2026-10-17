@@ -1,0 +1,73 @@
+{
+  "key": "amazon",
+  "name": "Amazon",
+  "region": "global",
+  "description": "Amazon detail pages on its regional stores: title, brand, ASIN, price and list price, availability, bullets and description, high-resolution images from the image block, breadcrumb, technical tables, seller, delivery and rating text, and variations from the twister data. The Amazon Product Advertising API is the better route for monitoring.",
+  "domains": [
+    "amazon.com", "*.amazon.com", "amazon.co.uk", "*.amazon.co.uk", "amazon.de", "*.amazon.de", "amazon.fr", "*.amazon.fr",
+    "amazon.it", "*.amazon.it", "amazon.es", "*.amazon.es", "amazon.ca", "*.amazon.ca", "amazon.com.au", "*.amazon.com.au",
+    "amazon.co.jp", "*.amazon.co.jp", "amazon.in", "*.amazon.in", "amazon.ae", "*.amazon.ae", "amazon.sa", "*.amazon.sa",
+    "amazon.com.mx", "*.amazon.com.mx", "amazon.com.br", "*.amazon.com.br", "amazon.nl", "*.amazon.nl", "amazon.se", "*.amazon.se",
+    "amazon.pl", "*.amazon.pl", "amazon.sg", "*.amazon.sg", "amazon.com.tr", "*.amazon.com.tr", "amazon.com.be", "*.amazon.com.be",
+    "amazon.eg", "*.amazon.eg"
+  ],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/amazon.html",
+    "fixture_url": "https://www.amazon.com/Trailcraft-Ultralight-Camping-Hammock-Straps/dp/B0TESTHAMK",
+    "note": "Assumes #productTitle, #corePrice_feature_div .a-offscreen, .a-text-price .a-offscreen, #availability, .po-brand, #feature-bullets, the ImageBlockATF 'colorImages' object literal (hiRes), #landingImage data-a-dynamic-image, #productDetails_techSpec_section_1, #sellerProfileTriggerId and the twister-js-init-dpx-data a-state JSON. '$' prices take the store's currency. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency_by_host": {
+      "amazon.com": "USD", "amazon.co.uk": "GBP", "amazon.de": "EUR", "amazon.fr": "EUR", "amazon.it": "EUR", "amazon.es": "EUR", "amazon.nl": "EUR",
+      "amazon.com.be": "EUR", "amazon.ca": "CAD", "amazon.com.au": "AUD", "amazon.co.jp": "JPY", "amazon.in": "INR", "amazon.ae": "AED",
+      "amazon.sa": "SAR", "amazon.com.mx": "MXN", "amazon.com.br": "BRL", "amazon.se": "SEK", "amazon.pl": "PLN", "amazon.sg": "SGD",
+      "amazon.com.tr": "TRY", "amazon.eg": "EGP"
+    },
+    "product_signal": { "any": [{ "css": "#productTitle" }] },
+    "sources": {
+      "image_block": { "kind": "script_marker", "marker": "'colorImages'" },
+      "dynamic_image": { "kind": "attr_json", "selector": "#landingImage", "attr": "data-a-dynamic-image" },
+      "twister": { "kind": "script_json", "selector": "script[type='a-state'][data-a-state*='twister-js-init-dpx-data']" }
+    },
+    "fields": {
+      "title": [{ "css": "#productTitle" }],
+      "description": [{ "css": "#feature-bullets ul", "multiline": true }, { "css": "#productDescription", "multiline": true }, { "meta": "description" }],
+      "brand": [{ "css": "#productOverview_feature_div tr.po-brand td.a-span9" }],
+      "sku": [{ "css": "#averageCustomerReviews[data-asin]", "attr": "data-asin" }],
+      "price": [
+        { "css": "#corePrice_feature_div .a-price .a-offscreen" },
+        { "css": "#corePriceDisplay_desktop_feature_div .a-price .a-offscreen" },
+        { "css": "#priceblock_ourprice" }
+      ],
+      "list_price": [{ "css": ".basisPrice .a-offscreen" }, { "css": ".a-price.a-text-price .a-offscreen" }],
+      "availability": [{ "css": "#availability span" }],
+      "category": [{ "css": "#wayfinding-breadcrumbs_feature_div li a", "all": true }],
+      "images": [
+        { "source": "image_block", "path": "initial[*].hiRes", "transforms": ["image_original"] },
+        { "source": "dynamic_image", "path": "", "transforms": ["keys", "image_original"] },
+        { "css": "#landingImage", "attr": "data-old-hires", "transforms": ["image_original"] }
+      ],
+      "specifications": [
+        { "css": "#productDetails_techSpec_section_1", "table": true },
+        { "css": "#productDetails_detailBullets_sections1", "table": true },
+        { "css": "#detailBullets_feature_div li", "pairs": { "name": ".a-text-bold", "value": ".a-list-item span:last-child" } }
+      ],
+      "supplier_name": [{ "css": "#sellerProfileTriggerId" }, { "css": "#merchant-info a" }],
+      "supplier_url": [{ "css": "#sellerProfileTriggerId", "attr": "href" }],
+      "shipping": [{ "css": "#mir-layout-DELIVERY_BLOCK span[data-csa-c-delivery-price]" }],
+      "rating": [{ "css": "#acrPopover", "attr": "title" }],
+      "rating_count": [{ "css": "#acrCustomerReviewText" }]
+    },
+    "variants": {
+      "mode": "list",
+      "source": "twister",
+      "path": "dimensionValuesDisplayData",
+      "sku": "$key",
+      "option_positions": { "values": "", "names": { "source": "twister", "path": "dimensionsDisplay" } }
+    }
+  }
+}

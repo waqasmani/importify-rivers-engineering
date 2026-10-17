@@ -1,0 +1,47 @@
+{
+  "key": "shopee",
+  "name": "Shopee",
+  "region": "southeast_asia",
+  "description": "Shopee product pages in its country sites: JSON-LD Product (name, description, brand, lowest offer price, seller, rating) plus full-size briefing images and the specification block. Shopee renders most data in the browser, so capture the page after it has loaded.",
+  "domains": [
+    "shopee.sg", "*.shopee.sg", "shopee.com.my", "*.shopee.com.my", "shopee.ph", "*.shopee.ph", "shopee.co.th", "*.shopee.co.th",
+    "shopee.vn", "*.shopee.vn", "shopee.co.id", "*.shopee.co.id", "shopee.tw", "*.shopee.tw", "shopee.com.br", "*.shopee.com.br",
+    "shopee.com.mx", "*.shopee.com.mx", "shopee.com.co", "*.shopee.com.co", "shopee.cl", "*.shopee.cl"
+  ],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/shopee.html",
+    "fixture_url": "https://shopee.sg/Portable-Mini-Blender-400ml-i.123456.7890123",
+    "note": "Assumes a JSON-LD Product with an AggregateOffer (lowPrice, priceCurrency, seller) and image URLs ending in _tn, rendered .product-briefing images and .product-detail .spec-row name/value pairs; Shopee's class names are generated and likely differ on real pages. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency_by_host": {
+      "shopee.sg": "SGD", "shopee.com.my": "MYR", "shopee.ph": "PHP", "shopee.co.th": "THB", "shopee.vn": "VND", "shopee.co.id": "IDR",
+      "shopee.tw": "TWD", "shopee.com.br": "BRL", "shopee.com.mx": "MXN", "shopee.com.co": "COP", "shopee.cl": "CLP"
+    },
+    "product_signal": { "any": [{ "source": "ld", "path": "offers" }] },
+    "sources": { "ld": { "kind": "json_ld", "types": ["Product"] } },
+    "fields": {
+      "title": [{ "source": "ld", "path": "name" }, { "css": ".product-briefing .briefing-title" }],
+      "description": [{ "source": "ld", "path": "description" }],
+      "brand": [{ "source": "ld", "path": "brand" }],
+      "sku": [{ "source": "ld", "path": "productID" }],
+      "price": [{ "source": "ld", "path": "offers.lowPrice" }, { "source": "ld", "path": "offers.price" }],
+      "currency": [{ "source": "ld", "path": "offers.priceCurrency" }],
+      "availability": [{ "source": "ld", "path": "offers.availability" }],
+      "images": [
+        { "css": ".product-briefing picture img", "all": true, "transforms": ["image_original"] },
+        { "source": "ld", "path": "image", "transforms": ["image_original"] }
+      ],
+      "specifications": [{ "css": ".product-detail .spec-row", "pairs": { "name": ".spec-name", "value": ".spec-value" } }],
+      "supplier_name": [{ "source": "ld", "path": "offers.seller.name" }],
+      "supplier_url": [{ "source": "ld", "path": "offers.seller.url" }],
+      "canonical_url": [{ "source": "ld", "path": "url" }],
+      "rating": [{ "source": "ld", "path": "aggregateRating.ratingValue" }],
+      "rating_count": [{ "source": "ld", "path": "aggregateRating.ratingCount" }]
+    }
+  }
+}

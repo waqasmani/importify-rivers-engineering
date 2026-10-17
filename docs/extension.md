@@ -163,8 +163,11 @@ Never captured or sent:
   hidden inputs are dropped from snapshots;
 - meta tags, attributes, JSON-LD keys and URL parameters whose names suggest tokens, CSRF values,
   nonces, sessions, secrets or API keys;
-- inline or external scripts (scripts are only parsed as data when they are JSON-LD or Shopify
-  product JSON; nothing on the page is executed and the content script makes no network requests).
+- inline or external scripts. Scripts are only parsed as data: JSON-LD, Shopify product JSON and
+  the embedded state that marketplace definitions name (for example `window.runParams` or
+  `__NEXT_DATA__`), read with a brace scanner and a JSON/object-literal parser, never evaluated.
+  Token-like keys (CSRF values, sessions, tokens) are removed before anything reads that data,
+  nothing on the page is executed and the content script makes no network requests.
 
 **HTML snapshots** are optional. They are taken only when the server's capture setting
 `store_html_snapshots` is on **and** you enable them in *Settings → HTML snapshots*; your size limit
@@ -204,24 +207,36 @@ snapshot as inert text.
 
 ### Extraction adapters
 
-The content script runs every enabled adapter that matches the page's domain (from
+Extraction lives in the shared package `packages/extractor` (`@rea/extractor`, DOM APIs only), which
+the content script bundles and the dashboard's Adapter lab runs too. The content script adds only the
+sanitized snapshot. The content script runs every enabled adapter that matches the page's domain (from
 `/extension/config`; built-in defaults before pairing) in priority order and merges the results field
 by field, keeping the most confident value and recording which adapter and selector or property
 produced it (`field_confidence`, `evidence`, `extraction_method`, `adapter_key` in the import payload):
 schema.org **JSON-LD** (Product, ProductGroup, Offer, AggregateOffer, Organization), **microdata**,
 **Open Graph** / `product:` meta tags, **Shopify** (DOM markers and embedded product JSON; prices in
 cents), **WooCommerce** (body classes, price markup, `variations_form` data), **Alibaba** (visible
-details, tiered prices, supplier), **server-defined selector adapters** (CSS selectors configured in
-REA under *Settings → Source adapters*, matched by domain pattern) and **generic** heuristics (headings,
-price patterns outside struck-through prices, prominent images, specification tables, SKU patterns).
-When no price is found the payload says so in its warnings; no price is ever guessed.
+details, tiered prices, supplier), **marketplace definitions and other rules adapters** (declarative
+rule documents for 31 marketplaces such as AliExpress, Amazon, Temu or Lazada, see
+[marketplaces.md](marketplaces.md); delivered by `/extension/config` only after pairing and run only
+when their domain matches and their product signal holds), **server-defined selector adapters** (CSS
+selectors configured in REA under *Settings → Source adapters*, matched by domain pattern) and
+**generic** heuristics (headings, price patterns outside struck-through prices, prominent images,
+specification tables, SKU patterns). A marketplace definition outranks the generic adapters, which
+fill only the fields it leaves empty. List price, shipping and rating counts that definitions find
+are kept with the capture as offer metadata (`extracted.metadata`), never imported as product
+fields. When no price is found the payload says so in its warnings; no price is ever guessed.
 
 ## Testing
 
-- `pnpm --filter @rea/extension test` runs the unit tests in `apps/extension/tests`: adapters against
-  every fixture in `testdata/fixtures`, the snapshot sanitizer, message schemas and sender checks, the
-  element picker, server URL validation, and the token pairing/refresh/rotation/401-wipe logic with a
-  mocked `fetch`.
+- `pnpm --filter @rea/extractor test` runs the extraction tests in `packages/extractor/tests`: every
+  adapter against the fixtures in `testdata/fixtures`, the rules engine (brace scanner, path language,
+  transforms, variants, limits, malformed data) and every marketplace definition against its fixture
+  in `testdata/fixtures/marketplaces`.
+- `pnpm --filter @rea/extension test` runs the unit tests in `apps/extension/tests`: the content
+  script's extraction entry with snapshots and rules adapters, the snapshot sanitizer, message schemas
+  and sender checks, the element picker, server URL validation, and the token
+  pairing/refresh/rotation/401-wipe logic with a mocked `fetch`.
 - `pnpm --filter @rea/extension test:e2e` (after a build) runs Playwright with Chromium
   (`REA_E2E_CHROMIUM`, else `/opt/pw-browsers/chromium` when present, else Playwright's own
   download), loading `dist/` with
@@ -235,10 +250,16 @@ When no price is found the payload says so in its warnings; no price is ever gue
   the side panel page, picks the specification table, captures with a snapshot, imports, verifies the
   records through the API, creates an analysis project, exercises the external-AI confirmation and
   checks disconnect and server-side revocation. Optional variables: `REA_E2E_EMAIL`,
-  `REA_E2E_PASSWORD`, `REA_E2E_PAIRING_CODE`, `REA_E2E_FIXTURE_PORT`.
+  `REA_E2E_PASSWORD`, `REA_E2E_PAIRING_CODE`, `REA_E2E_FIXTURE_PORT`, `REA_E2E_API_PORT` and
+  `REA_E2E_DB` (database of the throw-away API).
   Chromium cannot accept the optional host-permission prompt under automation, so this spec loads a
   temporary copy of `dist/` whose manifest additionally grants the fixture origin only; the shipped
   build is unchanged.
+  `e2e/marketplace-capture.spec.ts` pairs again and captures the synthetic AliExpress fixture under
+  `https://www.aliexpress.com/…` with the shipped definition, then imports it with its variants. It
+  runs offline: Chromium starts without a proxy and cannot resolve any host but the local API,
+  Playwright answers the page request with the fixture and aborts every other request to the
+  marketplace, and the test asserts that the page was the only marketplace request.
 
 ## Troubleshooting
 

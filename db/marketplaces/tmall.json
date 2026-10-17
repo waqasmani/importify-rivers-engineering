@@ -1,0 +1,42 @@
+{
+  "key": "tmall",
+  "name": "Tmall",
+  "region": "china",
+  "description": "Tmall item pages (same platform as Taobao): title, images, flagship store, properties and SKUs from the embedded __ICE_APP_CONTEXT__ loader data, with prices looked up in sku2info. Prices are in CNY.",
+  "domains": ["tmall.com", "*.tmall.com", "tmall.hk", "*.tmall.hk"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/tmall.html",
+    "fixture_url": "https://detail.tmall.com/item.htm?id=681122334455",
+    "note": "Assumes the Taobao loader layout: window.__ICE_APP_CONTEXT__.loaderData.home.data.res with item, seller.shopName, skuBase.props/skus (propPath 'pid:vid') and skuCore.sku2info keyed by skuId. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency": "CNY",
+    "product_signal": { "any": [{ "source": "ice", "path": "loaderData.home.data.res.item.title" }] },
+    "sources": { "ice": { "kind": "script_marker", "marker": "window.__ICE_APP_CONTEXT__" } },
+    "fields": {
+      "title": [
+        { "source": "ice", "path": "loaderData.home.data.res.item.title", "transforms": ["trim"] },
+        { "css": "h1[class*='mainTitle']" }
+      ],
+      "sku": [{ "source": "ice", "path": "loaderData.home.data.res.item.itemId" }],
+      "brand": [{ "source": "ice", "path": "loaderData.home.data.res.props[?name=品牌].value" }],
+      "model": [{ "source": "ice", "path": "loaderData.home.data.res.props[?name=型号].value" }],
+      "price": [{ "source": "ice", "path": "loaderData.home.data.res.skuCore.sku2info.0.price.priceText" }],
+      "availability": [{ "source": "ice", "path": "loaderData.home.data.res.skuCore.sku2info.0.quantity", "transforms": ["stock"] }],
+      "images": [{ "source": "ice", "path": "loaderData.home.data.res.item.images", "transforms": ["protocol_fix", "image_original"] }],
+      "specifications": [{ "source": "ice", "path": "loaderData.home.data.res.props", "entry": { "name": "name", "value": "value" } }],
+      "supplier_name": [{ "source": "ice", "path": "loaderData.home.data.res.seller.shopName" }],
+      "supplier_url": [{ "source": "ice", "path": "loaderData.home.data.res.seller.shopUrl" }]
+    },
+    "variants": {
+      "mode": "property_join",
+      "properties": { "source": "ice", "path": "loaderData.home.data.res.skuBase.props", "id": "pid", "name": "name", "values": "values", "value_id": "vid", "value_name": "name", "value_image": { "path": "image", "transforms": ["protocol_fix"] } },
+      "skus": { "source": "ice", "path": "loaderData.home.data.res.skuBase.skus", "ids": "propPath", "separator": ";", "sku": "skuId" },
+      "offers": { "source": "ice", "path": "loaderData.home.data.res.skuCore.sku2info", "key": "skuId", "price": "price.priceText", "stock": "quantity" }
+    }
+  }
+}

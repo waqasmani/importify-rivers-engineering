@@ -28,10 +28,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Source adapters */
+        /** Source adapters and marketplace definitions */
         get: operations["listAdapters"];
         put?: never;
-        /** Create a selector adapter */
+        /** Create a selector or rules adapter */
         post: operations["createAdapter"];
         delete?: never;
         options?: never;
@@ -50,7 +50,7 @@ export interface paths {
         /** Update an adapter */
         put: operations["updateAdapter"];
         post?: never;
-        /** Delete a selector adapter */
+        /** Delete a custom adapter */
         delete: operations["deleteAdapter"];
         options?: never;
         head?: never;
@@ -2984,9 +2984,11 @@ export interface components {
             domain_patterns: string[];
             enabled: boolean;
             key: string;
+            kind?: string;
             name: string;
             /** Format: int32 */
             priority: number;
+            rules?: unknown;
             selectors: {
                 [key: string]: string;
             };
@@ -6077,6 +6079,8 @@ export interface components {
         SourceAdapter: {
             /** Format: date-time */
             created_at: string;
+            /** Format: int32 */
+            definition_version: number;
             description: string;
             domain_patterns: string[];
             enabled: boolean;
@@ -6087,9 +6091,13 @@ export interface components {
             name: string;
             /** Format: int32 */
             priority: number;
+            region: string;
+            rules: unknown;
             selectors: unknown;
+            shipped: boolean;
             /** Format: date-time */
             updated_at: string;
+            verification: unknown;
             /** Format: int32 */
             version: number;
         };

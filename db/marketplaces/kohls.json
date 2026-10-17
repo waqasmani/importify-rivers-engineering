@@ -1,0 +1,43 @@
+{
+  "key": "kohls",
+  "name": "Kohl's",
+  "region": "north_america",
+  "description": "Kohl's product pages: title, brand, sale and regular price, images, breadcrumbs, specifications and colour/size SKUs from the embedded productV2JsonData object.",
+  "domains": ["kohls.com", "*.kohls.com"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/kohls.html",
+    "fixture_url": "https://www.kohls.com/product/prd-6123456/mens-flannel-shirt.jsp",
+    "note": "Assumes var productV2JsonData = { productTitle, webID, brand, description, price.salePrice/regularPrice.minPrice, images[].url, breadcrumbs, SKUS[] { skuCode, UPC.ID, color, size, price.salePrice.minPrice, stock } }. Prices are USD. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency": "USD",
+    "product_signal": { "any": [{ "source": "product", "path": "productTitle" }] },
+    "sources": { "product": { "kind": "script_marker", "marker": "productV2JsonData" } },
+    "fields": {
+      "title": [{ "source": "product", "path": "productTitle", "transforms": ["trim"] }, { "css": "h1.product-title" }],
+      "description": [{ "source": "product", "path": "description", "transforms": ["strip_html"] }],
+      "brand": [{ "source": "product", "path": "brand" }],
+      "sku": [{ "source": "product", "path": "webID" }],
+      "price": [{ "source": "product", "path": "price.salePrice.minPrice" }, { "source": "product", "path": "price.regularPrice.minPrice" }],
+      "list_price": [{ "source": "product", "path": "price.regularPrice.minPrice" }],
+      "category": [{ "source": "product", "path": "breadcrumbs[*].name" }],
+      "images": [{ "source": "product", "path": "images[*].url" }],
+      "specifications": [{ "source": "product", "path": "specifications", "entry": { "name": "name", "value": "value" } }],
+      "rating": [{ "source": "product", "path": "avgRating" }],
+      "rating_count": [{ "source": "product", "path": "ratingCount" }]
+    },
+    "variants": {
+      "mode": "list",
+      "source": "product",
+      "path": "SKUS",
+      "sku": "skuCode",
+      "price": "price.salePrice.minPrice",
+      "stock": "stock",
+      "options": { "Color": "color", "Size": "size" }
+    }
+  }
+}

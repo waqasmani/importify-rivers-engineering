@@ -1,0 +1,45 @@
+{
+  "key": "walmart",
+  "name": "Walmart",
+  "region": "north_america",
+  "description": "Walmart item pages (walmart.com and walmart.ca): name, brand, model, UPC, prices, images, category, seller, availability and variants from the Next.js __NEXT_DATA__ product, with variant criteria joined to the variants map. Walmart's affiliate and marketplace APIs are the better route for monitoring.",
+  "domains": ["walmart.com", "*.walmart.com", "walmart.ca", "*.walmart.ca"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/walmart.html",
+    "fixture_url": "https://www.walmart.com/ip/Cast-Iron-Skillet-12-inch/5099887766",
+    "note": "Assumes script#__NEXT_DATA__ with props.pageProps.initialData.data.product { name, brand, model, upc, priceInfo.currentPrice/wasPrice, imageInfo.allImages, category.path, variantCriteria[].variantList, variantsMap{}.variants (value ids) } and data.idml.specifications. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency_by_host": { "walmart.com": "USD", "walmart.ca": "CAD" },
+    "product_signal": { "any": [{ "source": "next", "path": "props.pageProps.initialData.data.product.name" }] },
+    "sources": { "next": { "kind": "script_json", "selector": "script#__NEXT_DATA__" } },
+    "fields": {
+      "title": [{ "source": "next", "path": "props.pageProps.initialData.data.product.name", "transforms": ["trim"] }, { "css": "h1#main-title" }],
+      "description": [{ "source": "next", "path": "props.pageProps.initialData.data.product.shortDescription", "transforms": ["strip_html"] }],
+      "brand": [{ "source": "next", "path": "props.pageProps.initialData.data.product.brand" }],
+      "sku": [{ "source": "next", "path": "props.pageProps.initialData.data.product.usItemId" }],
+      "model": [{ "source": "next", "path": "props.pageProps.initialData.data.product.model" }],
+      "gtin": [{ "source": "next", "path": "props.pageProps.initialData.data.product.upc" }],
+      "currency": [{ "source": "next", "path": "props.pageProps.initialData.data.product.priceInfo.currentPrice.currencyUnit" }],
+      "price": [{ "source": "next", "path": "props.pageProps.initialData.data.product.priceInfo.currentPrice.price" }],
+      "list_price": [{ "source": "next", "path": "props.pageProps.initialData.data.product.priceInfo.wasPrice" }],
+      "availability": [{ "source": "next", "path": "props.pageProps.initialData.data.product.availabilityStatus", "transforms": ["lowercase"] }],
+      "category": [{ "source": "next", "path": "props.pageProps.initialData.data.product.category.path[*].name" }],
+      "images": [{ "source": "next", "path": "props.pageProps.initialData.data.product.imageInfo.allImages[*].url" }],
+      "specifications": [{ "source": "next", "path": "props.pageProps.initialData.data.idml.specifications", "entry": { "name": "name", "value": "value" } }],
+      "supplier_name": [{ "source": "next", "path": "props.pageProps.initialData.data.product.sellerDisplayName" }, { "source": "next", "path": "props.pageProps.initialData.data.product.sellerName" }],
+      "shipping": [{ "source": "next", "path": "props.pageProps.initialData.data.product.fulfillmentSummary[0].message" }],
+      "rating": [{ "source": "next", "path": "props.pageProps.initialData.data.reviews.averageOverallRating" }],
+      "rating_count": [{ "source": "next", "path": "props.pageProps.initialData.data.reviews.totalReviewCount" }]
+    },
+    "variants": {
+      "mode": "property_join",
+      "properties": { "source": "next", "path": "props.pageProps.initialData.data.product.variantCriteria", "id": "id", "name": "name", "values": "variantList", "value_id": "id", "value_name": "name", "value_image": "images[0]" },
+      "skus": { "source": "next", "path": "props.pageProps.initialData.data.product.variantsMap", "ids": "variants", "sku": "usItemId", "price": "priceInfo.currentPrice", "availability": { "path": "availabilityStatus", "transforms": ["lowercase"] } }
+    }
+  }
+}

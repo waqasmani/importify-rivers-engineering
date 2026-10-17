@@ -1,0 +1,51 @@
+<!doctype html>
+<!-- Synthetic fixture: invented product data in the layout REA assumes for Alibaba.com product-detail
+     pages (window.detailData.globalData with product, sku.skuAttrs/skuInfoMap and seller). Not a copy of a real page. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Custom Logo Bamboo Fibre Lunch Box Set - Buy Lunch Box on Alibaba.com</title>
+<meta property="og:title" content="Custom Logo Bamboo Fibre Lunch Box Set - Buy Lunch Box on Alibaba.com">
+<meta name="_csrf_token" content="meta-csrf-should-not-leak">
+</head>
+<body>
+<div class="product-title"><h1 title="Custom Logo Bamboo Fibre Lunch Box Set">Custom Logo Bamboo Fibre Lunch Box Set</h1></div>
+<script>
+window.detailData = {
+  "globalData": {
+    "product": {
+      "productId": 1600999888777,
+      "subject": "Custom Logo Bamboo Fibre Lunch Box Set",
+      "mediaItems": [
+        { "type": "image", "imageUrl": { "big": "//s.alicdn.example/@sc04/kf/Hbox1.jpg_720x720q50.jpg" } },
+        { "type": "video", "videoUrl": "//cloud.video.example/box.mp4" },
+        { "type": "image", "imageUrl": { "big": "//s.alicdn.example/@sc04/kf/Hbox2.jpg_720x720q50.jpg" } }
+      ],
+      "price": { "productLadderPrices": [ { "min": 100, "max": 499, "price": 2.85, "formatPrice": "$2.85" }, { "min": 500, "max": -1, "price": 2.4, "formatPrice": "$2.40" } ] },
+      "moq": { "minOrderQuantity": 100, "unit": "sets" },
+      "sku": {
+        "skuAttrs": [
+          { "id": 3216, "name": "Color", "values": [ { "id": 1001, "name": "Sage Green", "imageUrl": "//s.alicdn.example/@sc04/kf/Hgreen.jpg_100x100.jpg" }, { "id": 1002, "name": "Oat Beige" } ] },
+          { "id": 5, "name": "Capacity", "values": [ { "id": 2001, "name": "800 ml" }, { "id": 2002, "name": "1200 ml" } ] }
+        ],
+        "skuInfoMap": {
+          "3216:1001;5:2001": { "id": 10001, "price": { "price": 2.85 } },
+          "3216:1001;5:2002": { "id": 10002, "price": { "price": 3.1 } },
+          "3216:1002;5:2001": { "id": 10003, "price": { "price": 2.85 } }
+        }
+      },
+      "productBasicProperties": [
+        { "attrName": "Material", "attrValue": "Bamboo fibre" },
+        { "attrName": "Place of Origin", "attrValue": "Zhejiang, China" },
+        { "attrName": "Brand Name", "attrValue": "Greenleaf" },
+        { "attrName": "Model Number", "attrValue": "BF-LB2" }
+      ]
+    },
+    "seller": { "companyName": "Ningbo Greenleaf Housewares Co., Ltd.", "homeUrl": "https://greenleaf.en.alibaba.example/" },
+    "trade": { "leadTime": "Lead time 15 days for 100-499 sets" }
+  },
+  "_csrf": "inline-csrf-should-not-leak"
+};
+</script>
+</body>
+</html>

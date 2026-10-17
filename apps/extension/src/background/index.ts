@@ -1,5 +1,5 @@
 // Service worker entry. All REA API calls happen here; tokens never leave this context.
-import { scrubUrl } from '../shared/sensitive'
+import { scrubUrl } from '@rea/extractor'
 import { broadcast, onRuntimeMessage } from './router'
 import { addSelection, clearPicker, forgetTab, getPicker, setContext } from './state'
 

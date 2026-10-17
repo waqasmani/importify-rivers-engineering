@@ -29,15 +29,21 @@ async function extensionWorker(context: BrowserContext): Promise<Worker> {
   return existing.at(-1) ?? (await context.waitForEvent('serviceworker', { timeout: 30_000 }))
 }
 
+/**
+ * Chromium flags that keep a run off the network: no proxy, and every host other than the local
+ * API and fixture server fails to resolve. Requests the spec routes are answered by Playwright.
+ */
+export const OFFLINE_ARGS = ['--no-proxy-server', '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost']
+
 /** Loads an unpacked extension into a fresh persistent Chromium profile (new headless mode). */
-export async function launchExtension(dir: string): Promise<Launched> {
+export async function launchExtension(dir: string, extraArgs: string[] = []): Promise<Launched> {
   const profile = await mkdtemp(path.join(os.tmpdir(), 'rea-ext-profile-'))
   const context = await chromium.launchPersistentContext(profile, {
     // Without an explicit binary, headless mode would pick chromium-headless-shell, which cannot
     // load extensions; the "chromium" channel selects Playwright's full Chromium build (CI).
     ...(CHROMIUM ? { executablePath: CHROMIUM } : { channel: 'chromium' }),
     headless: true,
-    args: ['--headless=new', `--disable-extensions-except=${dir}`, `--load-extension=${dir}`, '--no-first-run', '--no-default-browser-check'],
+    args: ['--headless=new', `--disable-extensions-except=${dir}`, `--load-extension=${dir}`, '--no-first-run', '--no-default-browser-check', ...extraArgs],
   })
   let worker = await extensionWorker(context)
   // The worker can be replaced right after installation; wait until its extension APIs are ready.
@@ -64,13 +70,14 @@ export async function launchExtension(dir: string): Promise<Launched> {
 /**
  * Chromium cannot accept the optional host-permission prompt in automation, so the end-to-end run
  * uses a copy of the built extension that additionally declares access to the local fixture
- * origin only. The shipped dist/ keeps no host permissions (see scripts/check-dist.mjs).
+ * origin (or, for the marketplace spec, the routed marketplace origins passed in) only. The
+ * shipped dist/ keeps no host permissions (see scripts/check-dist.mjs).
  */
-export async function testCopyWithFixtureAccess(): Promise<{ dir: string; cleanup: () => Promise<void> }> {
+export async function testCopyWithFixtureAccess(origins: string[] = [`${FIXTURE_ORIGIN}/*`]): Promise<{ dir: string; cleanup: () => Promise<void> }> {
   const dir = await mkdtemp(path.join(os.tmpdir(), 'rea-ext-e2e-'))
   await cp(DIST, dir, { recursive: true })
   const manifest = JSON.parse(await readFile(path.join(dir, 'manifest.json'), 'utf8'))
-  manifest.host_permissions = [`${FIXTURE_ORIGIN}/*`]
+  manifest.host_permissions = origins
   await writeFile(path.join(dir, 'manifest.json'), JSON.stringify(manifest, null, 2))
   return { dir, cleanup: () => rm(dir, { recursive: true, force: true }) }
 }
@@ -141,4 +148,9 @@ export class ReaSession {
     if (res.status >= 300 || !res.body.csrf_token) throw new Error(`sign-in failed with HTTP ${res.status}: ${JSON.stringify(res.body)}`)
     this.csrf = res.body.csrf_token
   }
+}
+
+/** A marketplace fixture from testdata/fixtures/marketplaces. */
+export function marketplaceFixture(key: string): Promise<string> {
+  return readFile(path.join(FIXTURES, 'marketplaces', `${key}.html`), 'utf8')
 }

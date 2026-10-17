@@ -8,6 +8,7 @@ import (
 
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/config"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/httpapi"
+	"github.com/waqasmani/importify-rivers-engineering/services/internal/marketplaces"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/store"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/testutil"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/worker"
@@ -42,6 +43,9 @@ func newEnvWith(t *testing.T, configure func(*config.Config)) *env {
 		t.Fatal(err)
 	}
 	w := worker.New(cfg, d, log, api.Box(), api.Files())
+	if _, err := marketplaces.SyncShipped(t.Context(), d, log); err != nil {
+		t.Fatal(err)
+	}
 	if err := api.PrepareSetup(t.Context()); err != nil {
 		t.Fatal(err)
 	}

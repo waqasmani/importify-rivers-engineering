@@ -2,6 +2,7 @@
 // worker, content script -> service worker, service worker -> UI page) is parsed with these
 // schemas; anything that does not match is rejected.
 import { z } from 'zod'
+import { MAX_DOMAIN_PATTERNS, METADATA_KEYS, ruleDocumentSchema } from '@rea/extractor'
 import type { CaptureInput, ImportRequest, Payload, Schemas, Selection } from './types'
 import { PAGE_TYPES, PICK_FIELDS } from './types'
 
@@ -245,11 +246,12 @@ export type _ImportMatches = Assert<Extends<z.infer<typeof importRequestSchema>,
 export const adapterConfigSchema = z.strictObject({
   key: z.string().min(1).max(60),
   name: shortText(200),
-  kind: z.enum(['builtin', 'selector']),
-  domain_patterns: z.array(shortText(253)).max(50),
+  kind: z.enum(['builtin', 'selector', 'rules']),
+  domain_patterns: z.array(shortText(253)).max(MAX_DOMAIN_PATTERNS),
   enabled: z.boolean(),
   priority: z.number().int().min(0).max(10000),
   selectors: z.record(shortText(40), shortText(300)),
+  rules: ruleDocumentSchema.optional(),
 })
 
 export const extractOptionsSchema = z.strictObject({
@@ -277,6 +279,7 @@ export const extractionResultSchema = z.strictObject({
   product: z.strictObject({
     payload: payloadSchema,
     fields: z.record(z.string(), fieldInfoSchema),
+    metadata: z.partialRecord(z.enum(METADATA_KEYS), fieldInfoSchema.extend({ value: shortText(300) })),
     adapters: z.array(z.strictObject({ key: z.string(), name: z.string(), matched: z.boolean(), fields: z.array(z.string()), warnings: z.array(z.string()) })).max(200),
     detected: z.boolean(),
   }),

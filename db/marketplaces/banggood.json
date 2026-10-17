@@ -1,0 +1,37 @@
+{
+  "key": "banggood",
+  "name": "Banggood",
+  "region": "cross_border",
+  "description": "Banggood product pages: JSON-LD Product (name, SKU, brand, images, offer) plus the visible title, old price, breadcrumb, specification table and shipping note.",
+  "domains": ["banggood.com", "*.banggood.com"],
+  "priority": 60,
+  "version": 1,
+  "verification": {
+    "status": "synthetic_fixture",
+    "fixture": "testdata/fixtures/marketplaces/banggood.html",
+    "fixture_url": "https://www.banggood.com/Voltra-65W-GaN-USB-C-Charger-p-1987654.html",
+    "note": "Assumes a schema.org Product in JSON-LD and visible .product-title-text, .main-price/.old-price, .product-breadcrumb, .specification table and .product-shipping. Not yet checked against saved real pages."
+  },
+  "rules": {
+    "schema": 1,
+    "currency_by_host": { "banggood.com": "USD" },
+    "product_signal": { "any": [{ "source": "ld", "path": "name" }, { "css": "h1.product-title-text" }] },
+    "sources": { "ld": { "kind": "json_ld", "types": ["Product"] } },
+    "fields": {
+      "title": [{ "source": "ld", "path": "name" }, { "css": "h1.product-title-text" }],
+      "description": [{ "source": "ld", "path": "description" }],
+      "brand": [{ "source": "ld", "path": "brand.name" }, { "source": "ld", "path": "brand" }],
+      "sku": [{ "source": "ld", "path": "sku" }],
+      "price": [{ "source": "ld", "path": "offers.price" }, { "css": ".product-price .main-price" }],
+      "currency": [{ "source": "ld", "path": "offers.priceCurrency" }],
+      "list_price": [{ "css": ".product-price .old-price" }],
+      "availability": [{ "source": "ld", "path": "offers.availability" }],
+      "category": [{ "css": ".product-breadcrumb a:not(:first-child)", "all": true }],
+      "images": [{ "source": "ld", "path": "image" }],
+      "specifications": [{ "css": ".specification table", "table": true }],
+      "shipping": [{ "css": ".product-shipping" }],
+      "rating": [{ "source": "ld", "path": "aggregateRating.ratingValue" }],
+      "rating_count": [{ "source": "ld", "path": "aggregateRating.reviewCount" }]
+    }
+  }
+}

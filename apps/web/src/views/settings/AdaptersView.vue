@@ -26,7 +26,8 @@ const canManage = computed(() => auth.can('settings.manage'))
 
 const q = useQuery({ queryKey: ['adapters'], queryFn: ({ signal }) => api.get<Schemas['SourceAdapterItems']>('/adapters', undefined, signal) })
 const builtins = computed(() => (q.data.value?.items ?? []).filter((a) => a.kind === 'builtin'))
-const custom = computed(() => (q.data.value?.items ?? []).filter((a) => a.kind !== 'builtin'))
+const custom = computed(() => (q.data.value?.items ?? []).filter((a) => a.kind === 'selector'))
+const rulesCount = computed(() => (q.data.value?.items ?? []).filter((a) => a.kind === 'rules').length)
 
 const modal = ref(false)
 const editing = ref<Adapter | null>(null)
@@ -110,6 +111,11 @@ async function remove(a: Adapter) {
       When you capture a page with the REA extension, it applies the enabled adapters whose domains match the page, in priority order (lowest number first), and sends the
       extracted fields to REA for review. Adapters run in your browser, only on pages you choose to capture. Add a selector adapter for a supplier site whose pages the
       built-in adapters do not read well.
+    </p>
+    <p class="mb-4 max-w-3xl text-sm text-slate-600" data-testid="marketplaces-link">
+      Marketplace definitions and other rules adapters ({{ rulesCount }}) are managed under
+      <RouterLink to="/marketplaces" class="font-medium text-brand-700 hover:underline">Marketplaces</RouterLink>; test them on saved pages in the
+      <RouterLink to="/adapter-lab" class="font-medium text-brand-700 hover:underline">Adapter lab</RouterLink>.
     </p>
 
     <StateViews v-if="q.isLoading.value" kind="loading" />

@@ -47,7 +47,9 @@ client `@/api/client` (`api.get/post/...`, `ApiError`, CSRF header). Lists via
 (DOMPurify, Mermaid strict). Routes and permissions in `src/router/index.ts`.
 
 ## Extension
-MV3 with pinned key (ID `olceibeplclcegianhjffambadoakkno`), permissions activeTab, scripting,
-storage, contextMenus, sidePanel; optional host permissions per site. Service worker holds
-tokens and talks to the API; the content script is injected on demand, runs adapters and never
-sees credentials. Messages are zod-validated with sender checks.
+MV3 with pinned key (ID `olceibeplclcegianhjffambadoakkno`, public key in
+`apps/extension/manifest-key.txt`), permissions activeTab, scripting, storage, contextMenus,
+sidePanel; optional host permissions per site. `src/background` (service worker) holds tokens and
+talks to the API; `src/content` is injected on demand (adapters in `extract/`, `picker.ts`,
+`snapshot.ts`) and never sees credentials; `src/ui` is the Vue side panel/popup; `src/shared`
+holds zod message schemas. Build with `scripts/build.mjs`, verified by `scripts/check-dist.mjs`.

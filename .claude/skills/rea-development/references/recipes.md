@@ -43,11 +43,16 @@
 3. Render it in `apps/web/src/components/ai/AiJobResult.vue`.
 
 ## Add an extension site adapter
-1. Adapter module in `apps/extension/src/content/adapters/` returning partial Payload fields with
-   per-field confidence and evidence; register it with its domain test and priority.
-2. Never read cookies, form values, hidden inputs or token-like meta tags.
-3. Fixture HTML in `testdata/fixtures` + Vitest test asserting extracted fields.
-   Simple sites can use a server-side selector adapter instead (Settings → Source adapters).
+1. Module in `apps/extension/src/content/extract/<site>.ts` returning `AdapterOutput` fields with
+   per-field confidence and evidence (see `shopify.ts`, `woocommerce.ts`); register it in the
+   `BUILTIN` map in `extract/index.ts`. `merge.ts` combines adapters by confidence.
+2. Built-in adapters are switched on and prioritized by server rows: add a migration inserting a
+   `source_adapters` row with `kind = 'builtin'`, the same `key`, domain patterns and priority.
+3. Never read cookies, form values, hidden inputs or token-like meta tags; the content script
+   must make no network requests (`scripts/check-dist.mjs` enforces parts of this).
+4. Fixture HTML in `testdata/fixtures` + a case in `apps/extension/tests/adapters.spec.ts`.
+   Simple sites need no code: an administrator adds a selector adapter under Settings → Source
+   adapters, which the extension receives from `/extension/config`.
 
 ## Release / deploy
 ```bash

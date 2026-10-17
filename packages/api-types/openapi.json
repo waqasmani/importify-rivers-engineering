@@ -50,12 +50,18 @@
           "key": {
             "type": "string"
           },
+          "kind": {
+            "type": "string"
+          },
           "name": {
             "type": "string"
           },
           "priority": {
             "format": "int32",
             "type": "integer"
+          },
+          "rules": {
+            "nullable": true
           },
           "selectors": {
             "additionalProperties": {
@@ -7819,6 +7825,10 @@
             "format": "date-time",
             "type": "string"
           },
+          "definition_version": {
+            "format": "int32",
+            "type": "integer"
+          },
           "description": {
             "type": "string"
           },
@@ -7848,12 +7858,24 @@
             "format": "int32",
             "type": "integer"
           },
+          "region": {
+            "type": "string"
+          },
+          "rules": {
+            "nullable": true
+          },
           "selectors": {
             "nullable": true
+          },
+          "shipped": {
+            "type": "boolean"
           },
           "updated_at": {
             "format": "date-time",
             "type": "string"
+          },
+          "verification": {
+            "nullable": true
           },
           "version": {
             "format": "int32",
@@ -7862,6 +7884,7 @@
         },
         "required": [
           "created_at",
+          "definition_version",
           "description",
           "domain_patterns",
           "enabled",
@@ -7870,8 +7893,12 @@
           "kind",
           "name",
           "priority",
+          "region",
+          "rules",
           "selectors",
+          "shipped",
           "updated_at",
+          "verification",
           "version"
         ],
         "type": "object"
@@ -9671,7 +9698,7 @@
             "description": "Error"
           }
         },
-        "summary": "Source adapters",
+        "summary": "Source adapters and marketplace definitions",
         "tags": [
           "Products"
         ]
@@ -9711,7 +9738,7 @@
             "description": "Error"
           }
         },
-        "summary": "Create a selector adapter",
+        "summary": "Create a selector or rules adapter",
         "tags": [
           "Products"
         ]
@@ -9745,7 +9772,7 @@
             "description": "Error"
           }
         },
-        "summary": "Delete a selector adapter",
+        "summary": "Delete a custom adapter",
         "tags": [
           "Products"
         ]

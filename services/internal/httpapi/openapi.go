@@ -184,10 +184,10 @@ func Operations() []opDoc {
 		op("GET", "/api/v1/captures/{id}", "getCapture", "Products", "One capture", nil, captureDetailDoc{}, 200),
 		op("GET", "/api/v1/captures/{id}/snapshot", "captureSnapshot", "Products", "Sanitized HTML snapshot as plain text", nil, nil, 200).produces("text/plain"),
 		op("DELETE", "/api/v1/captures/{id}", "deleteCapture", "Products", "Delete a capture", nil, nil, 204),
-		op("GET", "/api/v1/adapters", "listAdapters", "Products", "Source adapters", nil, Items[store.SourceAdapter]{}, 200),
-		op("POST", "/api/v1/adapters", "createAdapter", "Products", "Create a selector adapter", adapterInput{}, store.SourceAdapter{}, 201),
+		op("GET", "/api/v1/adapters", "listAdapters", "Products", "Source adapters and marketplace definitions", nil, Items[store.SourceAdapter]{}, 200),
+		op("POST", "/api/v1/adapters", "createAdapter", "Products", "Create a selector or rules adapter", adapterInput{}, store.SourceAdapter{}, 201),
 		op("PUT", "/api/v1/adapters/{id}", "updateAdapter", "Products", "Update an adapter", adapterInput{}, store.SourceAdapter{}, 200),
-		op("DELETE", "/api/v1/adapters/{id}", "deleteAdapter", "Products", "Delete a selector adapter", nil, nil, 204),
+		op("DELETE", "/api/v1/adapters/{id}", "deleteAdapter", "Products", "Delete a custom adapter", nil, nil, 204),
 
 		op("GET", "/api/v1/analysis/analyzers", "listAnalyzers", "Analysis", "Analyzers, source kinds and report kinds", nil, analyzersDoc{}, 200),
 		op("GET", "/api/v1/analysis/projects", "listProjects", "Analysis", "Analysis projects", nil, Page[projectView]{}, 200, "q", "workspace_id", "status", "limit", "offset"),

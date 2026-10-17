@@ -24,6 +24,7 @@ import (
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/auth"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/config"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/httpapi"
+	"github.com/waqasmani/importify-rivers-engineering/services/internal/marketplaces"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/migrate"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/store"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/worker"
@@ -83,6 +84,11 @@ func serve() error {
 		return err
 	}
 	defer db.Close()
+	// Shipped marketplace definitions are upserted after migrations; an administrator's enabled
+	// flags and priorities are kept.
+	if _, err := marketplaces.SyncShipped(ctx, db, log); err != nil {
+		return fmt.Errorf("marketplace definitions: %w", err)
+	}
 
 	var w *worker.Worker
 	deps := httpapi.Deps{}

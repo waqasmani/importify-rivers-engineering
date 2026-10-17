@@ -3,8 +3,11 @@
 ## Request path
 Caddy (static dashboard, TLS) → `/api/*` → `rea-api`. Middleware order: request ID → client IP
 (`X-Forwarded-For` only from `REA_TRUSTED_PROXIES`) → security headers → CORS → rate limit →
-authenticate (session cookie + CSRF, personal token `reap_…`, extension token `reaa_…`) → route
-permission (`s.requirePerm(auth.PermX)`) → handler.
+authenticate (session cookie + CSRF, personal token `reap_…`, extension token `reaa_…`,
+integration key `reai_…`) → route permission (`s.requirePerm(auth.PermX)`) → handler.
+Integration keys (organization-owned, scopes in `auth.IntegrationScopes`) are refused outside
+`integrationRouteAllowed` (catalog GETs and product import submission) in `requireAuth`;
+`Principal.Integration` is set and `Principal.User` is zero for them, so use `userIDPtr(r)`.
 
 Handlers return `error`; `s.h()` converts `*APIError` to `{"error":{"code","message","fields"}}`.
 Helpers: `decode` (strict JSON, 415 on wrong content type), `pathUUID`, `pagination`, `q*`
@@ -16,6 +19,15 @@ respond only after the transaction commits. Audit with `s.audit(ctx, q, r, audit
 PostgreSQL 18 with `pg_trgm` and `citext`. Polymorphic children (notes, record_tags, attachments,
 tasks) use `(entity_type, entity_id)` with cleanup triggers; allowed types are the `entities` map
 in `httpapi/crm_common.go`. Settings live in `app_settings` behind the `settingSpecs` registry.
+
+## Catalog change capture
+Triggers on products, product_variants, product_images, record_tags, tags (name) and suppliers
+(name) write `catalog_change_events` in the writing transaction, so no write path needs code for
+it. `catalog.Sequence` moves committed events into `catalog_changes` (the feed) under an advisory
+lock and classifies them; `catalog.Load` maps rows to the API representation with an explicit
+column list (`toProduct`, `catalogPricing`). New product columns stay private until mapped there;
+non-catalog columns go into `rea_catalog_ignored_fields()`, selling-price columns into
+`priceFields`. Webhooks (`internal/webhooks`) fan the feed out per endpoint in the worker.
 
 ## Jobs
 `analysis_runs` and `ai_jobs` are claimed with `FOR UPDATE SKIP LOCKED` by the embedded worker

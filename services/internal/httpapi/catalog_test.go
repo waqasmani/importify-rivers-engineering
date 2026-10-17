@@ -249,7 +249,7 @@ func TestIntegrationKeysAreRateLimitedPerKey(t *testing.T) {
 	for i := 0; i < 20; i++ {
 		res := a.Do("GET", "/api/v1/catalog/changes", nil)
 		if res.Status == 429 {
-			if res.ErrorCode() != "rate_limited" {
+			if res.ErrorCode() != "rate_limited" || res.Header.Get("Retry-After") == "" {
 				t.Fatalf("wrong error: %s", res.Body)
 			}
 			limited++

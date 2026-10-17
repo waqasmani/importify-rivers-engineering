@@ -228,6 +228,9 @@ func (s *Server) authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		p, err := s.resolvePrincipal(r)
 		if err != nil {
+			if ae, isAPI := err.(*APIError); isAPI && ae.Status == http.StatusTooManyRequests {
+				w.Header().Set("Retry-After", "60")
+			}
 			s.writeError(w, r, err)
 			return
 		}

@@ -135,7 +135,11 @@ rsync -a /opt/rea/deploy/backups/ backup-host:/srv/backups/rea/
 encrypted AI provider keys in a restored database cannot be decrypted (re-enter them).
 
 Administrators can also create and download database-only backups under **Settings → System**,
-and export all records as JSON Lines (passwords, sessions and secrets excluded).
+and export all records as JSON Lines (passwords, sessions and secrets excluded). Those `.dump`
+files are stored in the data volume; copy one out with
+`docker compose -f deploy/docker-compose.yml cp api:/data/backups/rea-20261017-021500.dump .`.
+Both scripts below accept such a file instead of a backup directory (attachments are then left
+as they are).
 
 ## Restore
 

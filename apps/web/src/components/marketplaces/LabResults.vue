@@ -15,7 +15,11 @@ const payload = computed(() => page.value.product.payload)
 
 function payloadValue(key: string): string {
   const p = payload.value as unknown as Record<string, unknown>
-  if (key === 'price') return p['price'] ? `${String(p['price'])}${p['price_amount'] ? ` (${String(p['price_amount'])})` : ''}` : ''
+  if (key === 'price') {
+    const text = String(p['price'] ?? '')
+    const amount = String(p['price_amount'] ?? '')
+    return amount && !text.includes(amount) ? `${text} (${amount})` : text
+  }
   return displayValue(p[key])
 }
 
@@ -57,13 +61,16 @@ const pct = (n?: number | null) => (n === null || n === undefined ? '' : `${Math
       </h2>
       <p v-if="focusRows.length === 0" class="px-4 py-3 text-sm text-slate-500">This adapter produced no fields for the page.</p>
       <table v-else class="mt-2 w-full text-left text-sm" data-testid="lab-focus-table">
-        <thead class="bg-slate-50 text-xs text-slate-500"><tr><th class="px-4 py-2">Field</th><th class="px-4 py-2">Value</th><th class="px-4 py-2">Confidence</th><th class="px-4 py-2">Evidence</th></tr></thead>
+        <thead class="bg-slate-50 text-xs text-slate-500"><tr><th class="px-4 py-2">Field</th><th class="px-4 py-2">Value and evidence</th><th class="px-4 py-2">Confidence</th></tr></thead>
         <tbody class="divide-y divide-slate-100">
           <tr v-for="r in focusRows" :key="r.key" class="align-top">
             <td class="px-4 py-2 font-medium whitespace-nowrap">{{ fieldLabel(r.key) }}</td>
-            <td class="max-w-md px-4 py-2 break-words">{{ r.value }}<p v-for="w in r.warnings" :key="w" class="text-xs text-amber-700">{{ w }}</p></td>
+            <td class="px-4 py-2 break-words">
+              {{ r.value }}
+              <p class="mt-0.5 font-mono text-xs break-words text-slate-500">{{ r.evidence }}</p>
+              <p v-for="w in r.warnings" :key="w" class="text-xs text-amber-700">{{ w }}</p>
+            </td>
             <td class="px-4 py-2">{{ pct(r.confidence) }}</td>
-            <td class="px-4 py-2 font-mono text-xs break-all text-slate-600">{{ r.evidence }}</td>
           </tr>
         </tbody>
       </table>
@@ -75,14 +82,16 @@ const pct = (n?: number | null) => (n === null || n === undefined ? '' : `${Math
     <section class="card overflow-x-auto" aria-labelledby="lab-fields">
       <h2 id="lab-fields" class="px-4 pt-3 text-sm font-semibold text-slate-800">Merged product fields (what an import would contain)</h2>
       <table class="mt-2 w-full text-left text-sm" data-testid="lab-fields">
-        <thead class="bg-slate-50 text-xs text-slate-500"><tr><th class="px-4 py-2">Field</th><th class="px-4 py-2">Value</th><th class="px-4 py-2">Confidence</th><th class="px-4 py-2">Adapter</th><th class="px-4 py-2">Evidence</th></tr></thead>
+        <thead class="bg-slate-50 text-xs text-slate-500"><tr><th class="px-4 py-2">Field</th><th class="px-4 py-2">Value and evidence</th><th class="px-4 py-2">Confidence</th><th class="px-4 py-2">Adapter</th></tr></thead>
         <tbody class="divide-y divide-slate-100">
           <tr v-for="r in fieldRows" :key="r.key" class="align-top" :data-testid="`lab-field-${r.key}`">
             <td class="px-4 py-2 font-medium whitespace-nowrap">{{ fieldLabel(r.key) }}</td>
-            <td class="max-w-md px-4 py-2 break-words whitespace-pre-line">{{ r.value }}</td>
+            <td class="px-4 py-2 break-words">
+              <span class="whitespace-pre-line">{{ r.value }}</span>
+              <p v-if="r.info" class="mt-0.5 font-mono text-xs break-words text-slate-500">{{ r.info.evidence }}</p>
+            </td>
             <td class="px-4 py-2">{{ pct(r.info?.confidence) }}</td>
             <td class="px-4 py-2"><code class="text-xs">{{ r.info?.adapter }}</code></td>
-            <td class="px-4 py-2 font-mono text-xs break-all text-slate-600">{{ r.info?.evidence }}</td>
           </tr>
         </tbody>
       </table>
@@ -129,9 +138,8 @@ const pct = (n?: number | null) => (n === null || n === undefined ? '' : `${Math
         <tbody class="divide-y divide-slate-100">
           <tr v-for="r in metadataRows" :key="r.key" class="align-top">
             <td class="px-4 py-2 font-medium whitespace-nowrap">{{ fieldLabel(r.key) }}</td>
-            <td class="px-4 py-2">{{ r.m!.value }}</td>
+            <td class="px-4 py-2 break-words">{{ r.m!.value }}<p class="mt-0.5 font-mono text-xs break-words text-slate-500">{{ r.m!.evidence }}</p></td>
             <td class="px-4 py-2">{{ pct(r.m!.confidence) }}</td>
-            <td class="px-4 py-2 font-mono text-xs break-all text-slate-600">{{ r.m!.evidence }}</td>
           </tr>
         </tbody>
       </table>

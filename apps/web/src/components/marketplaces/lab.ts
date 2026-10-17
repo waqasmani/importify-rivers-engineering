@@ -98,7 +98,11 @@ export function displayValue(v: unknown): string {
   if (Array.isArray(v)) return `${v.length} ${v.length === 1 ? 'item' : 'items'}`
   if (typeof v === 'object') {
     const o = v as Record<string, unknown>
-    if ('amount' in o && 'text' in o) return `${String(o['text'] ?? '')}${o['amount'] ? ` (${String(o['amount'])}${o['currency'] ? ' ' + String(o['currency']) : ''})` : ''}`
+    if ('amount' in o && 'text' in o) {
+      const text = String(o['text'] ?? '')
+      const amount = o['amount'] ? `${String(o['amount'])}${o['currency'] ? ' ' + String(o['currency']) : ''}` : ''
+      return amount && !text.includes(String(o['amount'])) ? `${text} (${amount})` : text || amount
+    }
     const n = Object.keys(o).length
     return `${n} ${n === 1 ? 'entry' : 'entries'}`
   }

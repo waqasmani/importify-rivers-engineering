@@ -121,8 +121,8 @@ async function onSaved() {
 
     <StateViews v-if="q.isLoading.value" kind="loading" />
     <StateViews v-else-if="q.error.value" kind="error" :message="errorMessage(q.error.value)" @retry="q.refetch()" />
-    <div v-else class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
-      <form class="card space-y-4 self-start p-4" aria-label="Lab input" @submit.prevent="execute">
+    <div v-else class="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]">
+      <form class="card max-w-3xl space-y-4 self-start p-4" aria-label="Lab input" @submit.prevent="execute">
         <FormField v-slot="{ id }" label="Page address" required>
           <input :id="id" v-model="url" class="input font-mono text-xs" type="url" placeholder="https://www.example.com/item/123" required spellcheck="false" data-testid="lab-url" />
         </FormField>

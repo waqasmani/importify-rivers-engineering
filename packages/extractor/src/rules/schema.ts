@@ -254,7 +254,10 @@ export function parseRuleDocument(input: unknown): { ok: true; doc: RuleDocument
   }
   const r = ruleDocumentSchema.safeParse(value)
   if (r.success) return { ok: true, doc: r.data }
-  return { ok: false, issues: r.error.issues.slice(0, 50).map((i) => ({ path: issuePath(i.path), message: i.message })) }
+  return {
+    ok: false,
+    issues: r.error.issues.slice(0, 50).map((i) => ({ path: issuePath(i.path), message: /received undefined$/.test(i.message) ? 'is required' : i.message })),
+  }
 }
 
 /** The fields a rule document can fill, in display order, plus "variants" when it maps them. */

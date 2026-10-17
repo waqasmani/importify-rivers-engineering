@@ -1,0 +1,68 @@
+@import "tailwindcss" source("../");
+
+@theme {
+  --color-brand-50: #f0fdfa;
+  --color-brand-100: #ccfbf1;
+  --color-brand-200: #99f6e4;
+  --color-brand-600: #0d9488;
+  --color-brand-700: #0f766e;
+  --color-brand-800: #115e59;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+@layer base {
+  html,
+  body {
+    margin: 0;
+  }
+  body {
+    background: var(--color-slate-50);
+    color: var(--color-slate-900);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  body.popup {
+    width: 420px;
+    min-height: 480px;
+    max-height: 600px;
+  }
+  a {
+    color: var(--color-brand-700);
+  }
+}
+
+@utility input {
+  @apply block w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-[13px] text-slate-900 shadow-xs outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100 disabled:bg-slate-100 disabled:text-slate-500;
+}
+
+@utility label {
+  @apply mb-1 block text-xs font-medium text-slate-600;
+}
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[13px] font-medium whitespace-nowrap transition disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+@utility btn-primary {
+  @apply btn border-brand-700 bg-brand-700 text-white hover:bg-brand-800;
+}
+
+@utility btn-secondary {
+  @apply btn border-slate-300 bg-white text-slate-800 hover:bg-slate-100;
+}
+
+@utility btn-danger {
+  @apply btn border-red-300 bg-white text-red-700 hover:bg-red-50;
+}
+
+@utility card {
+  @apply rounded-lg border border-slate-200 bg-white p-3 shadow-xs;
+}
+
+@utility muted {
+  @apply text-xs text-slate-500;
+}
+
+@utility chip {
+  @apply inline-flex items-center rounded-full border px-1.5 py-px text-[11px] font-medium;
+}

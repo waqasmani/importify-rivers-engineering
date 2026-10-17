@@ -100,8 +100,8 @@ jobs:
         run: pnpm --filter @rea/web test:e2e
         env:
           REA_API_BIN: ${{ github.workspace }}/bin/rea-api
-      - name: Extension load and pairing test
-        run: xvfb-run --auto-servernum pnpm --filter @rea/extension test:e2e
+      - name: Extension load, pairing, capture and import test
+        run: pnpm --filter @rea/extension test:e2e
         env:
           REA_API_BIN: ${{ github.workspace }}/bin/rea-api
       - uses: actions/upload-artifact@v4

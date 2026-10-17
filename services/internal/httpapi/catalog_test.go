@@ -402,6 +402,7 @@ func TestCatalogFiltersLookupsAndETags(t *testing.T) {
 	b := e.publish("Blue mug", "MUG-B", map[string]any{"category": "Kitchen", "availability": "out_of_stock"})
 	e.publish("Shared SKU one", "DUP", nil)
 	e.publish("Shared SKU two", "DUP", nil)
+	slash := e.publish("Odd SKU", "AB/50%", nil)
 	e.owner.Do("POST", "/api/v1/products/"+b+"/variants", map[string]any{"title": "Large", "sku": "MUG-B-L", "price": "12", "currency": "EUR"}).Must(t, 201)
 	e.owner.Do("PUT", "/api/v1/record-tags", map[string]any{"entity_type": "product", "entity_id": a, "tag_names": []string{"Gift"}}).Must(t, 200)
 	key, _, _ := e.integrationKey("Shop", "catalog.read")
@@ -423,6 +424,12 @@ func TestCatalogFiltersLookupsAndETags(t *testing.T) {
 		t.Fatal("ambiguous SKU not reported")
 	}
 	key.Do("GET", "/api/v1/catalog/products/by-sku/NOPE", nil).Must(t, 404)
+	if key.Do("GET", "/api/v1/catalog/products/by-sku/"+url.PathEscape("AB/50%"), nil).Must(t, 200).Str("id") != slash {
+		t.Fatal("SKU with reserved characters not found")
+	}
+	if key.Do("GET", "/api/v1/catalog/products/by-sku/ab%2F50%25", nil).Must(t, 200).Str("id") != slash {
+		t.Fatal("escaped slash in SKU not handled")
+	}
 	draft := e.owner.Do("POST", "/api/v1/products", map[string]any{"title": "Hidden"}).Must(t, 201).Str("id")
 	key.Do("GET", "/api/v1/catalog/products/"+draft, nil).Must(t, 404)
 

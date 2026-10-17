@@ -46,7 +46,7 @@ async function redeliver(d: Delivery) {
   redelivering.value = d.id
   try {
     await api.post<Schemas['WebhookDeliveryDetail']>(`/integrations/deliveries/${d.id}/redeliver`)
-    toast.success('Redelivery queued. It is sent within a few seconds.')
+    toast.success('Redelivery queued. It is sent shortly while the webhook is enabled.')
     await Promise.all([qc.invalidateQueries({ queryKey: ['webhook-deliveries', props.webhookId] }), qc.invalidateQueries({ queryKey: ['webhooks'] })])
   } catch (e) {
     toast.error(errorMessage(e))

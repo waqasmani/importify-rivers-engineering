@@ -207,7 +207,13 @@ func (s *Server) handleCatalogProduct(w http.ResponseWriter, r *http.Request) er
 // handleCatalogProductBySKU finds a published product by its SKU or one of its variants' SKUs
 // (case-insensitive). Several matches are a conflict; list with ?sku= to see them all.
 func (s *Server) handleCatalogProductBySKU(w http.ResponseWriter, r *http.Request) error {
-	sku, err := url.PathUnescape(chi.URLParam(r, "sku"))
+	// chi matches on the escaped path when the request needed escaping (for example %2F in a SKU),
+	// so the parameter is only unescaped in that case.
+	sku := chi.URLParam(r, "sku")
+	var err error
+	if r.URL.RawPath != "" {
+		sku, err = url.PathUnescape(sku)
+	}
 	if err != nil || strings.TrimSpace(sku) == "" || len(sku) > 120 {
 		return errField("sku", "must be 1 to 120 characters")
 	}

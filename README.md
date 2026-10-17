@@ -32,6 +32,13 @@ telemetry, and AI is optional.
   a REST API with keyset pagination, ETags and an ordered change feed with tombstones, or receive
   signed webhooks, using organization-owned integration keys with scopes (costs and suppliers
   only when granted). No store plugins: your systems pull, REA never pushes on its own.
+- **Orders, confirm before placing** — your systems send customer orders with an integration key;
+  REA matches the lines to your products and prepares draft purchase orders per supplier with
+  warnings (unmatched lines, stock, missing costs, negative margin, incomplete address). Each one
+  is handed off only after a person with `orders.place` confirms exactly what they reviewed; then
+  it is placed by hand from a placement sheet, or by your own automation through a signed webhook
+  and reported back. Tracking flows back to your systems. REA never buys anything itself, nothing
+  is confirmed automatically, and customer data can be erased.
 - **Browser extension** (Chrome, Manifest V3) — capture pages, import products with site adapters
   (JSON-LD, microdata, Open Graph, Shopify, WooCommerce, Alibaba, custom selectors, generic
   fallback), an element picker, page inspector, quick research, AI analysis and save-to-CRM,
@@ -78,6 +85,7 @@ OpenAPI 3 generated from the Go types.
 | [api.md](docs/api.md) | Authentication, conventions, OpenAPI |
 | [pricing.md](docs/pricing.md) | Source price, cost and selling price, pricing rules with worked examples, exchange rates, pricing API |
 | [catalog-api.md](docs/catalog-api.md) | Catalog API, integration keys, change feed sync, webhooks and signature verification |
+| [orders.md](docs/orders.md) | Customer orders, supplier orders, confirm-before-placing, automation callbacks, order webhooks, personal data and erasure |
 | [extension.md](docs/extension.md) | Building, installing and pairing the extension, permissions, troubleshooting |
 | [development.md](docs/development.md) | Local development, tests, code generation |
 | [progress.md](docs/progress.md) | What was built in each phase and how it was verified |

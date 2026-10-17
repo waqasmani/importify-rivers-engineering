@@ -29,12 +29,16 @@ hash, can have an expiry date, and can be revoked at any time (effective immedia
 | `catalog.read` | `GET /catalog/products`, `/catalog/products/{id}`, `/catalog/products/by-sku/{sku}`, `/catalog/changes` |
 | `catalog.read_costs` | Additionally the `sourcing` blocks of products (cost, margin, observed source price, supplier, source URL and domain) and variants (cost and source price), sourcing-only changes, and the `source_domain` filter. Requires `catalog.read`. |
 | `imports.write` | `POST /imports/products/check` and `POST /imports/products`: submit products to the import queue for review |
+| `orders.write` | Submit and cancel customer orders and read the orders submitted with the same key; see [orders.md](orders.md) |
+| `supplier_orders.report` | For your purchasing automation: read confirmed supplier orders of suppliers with automated placement and report placements, failures and shipments; see [orders.md](orders.md) |
 
 **Keys belong to the organization, not to a person.** Their scopes are fixed when they are created
 and are never combined with anyone's role. Downgrading or deleting the administrator who created a
 key therefore neither widens nor breaks it; the key list keeps showing who created it (or the
 e-mail recorded at creation when that user was deleted). When someone with access to keys leaves,
 review and rotate the keys they created.
+
+No scope lets a key confirm a supplier order: that is always a person's decision in the dashboard.
 
 **Integration keys reach nothing else.** Requests with a key to any other endpoint (CRM, products
 in the dashboard sense, users, settings, audit log, profile, AI, analysis, integrations
@@ -186,7 +190,9 @@ do not produce events.
 ## Webhooks
 
 Register endpoints under **Settings → Integrations → Webhooks** (administrators only): a name,
-an HTTPS URL, the events to receive, whether to include costs, and whether it is enabled. REA
+an HTTPS URL, the events to receive, whether to include costs, and whether it is enabled. Besides
+the product events below, endpoints can subscribe to order events (`order.*`, `supplier_order.*`),
+which carry customer personal data and are described in [orders.md](orders.md#webhooks). REA
 generates the signing secret, shows it once and stores it encrypted with `REA_SECRET_KEY`
 (AES-256-GCM). A new endpoint receives changes made after it was created.
 

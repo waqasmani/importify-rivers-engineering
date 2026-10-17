@@ -13,6 +13,7 @@ import (
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/auth"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/catalog"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/normalize"
+	"github.com/waqasmani/importify-rivers-engineering/services/internal/orders"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/store"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/valid"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/webhooks"
@@ -64,12 +65,15 @@ type integrationsConfigDoc struct {
 	APIBaseURL string                  `json:"api_base_url"`
 	Scopes     []auth.IntegrationScope `json:"scopes"`
 	Events     []catalog.EventType     `json:"events"`
-	Webhooks   webhookPolicyDoc        `json:"webhooks"`
+	// OrderEvents are the order webhook events. Their payloads contain customer names, e-mail
+	// addresses, phone numbers and shipping addresses.
+	OrderEvents []catalog.EventType `json:"order_events"`
+	Webhooks    webhookPolicyDoc    `json:"webhooks"`
 }
 
 func (s *Server) handleIntegrationsConfig(w http.ResponseWriter, r *http.Request) error {
 	return ok(w, integrationsConfigDoc{APIBaseURL: s.cfg.PublicURL.String() + "/api/v1", Scopes: auth.IntegrationScopes,
-		Events: catalog.EventTypes, Webhooks: webhookPolicyDoc{AllowPrivateNetworks: s.cfg.WebhookAllowPrivate,
+		Events: catalog.EventTypes, OrderEvents: orders.EventTypes, Webhooks: webhookPolicyDoc{AllowPrivateNetworks: s.cfg.WebhookAllowPrivate,
 			AllowHTTPLocalhost: s.cfg.WebhookAllowHTTPLocalhost, MaxAttempts: s.cfg.WebhookMaxAttempts,
 			TimeoutSeconds: int(s.cfg.WebhookTimeout.Seconds()), DisableAfterFailures: s.cfg.WebhookDisableAfterFailures,
 			SignatureHeader: webhooks.HeaderSignature, TimestampHeader: webhooks.HeaderTimestamp, EventIDHeader: webhooks.HeaderEventID}})
@@ -283,13 +287,13 @@ func (s *Server) validateWebhook(in *webhookInput) error {
 		v.Add("url", err.Error())
 	}
 	events := []string{}
-	for _, e := range catalog.EventTypes {
+	for _, e := range append(append([]catalog.EventType{}, catalog.EventTypes...), orders.EventTypes...) {
 		if slices.Contains(in.Events, e.Type) {
 			events = append(events, e.Type)
 		}
 	}
 	for _, e := range in.Events {
-		if !catalog.IsEventType(e) {
+		if !catalog.IsEventType(e) && !orders.IsEventType(e) {
 			v.Add("events", "contains an unknown event type: "+e)
 		}
 	}

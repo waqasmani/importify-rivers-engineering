@@ -33,15 +33,16 @@ SELECT * FROM suppliers WHERE id = $1;
 -- name: CreateSupplier :one
 INSERT INTO suppliers (name, normalized_name, company_id, supplier_type, website, domain, country, city, address, email,
                        phone, primary_contact_id, pipeline_stage_id, rating, payment_terms, lead_time_days, moq_notes,
-                       certifications, description, owner_id, custom_fields, created_by)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+                       certifications, description, owner_id, custom_fields, created_by, order_placement)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22,
+        coalesce(sqlc.narg('order_placement')::text, 'manual'))
 RETURNING *;
 
 -- name: UpdateSupplier :one
 UPDATE suppliers SET name = $2, normalized_name = $3, company_id = $4, supplier_type = $5, website = $6, domain = $7,
   country = $8, city = $9, address = $10, email = $11, phone = $12, primary_contact_id = $13, pipeline_stage_id = $14,
   rating = $15, payment_terms = $16, lead_time_days = $17, moq_notes = $18, certifications = $19, description = $20,
-  owner_id = $21, custom_fields = $22
+  owner_id = $21, custom_fields = $22, order_placement = coalesce(sqlc.narg('order_placement')::text, order_placement)
 WHERE id = $1 RETURNING *;
 
 -- name: SetSupplierStage :one
@@ -78,7 +79,10 @@ WITH c1 AS (UPDATE contacts SET supplier_id = sqlc.arg(target_id) WHERE supplier
      -- Move supplier-product links that the target does not already have.
      c4 AS (UPDATE supplier_products sp SET supplier_id = sqlc.arg(target_id)
             WHERE sp.supplier_id = ANY(sqlc.arg(source_ids)::uuid[])
-              AND NOT EXISTS (SELECT 1 FROM supplier_products t WHERE t.supplier_id = sqlc.arg(target_id) AND t.product_id = sp.product_id))
+              AND NOT EXISTS (SELECT 1 FROM supplier_products t WHERE t.supplier_id = sqlc.arg(target_id) AND t.product_id = sp.product_id)),
+     -- Supplier orders and order line snapshots keep pointing at the merged supplier.
+     c5 AS (UPDATE supplier_orders SET supplier_id = sqlc.arg(target_id) WHERE supplier_id = ANY(sqlc.arg(source_ids)::uuid[])),
+     c6 AS (UPDATE order_lines SET supplier_id = sqlc.arg(target_id) WHERE supplier_id = ANY(sqlc.arg(source_ids)::uuid[]))
 SELECT 1;
 
 -- name: ListSupplierProducts :many

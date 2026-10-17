@@ -17,9 +17,10 @@ import (
 const createSupplier = `-- name: CreateSupplier :one
 INSERT INTO suppliers (name, normalized_name, company_id, supplier_type, website, domain, country, city, address, email,
                        phone, primary_contact_id, pipeline_stage_id, rating, payment_terms, lead_time_days, moq_notes,
-                       certifications, description, owner_id, custom_fields, created_by)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
-RETURNING id, name, normalized_name, company_id, supplier_type, website, domain, country, city, address, email, phone, primary_contact_id, pipeline_stage_id, rating, payment_terms, lead_time_days, moq_notes, certifications, description, owner_id, custom_fields, created_by, created_at, updated_at
+                       certifications, description, owner_id, custom_fields, created_by, order_placement)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22,
+        coalesce($23::text, 'manual'))
+RETURNING id, name, normalized_name, company_id, supplier_type, website, domain, country, city, address, email, phone, primary_contact_id, pipeline_stage_id, rating, payment_terms, lead_time_days, moq_notes, certifications, description, owner_id, custom_fields, created_by, created_at, updated_at, order_placement
 `
 
 type CreateSupplierParams struct {
@@ -45,6 +46,7 @@ type CreateSupplierParams struct {
 	OwnerID          *uuid.UUID      `json:"owner_id"`
 	CustomFields     json.RawMessage `json:"custom_fields"`
 	CreatedBy        *uuid.UUID      `json:"created_by"`
+	OrderPlacement   *string         `json:"order_placement"`
 }
 
 func (q *Queries) CreateSupplier(ctx context.Context, arg CreateSupplierParams) (Supplier, error) {
@@ -71,6 +73,7 @@ func (q *Queries) CreateSupplier(ctx context.Context, arg CreateSupplierParams) 
 		arg.OwnerID,
 		arg.CustomFields,
 		arg.CreatedBy,
+		arg.OrderPlacement,
 	)
 	var i Supplier
 	err := row.Scan(
@@ -99,6 +102,7 @@ func (q *Queries) CreateSupplier(ctx context.Context, arg CreateSupplierParams) 
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.OrderPlacement,
 	)
 	return i, err
 }
@@ -145,7 +149,7 @@ func (q *Queries) DeleteSuppliersBulk(ctx context.Context, ids []uuid.UUID) (int
 }
 
 const findSupplierByDomain = `-- name: FindSupplierByDomain :one
-SELECT id, name, normalized_name, company_id, supplier_type, website, domain, country, city, address, email, phone, primary_contact_id, pipeline_stage_id, rating, payment_terms, lead_time_days, moq_notes, certifications, description, owner_id, custom_fields, created_by, created_at, updated_at FROM suppliers WHERE domain = $1 ORDER BY created_at LIMIT 1
+SELECT id, name, normalized_name, company_id, supplier_type, website, domain, country, city, address, email, phone, primary_contact_id, pipeline_stage_id, rating, payment_terms, lead_time_days, moq_notes, certifications, description, owner_id, custom_fields, created_by, created_at, updated_at, order_placement FROM suppliers WHERE domain = $1 ORDER BY created_at LIMIT 1
 `
 
 func (q *Queries) FindSupplierByDomain(ctx context.Context, domain *string) (Supplier, error) {
@@ -177,12 +181,13 @@ func (q *Queries) FindSupplierByDomain(ctx context.Context, domain *string) (Sup
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.OrderPlacement,
 	)
 	return i, err
 }
 
 const findSupplierDuplicates = `-- name: FindSupplierDuplicates :many
-SELECT s.id, s.name, s.normalized_name, s.company_id, s.supplier_type, s.website, s.domain, s.country, s.city, s.address, s.email, s.phone, s.primary_contact_id, s.pipeline_stage_id, s.rating, s.payment_terms, s.lead_time_days, s.moq_notes, s.certifications, s.description, s.owner_id, s.custom_fields, s.created_by, s.created_at, s.updated_at, similarity(s.normalized_name, $1::text)::float8 AS score
+SELECT s.id, s.name, s.normalized_name, s.company_id, s.supplier_type, s.website, s.domain, s.country, s.city, s.address, s.email, s.phone, s.primary_contact_id, s.pipeline_stage_id, s.rating, s.payment_terms, s.lead_time_days, s.moq_notes, s.certifications, s.description, s.owner_id, s.custom_fields, s.created_by, s.created_at, s.updated_at, s.order_placement, similarity(s.normalized_name, $1::text)::float8 AS score
 FROM suppliers s
 WHERE s.id <> coalesce($2::uuid, '00000000-0000-0000-0000-000000000000'::uuid)
   AND (($3::text IS NOT NULL AND s.domain = $3)
@@ -223,6 +228,7 @@ type FindSupplierDuplicatesRow struct {
 	CreatedBy        *uuid.UUID      `json:"created_by"`
 	CreatedAt        time.Time       `json:"created_at"`
 	UpdatedAt        time.Time       `json:"updated_at"`
+	OrderPlacement   string          `json:"order_placement"`
 	Score            float64         `json:"score"`
 }
 
@@ -261,6 +267,7 @@ func (q *Queries) FindSupplierDuplicates(ctx context.Context, arg FindSupplierDu
 			&i.CreatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.OrderPlacement,
 			&i.Score,
 		); err != nil {
 			return nil, err
@@ -274,7 +281,7 @@ func (q *Queries) FindSupplierDuplicates(ctx context.Context, arg FindSupplierDu
 }
 
 const getSupplier = `-- name: GetSupplier :one
-SELECT id, name, normalized_name, company_id, supplier_type, website, domain, country, city, address, email, phone, primary_contact_id, pipeline_stage_id, rating, payment_terms, lead_time_days, moq_notes, certifications, description, owner_id, custom_fields, created_by, created_at, updated_at FROM suppliers WHERE id = $1
+SELECT id, name, normalized_name, company_id, supplier_type, website, domain, country, city, address, email, phone, primary_contact_id, pipeline_stage_id, rating, payment_terms, lead_time_days, moq_notes, certifications, description, owner_id, custom_fields, created_by, created_at, updated_at, order_placement FROM suppliers WHERE id = $1
 `
 
 func (q *Queries) GetSupplier(ctx context.Context, id uuid.UUID) (Supplier, error) {
@@ -306,6 +313,7 @@ func (q *Queries) GetSupplier(ctx context.Context, id uuid.UUID) (Supplier, erro
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.OrderPlacement,
 	)
 	return i, err
 }
@@ -430,7 +438,7 @@ func (q *Queries) ListSupplierProducts(ctx context.Context, supplierID uuid.UUID
 }
 
 const listSuppliers = `-- name: ListSuppliers :many
-SELECT s.id, s.name, s.normalized_name, s.company_id, s.supplier_type, s.website, s.domain, s.country, s.city, s.address, s.email, s.phone, s.primary_contact_id, s.pipeline_stage_id, s.rating, s.payment_terms, s.lead_time_days, s.moq_notes, s.certifications, s.description, s.owner_id, s.custom_fields, s.created_by, s.created_at, s.updated_at, co.name AS company_name, ps.name AS stage_name, ps.color AS stage_color,
+SELECT s.id, s.name, s.normalized_name, s.company_id, s.supplier_type, s.website, s.domain, s.country, s.city, s.address, s.email, s.phone, s.primary_contact_id, s.pipeline_stage_id, s.rating, s.payment_terms, s.lead_time_days, s.moq_notes, s.certifications, s.description, s.owner_id, s.custom_fields, s.created_by, s.created_at, s.updated_at, s.order_placement, co.name AS company_name, ps.name AS stage_name, ps.color AS stage_color,
   concat_ws(' ', pc.first_name, pc.last_name)::text AS primary_contact_name,
   (SELECT count(*) FROM supplier_products sp WHERE sp.supplier_id = s.id) AS product_count,
   count(*) OVER () AS total
@@ -530,6 +538,7 @@ func (q *Queries) ListSuppliers(ctx context.Context, arg ListSuppliersParams) ([
 			&i.Supplier.CreatedBy,
 			&i.Supplier.CreatedAt,
 			&i.Supplier.UpdatedAt,
+			&i.Supplier.OrderPlacement,
 			&i.CompanyName,
 			&i.StageName,
 			&i.StageColor,
@@ -554,7 +563,10 @@ WITH c1 AS (UPDATE contacts SET supplier_id = $1 WHERE supplier_id = ANY($2::uui
      -- Move supplier-product links that the target does not already have.
      c4 AS (UPDATE supplier_products sp SET supplier_id = $1
             WHERE sp.supplier_id = ANY($2::uuid[])
-              AND NOT EXISTS (SELECT 1 FROM supplier_products t WHERE t.supplier_id = $1 AND t.product_id = sp.product_id))
+              AND NOT EXISTS (SELECT 1 FROM supplier_products t WHERE t.supplier_id = $1 AND t.product_id = sp.product_id)),
+     -- Supplier orders and order line snapshots keep pointing at the merged supplier.
+     c5 AS (UPDATE supplier_orders SET supplier_id = $1 WHERE supplier_id = ANY($2::uuid[])),
+     c6 AS (UPDATE order_lines SET supplier_id = $1 WHERE supplier_id = ANY($2::uuid[]))
 SELECT 1
 `
 
@@ -586,7 +598,7 @@ func (q *Queries) SetSupplierOwnerBulk(ctx context.Context, arg SetSupplierOwner
 }
 
 const setSupplierStage = `-- name: SetSupplierStage :one
-UPDATE suppliers SET pipeline_stage_id = $2 WHERE id = $1 RETURNING id, name, normalized_name, company_id, supplier_type, website, domain, country, city, address, email, phone, primary_contact_id, pipeline_stage_id, rating, payment_terms, lead_time_days, moq_notes, certifications, description, owner_id, custom_fields, created_by, created_at, updated_at
+UPDATE suppliers SET pipeline_stage_id = $2 WHERE id = $1 RETURNING id, name, normalized_name, company_id, supplier_type, website, domain, country, city, address, email, phone, primary_contact_id, pipeline_stage_id, rating, payment_terms, lead_time_days, moq_notes, certifications, description, owner_id, custom_fields, created_by, created_at, updated_at, order_placement
 `
 
 type SetSupplierStageParams struct {
@@ -623,6 +635,7 @@ func (q *Queries) SetSupplierStage(ctx context.Context, arg SetSupplierStagePara
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.OrderPlacement,
 	)
 	return i, err
 }
@@ -648,8 +661,8 @@ const updateSupplier = `-- name: UpdateSupplier :one
 UPDATE suppliers SET name = $2, normalized_name = $3, company_id = $4, supplier_type = $5, website = $6, domain = $7,
   country = $8, city = $9, address = $10, email = $11, phone = $12, primary_contact_id = $13, pipeline_stage_id = $14,
   rating = $15, payment_terms = $16, lead_time_days = $17, moq_notes = $18, certifications = $19, description = $20,
-  owner_id = $21, custom_fields = $22
-WHERE id = $1 RETURNING id, name, normalized_name, company_id, supplier_type, website, domain, country, city, address, email, phone, primary_contact_id, pipeline_stage_id, rating, payment_terms, lead_time_days, moq_notes, certifications, description, owner_id, custom_fields, created_by, created_at, updated_at
+  owner_id = $21, custom_fields = $22, order_placement = coalesce($23::text, order_placement)
+WHERE id = $1 RETURNING id, name, normalized_name, company_id, supplier_type, website, domain, country, city, address, email, phone, primary_contact_id, pipeline_stage_id, rating, payment_terms, lead_time_days, moq_notes, certifications, description, owner_id, custom_fields, created_by, created_at, updated_at, order_placement
 `
 
 type UpdateSupplierParams struct {
@@ -675,6 +688,7 @@ type UpdateSupplierParams struct {
 	Description      string          `json:"description"`
 	OwnerID          *uuid.UUID      `json:"owner_id"`
 	CustomFields     json.RawMessage `json:"custom_fields"`
+	OrderPlacement   *string         `json:"order_placement"`
 }
 
 func (q *Queries) UpdateSupplier(ctx context.Context, arg UpdateSupplierParams) (Supplier, error) {
@@ -701,6 +715,7 @@ func (q *Queries) UpdateSupplier(ctx context.Context, arg UpdateSupplierParams) 
 		arg.Description,
 		arg.OwnerID,
 		arg.CustomFields,
+		arg.OrderPlacement,
 	)
 	var i Supplier
 	err := row.Scan(
@@ -729,6 +744,7 @@ func (q *Queries) UpdateSupplier(ctx context.Context, arg UpdateSupplierParams) 
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.OrderPlacement,
 	)
 	return i, err
 }

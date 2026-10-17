@@ -444,6 +444,91 @@ type OpportunityProduct struct {
 	CreatedAt     time.Time        `json:"created_at"`
 }
 
+type Order struct {
+	ID               uuid.UUID        `json:"id"`
+	Number           string           `json:"number"`
+	Channel          string           `json:"channel"`
+	IntegrationKeyID *uuid.UUID       `json:"integration_key_id"`
+	CreatedBy        *uuid.UUID       `json:"created_by"`
+	SourceLabel      string           `json:"source_label"`
+	ExternalID       string           `json:"external_id"`
+	RequestHash      string           `json:"request_hash"`
+	CustomerName     string           `json:"customer_name"`
+	CustomerEmail    string           `json:"customer_email"`
+	CustomerPhone    string           `json:"customer_phone"`
+	ShipName         string           `json:"ship_name"`
+	ShipCompany      string           `json:"ship_company"`
+	ShipLine1        string           `json:"ship_line1"`
+	ShipLine2        string           `json:"ship_line2"`
+	ShipCity         string           `json:"ship_city"`
+	ShipRegion       string           `json:"ship_region"`
+	ShipPostalCode   string           `json:"ship_postal_code"`
+	ShipCountry      string           `json:"ship_country"`
+	ShipPhone        string           `json:"ship_phone"`
+	Currency         string           `json:"currency"`
+	Subtotal         *decimal.Decimal `json:"subtotal"`
+	ShippingAmount   *decimal.Decimal `json:"shipping_amount"`
+	TaxAmount        *decimal.Decimal `json:"tax_amount"`
+	Total            *decimal.Decimal `json:"total"`
+	CustomerNote     string           `json:"customer_note"`
+	OrderedAt        time.Time        `json:"ordered_at"`
+	Status           string           `json:"status"`
+	NeedsAttention   bool             `json:"needs_attention"`
+	CancelledAt      *time.Time       `json:"cancelled_at"`
+	CancelledBy      *uuid.UUID       `json:"cancelled_by"`
+	CancelledByLabel string           `json:"cancelled_by_label"`
+	CancelReason     string           `json:"cancel_reason"`
+	CustomerErasedAt *time.Time       `json:"customer_erased_at"`
+	CustomerErasedBy *uuid.UUID       `json:"customer_erased_by"`
+	CreatedAt        time.Time        `json:"created_at"`
+	UpdatedAt        time.Time        `json:"updated_at"`
+}
+
+type OrderEvent struct {
+	ID                    int64      `json:"id"`
+	OrderID               uuid.UUID  `json:"order_id"`
+	SupplierOrderID       *uuid.UUID `json:"supplier_order_id"`
+	Kind                  string     `json:"kind"`
+	Summary               string     `json:"summary"`
+	FromStatus            string     `json:"from_status"`
+	ToStatus              string     `json:"to_status"`
+	ActorUserID           *uuid.UUID `json:"actor_user_id"`
+	ActorIntegrationKeyID *uuid.UUID `json:"actor_integration_key_id"`
+	ActorLabel            string     `json:"actor_label"`
+	CreatedAt             time.Time  `json:"created_at"`
+}
+
+type OrderLine struct {
+	ID                 uuid.UUID        `json:"id"`
+	OrderID            uuid.UUID        `json:"order_id"`
+	Position           int32            `json:"position"`
+	ExternalLineID     string           `json:"external_line_id"`
+	Sku                string           `json:"sku"`
+	Title              string           `json:"title"`
+	Quantity           int32            `json:"quantity"`
+	UnitPrice          *decimal.Decimal `json:"unit_price"`
+	RequestedProductID *uuid.UUID       `json:"requested_product_id"`
+	RequestedVariantID *uuid.UUID       `json:"requested_variant_id"`
+	ProductID          *uuid.UUID       `json:"product_id"`
+	VariantID          *uuid.UUID       `json:"variant_id"`
+	Resolution         string           `json:"resolution"`
+	ResolutionNote     string           `json:"resolution_note"`
+	SupplierID         *uuid.UUID       `json:"supplier_id"`
+	SupplierName       string           `json:"supplier_name"`
+	SourceDomain       string           `json:"source_domain"`
+	SourceUrl          *string          `json:"source_url"`
+	ProductTitle       string           `json:"product_title"`
+	VariantTitle       string           `json:"variant_title"`
+	VariantOptions     json.RawMessage  `json:"variant_options"`
+	ExpectedUnitCost   *decimal.Decimal `json:"expected_unit_cost"`
+	CostCurrency       *string          `json:"cost_currency"`
+	PreparedAt         *time.Time       `json:"prepared_at"`
+	SupplierOrderID    *uuid.UUID       `json:"supplier_order_id"`
+	CancelledAt        *time.Time       `json:"cancelled_at"`
+	CreatedAt          time.Time        `json:"created_at"`
+	UpdatedAt          time.Time        `json:"updated_at"`
+}
+
 type Permission struct {
 	Code        string `json:"code"`
 	Description string `json:"description"`
@@ -681,6 +766,58 @@ type Supplier struct {
 	CreatedBy        *uuid.UUID      `json:"created_by"`
 	CreatedAt        time.Time       `json:"created_at"`
 	UpdatedAt        time.Time       `json:"updated_at"`
+	OrderPlacement   string          `json:"order_placement"`
+}
+
+type SupplierOrder struct {
+	ID                  uuid.UUID        `json:"id"`
+	Number              string           `json:"number"`
+	OrderID             uuid.UUID        `json:"order_id"`
+	SupplierID          *uuid.UUID       `json:"supplier_id"`
+	SupplierName        string           `json:"supplier_name"`
+	SourceDomain        string           `json:"source_domain"`
+	GroupKey            string           `json:"group_key"`
+	PlacementMethod     string           `json:"placement_method"`
+	Status              string           `json:"status"`
+	Items               json.RawMessage  `json:"items"`
+	ExpectedCostTotal   *decimal.Decimal `json:"expected_cost_total"`
+	CostCurrency        *string          `json:"cost_currency"`
+	ShipName            string           `json:"ship_name"`
+	ShipCompany         string           `json:"ship_company"`
+	ShipLine1           string           `json:"ship_line1"`
+	ShipLine2           string           `json:"ship_line2"`
+	ShipCity            string           `json:"ship_city"`
+	ShipRegion          string           `json:"ship_region"`
+	ShipPostalCode      string           `json:"ship_postal_code"`
+	ShipCountry         string           `json:"ship_country"`
+	ShipPhone           string           `json:"ship_phone"`
+	NoteToSupplier      string           `json:"note_to_supplier"`
+	ContentHash         string           `json:"content_hash"`
+	ConfirmedBy         *uuid.UUID       `json:"confirmed_by"`
+	ConfirmedByLabel    string           `json:"confirmed_by_label"`
+	ConfirmedAt         *time.Time       `json:"confirmed_at"`
+	Attempt             int32            `json:"attempt"`
+	SupplierOrderNumber string           `json:"supplier_order_number"`
+	ActualCost          *decimal.Decimal `json:"actual_cost"`
+	ActualCurrency      *string          `json:"actual_currency"`
+	PlacementNote       string           `json:"placement_note"`
+	PlacedBy            *uuid.UUID       `json:"placed_by"`
+	PlacedByKeyID       *uuid.UUID       `json:"placed_by_key_id"`
+	PlacedByLabel       string           `json:"placed_by_label"`
+	PlacedAt            *time.Time       `json:"placed_at"`
+	FailureReason       string           `json:"failure_reason"`
+	FailedAt            *time.Time       `json:"failed_at"`
+	Carrier             string           `json:"carrier"`
+	TrackingNumber      string           `json:"tracking_number"`
+	TrackingUrl         *string          `json:"tracking_url"`
+	ShippedAt           *time.Time       `json:"shipped_at"`
+	DeliveredAt         *time.Time       `json:"delivered_at"`
+	CancelledBy         *uuid.UUID       `json:"cancelled_by"`
+	CancelledByLabel    string           `json:"cancelled_by_label"`
+	CancelledAt         *time.Time       `json:"cancelled_at"`
+	CancelReason        string           `json:"cancel_reason"`
+	CreatedAt           time.Time        `json:"created_at"`
+	UpdatedAt           time.Time        `json:"updated_at"`
 }
 
 type SupplierProduct struct {
@@ -752,28 +889,30 @@ type UserSession struct {
 }
 
 type WebhookDelivery struct {
-	ID             uuid.UUID       `json:"id"`
-	EndpointID     uuid.UUID       `json:"endpoint_id"`
-	EventID        uuid.UUID       `json:"event_id"`
-	EventType      string          `json:"event_type"`
-	ChangeID       *int64          `json:"change_id"`
-	ProductID      *uuid.UUID      `json:"product_id"`
-	Payload        json.RawMessage `json:"payload"`
-	IsTest         bool            `json:"is_test"`
-	Status         string          `json:"status"`
-	Attempts       int32           `json:"attempts"`
-	MaxAttempts    int32           `json:"max_attempts"`
-	NextAttemptAt  time.Time       `json:"next_attempt_at"`
-	LastAttemptAt  *time.Time      `json:"last_attempt_at"`
-	ResponseStatus *int32          `json:"response_status"`
-	ResponseBody   string          `json:"response_body"`
-	LatencyMs      *int32          `json:"latency_ms"`
-	Error          string          `json:"error"`
-	RedeliveryOf   *uuid.UUID      `json:"redelivery_of"`
-	LockedBy       string          `json:"locked_by"`
-	LockedAt       *time.Time      `json:"locked_at"`
-	CreatedAt      time.Time       `json:"created_at"`
-	FinishedAt     *time.Time      `json:"finished_at"`
+	ID              uuid.UUID       `json:"id"`
+	EndpointID      uuid.UUID       `json:"endpoint_id"`
+	EventID         uuid.UUID       `json:"event_id"`
+	EventType       string          `json:"event_type"`
+	ChangeID        *int64          `json:"change_id"`
+	ProductID       *uuid.UUID      `json:"product_id"`
+	Payload         json.RawMessage `json:"payload"`
+	IsTest          bool            `json:"is_test"`
+	Status          string          `json:"status"`
+	Attempts        int32           `json:"attempts"`
+	MaxAttempts     int32           `json:"max_attempts"`
+	NextAttemptAt   time.Time       `json:"next_attempt_at"`
+	LastAttemptAt   *time.Time      `json:"last_attempt_at"`
+	ResponseStatus  *int32          `json:"response_status"`
+	ResponseBody    string          `json:"response_body"`
+	LatencyMs       *int32          `json:"latency_ms"`
+	Error           string          `json:"error"`
+	RedeliveryOf    *uuid.UUID      `json:"redelivery_of"`
+	LockedBy        string          `json:"locked_by"`
+	LockedAt        *time.Time      `json:"locked_at"`
+	CreatedAt       time.Time       `json:"created_at"`
+	FinishedAt      *time.Time      `json:"finished_at"`
+	OrderID         *uuid.UUID      `json:"order_id"`
+	SupplierOrderID *uuid.UUID      `json:"supplier_order_id"`
 }
 
 type WebhookDeliveryAttempt struct {

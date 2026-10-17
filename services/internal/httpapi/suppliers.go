@@ -12,6 +12,7 @@ import (
 
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/auth"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/normalize"
+	"github.com/waqasmani/importify-rivers-engineering/services/internal/orders"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/store"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/valid"
 )
@@ -40,6 +41,11 @@ type supplierInput struct {
 	OwnerID          *uuid.UUID     `json:"owner_id"`
 	CustomFields     map[string]any `json:"custom_fields"`
 	TagIDs           []uuid.UUID    `json:"tag_ids,omitempty"`
+	// OrderPlacement is how confirmed supplier orders are placed: "manual" (a person on the
+	// supplier's site, the default) or "automation" (the user's own automation receives
+	// supplier_order.confirmed webhooks). Either way, nothing is placed before a person confirms it.
+	// Changing it needs orders.place; omitted keeps the current value.
+	OrderPlacement *string `json:"order_placement,omitempty"`
 }
 
 func (s *Server) prepareSupplier(ctx context.Context, q *store.Queries, in *supplierInput) (store.UpdateSupplierParams, error) {
@@ -73,6 +79,9 @@ func (s *Server) prepareSupplier(ctx context.Context, q *store.Queries, in *supp
 		v.Check(*in.Rating >= 1 && *in.Rating <= 5, "rating", "must be between 1 and 5")
 	}
 	v.IntRange("lead_time_days", in.LeadTimeDays, 0, 3650)
+	if in.OrderPlacement != nil {
+		v.OneOf("order_placement", *in.OrderPlacement, orders.PlacementManual, orders.PlacementAutomation)
+	}
 	website := strPtr(normalize.Text(deref(in.Website)))
 	if website != nil && !strings.Contains(*website, "://") {
 		w := "https://" + *website
@@ -110,7 +119,19 @@ func (s *Server) prepareSupplier(ctx context.Context, q *store.Queries, in *supp
 		SupplierType: in.SupplierType, Website: website, Domain: domain, Country: in.Country, City: in.City, Address: in.Address,
 		Email: in.Email, Phone: in.Phone, PrimaryContactID: in.PrimaryContactID, PipelineStageID: in.PipelineStageID,
 		Rating: in.Rating, PaymentTerms: in.PaymentTerms, LeadTimeDays: in.LeadTimeDays, MoqNotes: in.MoqNotes,
-		Certifications: certs, Description: in.Description, OwnerID: in.OwnerID, CustomFields: cf}, nil
+		Certifications: certs, Description: in.Description, OwnerID: in.OwnerID, CustomFields: cf, OrderPlacement: in.OrderPlacement}, nil
+}
+
+// checkPlacementChange refuses a change of the placement method without orders.place: it decides
+// whether confirmed purchase orders go to the user's automation.
+func (s *Server) checkPlacementChange(r *http.Request, current string, next *string) error {
+	if next == nil || *next == current {
+		return nil
+	}
+	if !principal(r).Can(auth.PermOrdersPlace) {
+		return errForbidden("Changing how a supplier's orders are placed requires orders.place.")
+	}
+	return nil
 }
 
 type supplierView struct {
@@ -234,7 +255,7 @@ func (s *Server) createSupplier(r *http.Request, q *store.Queries, p store.Updat
 		City: p.City, Address: p.Address, Email: p.Email, Phone: p.Phone, PrimaryContactID: p.PrimaryContactID,
 		PipelineStageID: p.PipelineStageID, Rating: p.Rating, PaymentTerms: p.PaymentTerms, LeadTimeDays: p.LeadTimeDays,
 		MoqNotes: p.MoqNotes, Certifications: p.Certifications, Description: p.Description, OwnerID: p.OwnerID,
-		CustomFields: p.CustomFields, CreatedBy: userIDPtr(r)})
+		CustomFields: p.CustomFields, CreatedBy: userIDPtr(r), OrderPlacement: p.OrderPlacement})
 	if err != nil {
 		return su, err
 	}
@@ -248,6 +269,9 @@ func (s *Server) handleCreateSupplier(w http.ResponseWriter, r *http.Request) er
 	}
 	p, err := s.prepareSupplier(r.Context(), s.db.Queries, &in)
 	if err != nil {
+		return err
+	}
+	if err := s.checkPlacementChange(r, orders.PlacementManual, in.OrderPlacement); err != nil {
 		return err
 	}
 	var su store.Supplier
@@ -284,8 +308,18 @@ func (s *Server) handleUpdateSupplier(w http.ResponseWriter, r *http.Request) er
 		if err != nil {
 			return err
 		}
+		if err := s.checkPlacementChange(r, before.OrderPlacement, in.OrderPlacement); err != nil {
+			return err
+		}
 		if su, err = q.UpdateSupplier(r.Context(), p); err != nil {
 			return err
+		}
+		if su.OrderPlacement != before.OrderPlacement {
+			// Drafts follow the supplier until they are confirmed; their content hash changes, so a
+			// confirmation prepared before the change is refused.
+			if _, err := q.SetDraftPlacementForSupplier(r.Context(), store.SetDraftPlacementForSupplierParams{SupplierID: &id, PlacementMethod: su.OrderPlacement}); err != nil {
+				return err
+			}
 		}
 		if err := setRecordTags(r.Context(), q, "supplier", id, in.TagIDs); err != nil {
 			return err

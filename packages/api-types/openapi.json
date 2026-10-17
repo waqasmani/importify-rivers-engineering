@@ -75,6 +75,49 @@
         ],
         "type": "object"
       },
+      "Address": {
+        "properties": {
+          "city": {
+            "type": "string"
+          },
+          "company": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "line1": {
+            "type": "string"
+          },
+          "line2": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "postal_code": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "city",
+          "company",
+          "country",
+          "line1",
+          "line2",
+          "name",
+          "phone",
+          "postal_code",
+          "region"
+        ],
+        "type": "object"
+      },
       "AffectedDoc": {
         "properties": {
           "affected": {
@@ -1085,6 +1128,14 @@
         ],
         "type": "object"
       },
+      "CancelInput": {
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "CaptureDetailDoc": {
         "properties": {
           "capture": {
@@ -2055,6 +2106,21 @@
         ],
         "type": "object"
       },
+      "ConfirmInput": {
+        "properties": {
+          "acknowledge_warnings": {
+            "type": "boolean"
+          },
+          "content_hash": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "acknowledge_warnings",
+          "content_hash"
+        ],
+        "type": "object"
+      },
       "ContactInput": {
         "properties": {
           "company_id": {
@@ -2613,6 +2679,25 @@
         ],
         "type": "object"
       },
+      "Customer": {
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "name",
+          "phone"
+        ],
+        "type": "object"
+      },
       "DashboardCountsRow": {
         "properties": {
           "active_analysis_projects": {
@@ -2959,6 +3044,447 @@
         ],
         "type": "object"
       },
+      "Event": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "order": {
+            "$ref": "#/components/schemas/EventOrder"
+          },
+          "previous_status": {
+            "type": "string"
+          },
+          "supplier_order": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EventSupplierOrder"
+              }
+            ],
+            "nullable": true
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "occurred_at",
+          "order",
+          "previous_status",
+          "supplier_order",
+          "type"
+        ],
+        "type": "object"
+      },
+      "EventCosts": {
+        "properties": {
+          "actual_cost": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "actual_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "cost_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "expected_cost_total": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "actual_cost",
+          "actual_currency",
+          "cost_currency",
+          "expected_cost_total"
+        ],
+        "type": "object"
+      },
+      "EventItem": {
+        "properties": {
+          "cost": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EventItemCost"
+              }
+            ],
+            "nullable": true
+          },
+          "line_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "options": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "product_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "quantity": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "source_url": {
+            "nullable": true,
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "variant_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "variant_title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "line_id",
+          "options",
+          "product_id",
+          "quantity",
+          "sku",
+          "source_url",
+          "title",
+          "variant_id",
+          "variant_title"
+        ],
+        "type": "object"
+      },
+      "EventItemCost": {
+        "properties": {
+          "cost_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "expected_unit_cost": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "cost_currency",
+          "expected_unit_cost"
+        ],
+        "type": "object"
+      },
+      "EventLine": {
+        "properties": {
+          "cancelled": {
+            "type": "boolean"
+          },
+          "external_line_id": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "position": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "product_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "quantity": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "resolution": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "supplier_order_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "unit_price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "variant_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "cancelled",
+          "external_line_id",
+          "id",
+          "position",
+          "product_id",
+          "quantity",
+          "resolution",
+          "sku",
+          "supplier_order_id",
+          "title",
+          "unit_price",
+          "variant_id"
+        ],
+        "type": "object"
+      },
+      "EventOrder": {
+        "properties": {
+          "cancelled_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/Customer"
+          },
+          "customer_erased": {
+            "type": "boolean"
+          },
+          "customer_note": {
+            "type": "string"
+          },
+          "external_id": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/EventLine"
+            },
+            "type": "array"
+          },
+          "needs_attention": {
+            "type": "boolean"
+          },
+          "number": {
+            "type": "string"
+          },
+          "ordered_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "shipping_address": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "shipping_amount": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "subtotal": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "tax_amount": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "total": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "cancelled_at",
+          "channel",
+          "currency",
+          "customer",
+          "customer_erased",
+          "customer_note",
+          "external_id",
+          "id",
+          "lines",
+          "needs_attention",
+          "number",
+          "ordered_at",
+          "shipping_address",
+          "shipping_amount",
+          "status",
+          "subtotal",
+          "tax_amount",
+          "total"
+        ],
+        "type": "object"
+      },
+      "EventSupplierOrder": {
+        "properties": {
+          "attempt": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "cancel_reason": {
+            "type": "string"
+          },
+          "cancelled_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "carrier": {
+            "type": "string"
+          },
+          "confirmed_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "costs": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EventCosts"
+              }
+            ],
+            "nullable": true
+          },
+          "delivered_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "failed_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "failure_reason": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/EventItem"
+            },
+            "type": "array"
+          },
+          "note_to_supplier": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "placed_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "placement_method": {
+            "type": "string"
+          },
+          "ship_to": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "shipped_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "source_domain": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "supplier_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "supplier_name": {
+            "type": "string"
+          },
+          "supplier_order_number": {
+            "type": "string"
+          },
+          "tracking_number": {
+            "type": "string"
+          },
+          "tracking_url": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "attempt",
+          "cancel_reason",
+          "cancelled_at",
+          "carrier",
+          "confirmed_at",
+          "delivered_at",
+          "failed_at",
+          "failure_reason",
+          "id",
+          "items",
+          "note_to_supplier",
+          "number",
+          "placed_at",
+          "placement_method",
+          "ship_to",
+          "shipped_at",
+          "source_domain",
+          "status",
+          "supplier_id",
+          "supplier_name",
+          "supplier_order_number",
+          "tracking_number",
+          "tracking_url"
+        ],
+        "type": "object"
+      },
       "EventType": {
         "properties": {
           "description": {
@@ -3066,6 +3592,17 @@
         "required": [
           "categories",
           "domains"
+        ],
+        "type": "object"
+      },
+      "FailedInput": {
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
         ],
         "type": "object"
       },
@@ -3938,6 +4475,12 @@
             },
             "type": "array"
           },
+          "order_events": {
+            "items": {
+              "$ref": "#/components/schemas/EventType"
+            },
+            "type": "array"
+          },
           "scopes": {
             "items": {
               "$ref": "#/components/schemas/IntegrationScope"
@@ -3951,8 +4494,83 @@
         "required": [
           "api_base_url",
           "events",
+          "order_events",
           "scopes",
           "webhooks"
+        ],
+        "type": "object"
+      },
+      "Item": {
+        "properties": {
+          "cost_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "expected_unit_cost": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "external_line_id": {
+            "type": "string"
+          },
+          "line_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "options": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "position": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "product_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "quantity": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "source_url": {
+            "nullable": true,
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "variant_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "variant_title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cost_currency",
+          "expected_unit_cost",
+          "external_line_id",
+          "line_id",
+          "options",
+          "position",
+          "product_id",
+          "quantity",
+          "sku",
+          "source_url",
+          "title",
+          "variant_id",
+          "variant_title"
         ],
         "type": "object"
       },
@@ -6219,6 +6837,656 @@
         ],
         "type": "object"
       },
+      "OrderAddressInput": {
+        "properties": {
+          "city": {
+            "type": "string"
+          },
+          "company": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "line1": {
+            "type": "string"
+          },
+          "line2": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "postal_code": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "OrderCustomerInput": {
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "OrderDetail": {
+        "properties": {
+          "cancel_reason": {
+            "type": "string"
+          },
+          "cancelled_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/Customer"
+          },
+          "customer_erased_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "customer_note": {
+            "type": "string"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/OrderEventView"
+            },
+            "type": "array"
+          },
+          "external_id": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "integration_key_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/OrderLineView"
+            },
+            "type": "array"
+          },
+          "needs_attention": {
+            "type": "boolean"
+          },
+          "number": {
+            "type": "string"
+          },
+          "ordered_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "shipping_address": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "shipping_amount": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "subtotal": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "supplier_orders": {
+            "items": {
+              "$ref": "#/components/schemas/SupplierOrderSummary"
+            },
+            "type": "array"
+          },
+          "tax_amount": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "total": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cancel_reason",
+          "cancelled_at",
+          "channel",
+          "created_at",
+          "currency",
+          "customer",
+          "customer_erased_at",
+          "customer_note",
+          "events",
+          "external_id",
+          "id",
+          "integration_key_id",
+          "lines",
+          "needs_attention",
+          "number",
+          "ordered_at",
+          "shipping_address",
+          "shipping_amount",
+          "source",
+          "status",
+          "subtotal",
+          "supplier_orders",
+          "tax_amount",
+          "total",
+          "updated_at"
+        ],
+        "type": "object"
+      },
+      "OrderEventView": {
+        "properties": {
+          "actor": {
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "from_status": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "supplier_order_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "to_status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "actor",
+          "created_at",
+          "from_status",
+          "id",
+          "kind",
+          "summary",
+          "supplier_order_id",
+          "to_status"
+        ],
+        "type": "object"
+      },
+      "OrderInput": {
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/OrderCustomerInput"
+          },
+          "customer_note": {
+            "type": "string"
+          },
+          "external_id": {
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/OrderLineInput"
+            },
+            "type": "array"
+          },
+          "ordered_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "shipping_address": {
+            "$ref": "#/components/schemas/OrderAddressInput"
+          },
+          "shipping_amount": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "subtotal": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "tax_amount": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "total": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "currency",
+          "customer",
+          "lines",
+          "shipping_address"
+        ],
+        "type": "object"
+      },
+      "OrderLineInput": {
+        "properties": {
+          "external_line_id": {
+            "type": "string"
+          },
+          "product_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "quantity": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "unit_price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "variant_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "quantity"
+        ],
+        "type": "object"
+      },
+      "OrderLineSourcing": {
+        "properties": {
+          "cost_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "expected_unit_cost": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "options": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "prepared_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "product_title": {
+            "type": "string"
+          },
+          "source_domain": {
+            "type": "string"
+          },
+          "source_url": {
+            "nullable": true,
+            "type": "string"
+          },
+          "supplier_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "supplier_name": {
+            "type": "string"
+          },
+          "variant_title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cost_currency",
+          "expected_unit_cost",
+          "options",
+          "prepared_at",
+          "product_title",
+          "source_domain",
+          "source_url",
+          "supplier_id",
+          "supplier_name",
+          "variant_title"
+        ],
+        "type": "object"
+      },
+      "OrderLineUpdateInput": {
+        "properties": {
+          "product_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "quantity": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "variant_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_id",
+          "quantity",
+          "variant_id"
+        ],
+        "type": "object"
+      },
+      "OrderLineView": {
+        "properties": {
+          "cancelled_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "external_line_id": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "position": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "product_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "quantity": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "resolution": {
+            "type": "string"
+          },
+          "resolution_note": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "sourcing": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OrderLineSourcing"
+              }
+            ],
+            "nullable": true
+          },
+          "supplier_order_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "unit_price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "variant_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "cancelled_at",
+          "external_line_id",
+          "id",
+          "position",
+          "product_id",
+          "quantity",
+          "resolution",
+          "resolution_note",
+          "sku",
+          "supplier_order_id",
+          "title",
+          "unit_price",
+          "variant_id"
+        ],
+        "type": "object"
+      },
+      "OrderListItem": {
+        "properties": {
+          "cancel_reason": {
+            "type": "string"
+          },
+          "cancelled_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/Customer"
+          },
+          "customer_erased_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "customer_note": {
+            "type": "string"
+          },
+          "external_id": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "integration_key_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "line_count": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "needs_attention": {
+            "type": "boolean"
+          },
+          "number": {
+            "type": "string"
+          },
+          "ordered_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "shipping_address": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "shipping_amount": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "subtotal": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "supplier_order_count": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "tax_amount": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "total": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "unassigned_count": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cancel_reason",
+          "cancelled_at",
+          "channel",
+          "created_at",
+          "currency",
+          "customer",
+          "customer_erased_at",
+          "customer_note",
+          "external_id",
+          "id",
+          "integration_key_id",
+          "line_count",
+          "needs_attention",
+          "number",
+          "ordered_at",
+          "shipping_address",
+          "shipping_amount",
+          "source",
+          "status",
+          "subtotal",
+          "supplier_order_count",
+          "tax_amount",
+          "total",
+          "unassigned_count",
+          "updated_at"
+        ],
+        "type": "object"
+      },
+      "OrderListItemPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OrderListItem"
+            },
+            "type": "array"
+          },
+          "limit": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "offset": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "total": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "limit",
+          "offset",
+          "total"
+        ],
+        "type": "object"
+      },
       "OrganizationSettings": {
         "properties": {
           "name": {
@@ -6696,6 +7964,29 @@
         },
         "required": [
           "items"
+        ],
+        "type": "object"
+      },
+      "PlacedInput": {
+        "properties": {
+          "actual_cost": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "supplier_order_number": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "supplier_order_number"
         ],
         "type": "object"
       },
@@ -9873,6 +11164,23 @@
         ],
         "type": "object"
       },
+      "ShipmentInput": {
+        "properties": {
+          "carrier": {
+            "type": "string"
+          },
+          "tracking_number": {
+            "type": "string"
+          },
+          "tracking_url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tracking_number"
+        ],
+        "type": "object"
+      },
       "SourceAdapter": {
         "properties": {
           "created_at": {
@@ -10314,6 +11622,9 @@
           "normalized_name": {
             "type": "string"
           },
+          "order_placement": {
+            "type": "string"
+          },
           "owner_id": {
             "format": "uuid",
             "nullable": true,
@@ -10369,6 +11680,7 @@
           "moq_notes",
           "name",
           "normalized_name",
+          "order_placement",
           "owner_id",
           "payment_terms",
           "phone",
@@ -10426,6 +11738,10 @@
             "type": "string"
           },
           "name": {
+            "type": "string"
+          },
+          "order_placement": {
+            "nullable": true,
             "type": "string"
           },
           "owner_id": {
@@ -10490,6 +11806,523 @@
           "rating",
           "supplier_type",
           "website"
+        ],
+        "type": "object"
+      },
+      "SupplierOrderListItem": {
+        "properties": {
+          "confirmed_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "cost_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expected_cost_total": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "failure_reason": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "item_count": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "number": {
+            "type": "string"
+          },
+          "order_external_id": {
+            "type": "string"
+          },
+          "order_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "order_number": {
+            "type": "string"
+          },
+          "placed_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "placement_method": {
+            "type": "string"
+          },
+          "quantity": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "ship_country": {
+            "type": "string"
+          },
+          "source_domain": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "supplier_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "supplier_name": {
+            "type": "string"
+          },
+          "supplier_order_number": {
+            "type": "string"
+          },
+          "tracking_number": {
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "warning_count": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "confirmed_at",
+          "cost_currency",
+          "created_at",
+          "expected_cost_total",
+          "failure_reason",
+          "id",
+          "item_count",
+          "number",
+          "order_external_id",
+          "order_id",
+          "order_number",
+          "placed_at",
+          "placement_method",
+          "quantity",
+          "ship_country",
+          "source_domain",
+          "status",
+          "supplier_id",
+          "supplier_name",
+          "supplier_order_number",
+          "tracking_number",
+          "updated_at",
+          "warning_count"
+        ],
+        "type": "object"
+      },
+      "SupplierOrderListItemPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SupplierOrderListItem"
+            },
+            "type": "array"
+          },
+          "limit": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "offset": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "total": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "limit",
+          "offset",
+          "total"
+        ],
+        "type": "object"
+      },
+      "SupplierOrderQueuesDoc": {
+        "properties": {
+          "awaiting_tracking": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "failed": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "to_confirm": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "to_place": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "awaiting_tracking",
+          "failed",
+          "to_confirm",
+          "to_place"
+        ],
+        "type": "object"
+      },
+      "SupplierOrderSourcing": {
+        "properties": {
+          "actual_cost": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "actual_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "cost_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "expected_cost_total": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "placement_method": {
+            "type": "string"
+          },
+          "source_domain": {
+            "type": "string"
+          },
+          "supplier_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "supplier_name": {
+            "type": "string"
+          },
+          "supplier_order_number": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "actual_cost",
+          "actual_currency",
+          "cost_currency",
+          "expected_cost_total",
+          "placement_method",
+          "source_domain",
+          "supplier_id",
+          "supplier_name",
+          "supplier_order_number"
+        ],
+        "type": "object"
+      },
+      "SupplierOrderSummary": {
+        "properties": {
+          "cancelled_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "carrier": {
+            "type": "string"
+          },
+          "confirmed_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "delivered_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "item_count": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "line_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "number": {
+            "type": "string"
+          },
+          "placed_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "shipped_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "sourcing": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SupplierOrderSourcing"
+              }
+            ],
+            "nullable": true
+          },
+          "status": {
+            "type": "string"
+          },
+          "tracking_number": {
+            "type": "string"
+          },
+          "tracking_url": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "cancelled_at",
+          "carrier",
+          "confirmed_at",
+          "delivered_at",
+          "id",
+          "item_count",
+          "line_ids",
+          "number",
+          "placed_at",
+          "shipped_at",
+          "status",
+          "tracking_number",
+          "tracking_url"
+        ],
+        "type": "object"
+      },
+      "SupplierOrderUpdateInput": {
+        "properties": {
+          "note_to_supplier": {
+            "type": "string"
+          },
+          "ship_to": {
+            "$ref": "#/components/schemas/OrderAddressInput"
+          }
+        },
+        "required": [
+          "note_to_supplier",
+          "ship_to"
+        ],
+        "type": "object"
+      },
+      "SupplierOrderView": {
+        "properties": {
+          "actual_cost": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "actual_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "attempt": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "cancel_reason": {
+            "type": "string"
+          },
+          "cancelled_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelled_by": {
+            "type": "string"
+          },
+          "carrier": {
+            "type": "string"
+          },
+          "confirmed_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "confirmed_by": {
+            "type": "string"
+          },
+          "content_hash": {
+            "type": "string"
+          },
+          "cost_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "delivered_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "expected_cost_total": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "failed_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "failure_reason": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "type": "array"
+          },
+          "note_to_supplier": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "order_external_id": {
+            "type": "string"
+          },
+          "order_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "order_number": {
+            "type": "string"
+          },
+          "placed_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "placed_by": {
+            "type": "string"
+          },
+          "placement_method": {
+            "type": "string"
+          },
+          "placement_note": {
+            "type": "string"
+          },
+          "ship_to": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "shipped_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "source_domain": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "supplier_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "supplier_name": {
+            "type": "string"
+          },
+          "supplier_order_number": {
+            "type": "string"
+          },
+          "tracking_number": {
+            "type": "string"
+          },
+          "tracking_url": {
+            "nullable": true,
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/Warning"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "actual_cost",
+          "actual_currency",
+          "attempt",
+          "cancel_reason",
+          "cancelled_at",
+          "cancelled_by",
+          "carrier",
+          "confirmed_at",
+          "confirmed_by",
+          "content_hash",
+          "cost_currency",
+          "created_at",
+          "delivered_at",
+          "expected_cost_total",
+          "failed_at",
+          "failure_reason",
+          "id",
+          "items",
+          "note_to_supplier",
+          "number",
+          "order_external_id",
+          "order_id",
+          "order_number",
+          "placed_at",
+          "placed_by",
+          "placement_method",
+          "placement_note",
+          "ship_to",
+          "shipped_at",
+          "source_domain",
+          "status",
+          "supplier_id",
+          "supplier_name",
+          "supplier_order_number",
+          "tracking_number",
+          "tracking_url",
+          "updated_at",
+          "warnings"
         ],
         "type": "object"
       },
@@ -10681,6 +12514,9 @@
           "normalized_name": {
             "type": "string"
           },
+          "order_placement": {
+            "type": "string"
+          },
           "owner_id": {
             "format": "uuid",
             "nullable": true,
@@ -10759,6 +12595,7 @@
           "moq_notes",
           "name",
           "normalized_name",
+          "order_placement",
           "owner_id",
           "payment_terms",
           "phone",
@@ -11593,6 +13430,27 @@
         ],
         "type": "object"
       },
+      "Warning": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "line_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "line_id",
+          "message"
+        ],
+        "type": "object"
+      },
       "WebhookCreatedDoc": {
         "properties": {
           "secret": {
@@ -12188,7 +14046,7 @@
     }
   },
   "info": {
-    "description": "Self-hosted API for REA (Reverse Engineering Anything) and Importify CRM. Browser sessions use the session cookie plus the X-CSRF-Token header on unsafe methods; the browser extension and scripts use Bearer tokens; external systems use integration keys (reai_...) on the Catalog endpoints.",
+    "description": "Self-hosted API for REA (Reverse Engineering Anything) and Importify CRM. Browser sessions use the session cookie plus the X-CSRF-Token header on unsafe methods; the browser extension and scripts use Bearer tokens; external systems use integration keys (reai_...) on the Catalog and Orders endpoints. Supplier orders are only handed off for placement after a signed-in person confirms them.",
     "title": "REA and Importify CRM API",
     "version": "1.0.0"
   },
@@ -19425,6 +21283,484 @@
         ]
       }
     },
+    "/api/v1/orders": {
+      "get": {
+        "operationId": "listOrders",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "needs_attention",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "integration_key_id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderListItemPage"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Customer orders, newest first (integration keys: the orders they submitted)",
+        "tags": [
+          "Orders"
+        ]
+      },
+      "post": {
+        "operationId": "createOrder",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDetail"
+                }
+              }
+            },
+            "description": "The external_id was already received with the same contents: the existing order"
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDetail"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Submit a customer order; REA prepares draft supplier orders (200 with the existing order when the external_id was already received)",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/v1/orders/by-external-id/{external_id}": {
+      "get": {
+        "operationId": "getOrderByExternalID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "external_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDetail"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "An order by your external order ID (integration keys: among their orders; people: among manual orders)",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/v1/orders/{id}": {
+      "get": {
+        "operationId": "getOrder",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDetail"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "A customer order with lines, supplier orders, tracking and timeline",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/v1/orders/{id}/cancel": {
+      "post": {
+        "operationId": "cancelOrder",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDetail"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Cancel a customer order while none of its supplier orders is placed",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/v1/orders/{id}/erase-customer": {
+      "post": {
+        "operationId": "eraseOrderCustomer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDetail"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Erase the customer's personal data once no supplier order is open",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/v1/orders/{id}/lines/{lineID}": {
+      "put": {
+        "operationId": "updateOrderLine",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "lineID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderLineUpdateInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDetail"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Map a line to a product or variant and set its quantity (lines of drafts only)",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/v1/orders/{id}/lines/{lineID}/cancel": {
+      "post": {
+        "operationId": "cancelOrderLine",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "lineID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDetail"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Cancel a line that is not in a confirmed supplier order",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/v1/orders/{id}/prepare": {
+      "post": {
+        "operationId": "prepareOrder",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDetail"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Resolve unmatched lines again and rebuild the draft supplier orders",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
     "/api/v1/permissions": {
       "get": {
         "operationId": "listPermissions",
@@ -21675,6 +24011,644 @@
         ]
       }
     },
+    "/api/v1/supplier-orders": {
+      "get": {
+        "operationId": "listSupplierOrders",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "queue",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "placement_method",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "supplier_id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order_id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierOrderListItemPage"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Supplier orders by queue (to_confirm, to_place, awaiting_tracking, failed) or status",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/v1/supplier-orders/queues": {
+      "get": {
+        "operationId": "supplierOrderQueues",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierOrderQueuesDoc"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Number of supplier orders in each queue",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/v1/supplier-orders/{id}": {
+      "get": {
+        "operationId": "getSupplierOrder",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierOrderView"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "A supplier order with items, ship-to, warnings and the content hash to confirm",
+        "tags": [
+          "Orders"
+        ]
+      },
+      "put": {
+        "operationId": "updateSupplierOrder",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupplierOrderUpdateInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierOrderView"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Edit the ship-to and note of a draft",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/v1/supplier-orders/{id}/cancel": {
+      "post": {
+        "operationId": "cancelSupplierOrder",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierOrderView"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Cancel a supplier order in REA (REA does not contact the supplier)",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/v1/supplier-orders/{id}/confirm": {
+      "post": {
+        "operationId": "confirmSupplierOrder",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierOrderView"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Confirm a draft for placement (a person with orders.place, dashboard session only)",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/v1/supplier-orders/{id}/delivered": {
+      "post": {
+        "operationId": "supplierOrderDelivered",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierOrderView"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Mark a shipped supplier order as delivered",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/v1/supplier-orders/{id}/failed": {
+      "post": {
+        "operationId": "supplierOrderFailed",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FailedInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierOrderView"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Report that placing a confirmed supplier order failed",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/v1/supplier-orders/{id}/placed": {
+      "post": {
+        "operationId": "supplierOrderPlaced",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlacedInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierOrderView"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Record that a confirmed supplier order was placed with the supplier",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/v1/supplier-orders/{id}/retry": {
+      "post": {
+        "operationId": "retrySupplierOrder",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierOrderView"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Hand a failed supplier order off again",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/v1/supplier-orders/{id}/revert": {
+      "post": {
+        "operationId": "revertSupplierOrder",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierOrderView"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Withdraw a confirmation that has not been placed (back to draft)",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/v1/supplier-orders/{id}/shipment": {
+      "post": {
+        "operationId": "supplierOrderShipment",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShipmentInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierOrderView"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Record or correct the tracking of a placed supplier order",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/v1/supplier-orders/{id}/switch-to-manual": {
+      "post": {
+        "operationId": "switchSupplierOrderToManual",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierOrderView"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Place a failed automated supplier order by hand instead",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
     "/api/v1/suppliers": {
       "get": {
         "operationId": "listSuppliers",
@@ -23782,6 +26756,74 @@
           }
         },
         "summary": "Catalog event delivered to a registered endpoint"
+      }
+    },
+    "orderEvent": {
+      "post": {
+        "description": "POSTed as JSON for every subscribed order event (order.received, order.status_changed, supplier_order.confirmed, supplier_order.placed, supplier_order.failed, supplier_order.shipped, supplier_order.cancelled), signed like catalog events. The body contains the customer's name, e-mail, phone and shipping address. supplier_order.confirmed is sent only after a person confirmed the supplier order, and only for suppliers with automated placement; cost fields are present only for endpoints with include_costs.",
+        "parameters": [
+          {
+            "description": "Event ID, identical across retries and redeliveries",
+            "in": "header",
+            "name": "X-REA-Event-Id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Event type",
+            "in": "header",
+            "name": "X-REA-Event-Type",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Delivery ID (a redelivery has a new one)",
+            "in": "header",
+            "name": "X-REA-Delivery-Id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Unix seconds when the request was signed; reject old timestamps",
+            "in": "header",
+            "name": "X-REA-Timestamp",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Comma-separated v1=\u003chex HMAC-SHA256\u003e signatures",
+            "in": "header",
+            "name": "X-REA-Signature",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Event"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Any 2xx status acknowledges the delivery"
+          }
+        },
+        "summary": "Order event delivered to a registered endpoint (contains personal data)"
       }
     }
   }

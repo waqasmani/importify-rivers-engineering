@@ -1866,6 +1866,143 @@ export interface paths {
         patch: operations["setOpportunityStage"];
         trace?: never;
     };
+    "/api/v1/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Customer orders, newest first (integration keys: the orders they submitted) */
+        get: operations["listOrders"];
+        put?: never;
+        /** Submit a customer order; REA prepares draft supplier orders (200 with the existing order when the external_id was already received) */
+        post: operations["createOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/by-external-id/{external_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** An order by your external order ID (integration keys: among their orders; people: among manual orders) */
+        get: operations["getOrderByExternalID"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A customer order with lines, supplier orders, tracking and timeline */
+        get: operations["getOrder"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a customer order while none of its supplier orders is placed */
+        post: operations["cancelOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{id}/erase-customer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Erase the customer's personal data once no supplier order is open */
+        post: operations["eraseOrderCustomer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{id}/lines/{lineID}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Map a line to a product or variant and set its quantity (lines of drafts only) */
+        put: operations["updateOrderLine"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{id}/lines/{lineID}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a line that is not in a confirmed supplier order */
+        post: operations["cancelOrderLine"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{id}/prepare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolve unmatched lines again and rebuild the draft supplier orders */
+        post: operations["prepareOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/permissions": {
         parameters: {
             query?: never;
@@ -2492,6 +2629,211 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/supplier-orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Supplier orders by queue (to_confirm, to_place, awaiting_tracking, failed) or status */
+        get: operations["listSupplierOrders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/supplier-orders/queues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Number of supplier orders in each queue */
+        get: operations["supplierOrderQueues"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/supplier-orders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A supplier order with items, ship-to, warnings and the content hash to confirm */
+        get: operations["getSupplierOrder"];
+        /** Edit the ship-to and note of a draft */
+        put: operations["updateSupplierOrder"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/supplier-orders/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a supplier order in REA (REA does not contact the supplier) */
+        post: operations["cancelSupplierOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/supplier-orders/{id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm a draft for placement (a person with orders.place, dashboard session only) */
+        post: operations["confirmSupplierOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/supplier-orders/{id}/delivered": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark a shipped supplier order as delivered */
+        post: operations["supplierOrderDelivered"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/supplier-orders/{id}/failed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Report that placing a confirmed supplier order failed */
+        post: operations["supplierOrderFailed"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/supplier-orders/{id}/placed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record that a confirmed supplier order was placed with the supplier */
+        post: operations["supplierOrderPlaced"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/supplier-orders/{id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Hand a failed supplier order off again */
+        post: operations["retrySupplierOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/supplier-orders/{id}/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw a confirmation that has not been placed (back to draft) */
+        post: operations["revertSupplierOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/supplier-orders/{id}/shipment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record or correct the tracking of a placed supplier order */
+        post: operations["supplierOrderShipment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/supplier-orders/{id}/switch-to-manual": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Place a failed automated supplier order by hand instead */
+        post: operations["switchSupplierOrderToManual"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/suppliers": {
         parameters: {
             query?: never;
@@ -2991,6 +3333,17 @@ export interface components {
                 [key: string]: string;
             };
         };
+        Address: {
+            city: string;
+            company: string;
+            country: string;
+            line1: string;
+            line2: string;
+            name: string;
+            phone: string;
+            postal_code: string;
+            region: string;
+        };
         AffectedDoc: {
             /** Format: int64 */
             affected: number;
@@ -3279,6 +3632,9 @@ export interface components {
             ids: string[];
             value: string | null;
         };
+        CancelInput: {
+            reason?: string;
+        };
         CaptureDetailDoc: {
             capture: components["schemas"]["CapturedPage"];
             has_snapshot: boolean;
@@ -3561,6 +3917,10 @@ export interface components {
             /** Format: int64 */
             total: number;
         };
+        ConfirmInput: {
+            acknowledge_warnings: boolean;
+            content_hash: string;
+        };
         ContactInput: {
             /** Format: uuid */
             company_id: string | null;
@@ -3720,6 +4080,11 @@ export interface components {
             position: number;
             required: boolean;
         };
+        Customer: {
+            email: string;
+            name: string;
+            phone: string;
+        };
         DashboardCountsRow: {
             /** Format: int64 */
             active_analysis_projects: number;
@@ -3825,6 +4190,154 @@ export interface components {
         ErrorDoc: {
             error: components["schemas"]["APIError"];
         };
+        Event: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            occurred_at: string;
+            order: components["schemas"]["EventOrder"];
+            previous_status: string;
+            supplier_order: components["schemas"]["EventSupplierOrder"] | null;
+            type: string;
+        };
+        EventCosts: {
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            actual_cost: string | null;
+            actual_currency: string | null;
+            cost_currency: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            expected_cost_total: string | null;
+        };
+        EventItem: {
+            cost?: components["schemas"]["EventItemCost"] | null;
+            /** Format: uuid */
+            line_id: string;
+            options: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            product_id: string | null;
+            /** Format: int32 */
+            quantity: number;
+            sku: string;
+            source_url: string | null;
+            title: string;
+            /** Format: uuid */
+            variant_id: string | null;
+            variant_title: string;
+        };
+        EventItemCost: {
+            cost_currency: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            expected_unit_cost: string | null;
+        };
+        EventLine: {
+            cancelled: boolean;
+            external_line_id: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            position: number;
+            /** Format: uuid */
+            product_id: string | null;
+            /** Format: int32 */
+            quantity: number;
+            resolution: string;
+            sku: string;
+            /** Format: uuid */
+            supplier_order_id: string | null;
+            title: string;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            unit_price: string | null;
+            /** Format: uuid */
+            variant_id: string | null;
+        };
+        EventOrder: {
+            /** Format: date-time */
+            cancelled_at: string | null;
+            channel: string;
+            currency: string;
+            customer: components["schemas"]["Customer"];
+            customer_erased: boolean;
+            customer_note: string;
+            external_id: string;
+            /** Format: uuid */
+            id: string;
+            lines: components["schemas"]["EventLine"][];
+            needs_attention: boolean;
+            number: string;
+            /** Format: date-time */
+            ordered_at: string;
+            shipping_address: components["schemas"]["Address"];
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            shipping_amount: string | null;
+            status: string;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            subtotal: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            tax_amount: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            total: string | null;
+        };
+        EventSupplierOrder: {
+            /** Format: int32 */
+            attempt: number;
+            cancel_reason: string;
+            /** Format: date-time */
+            cancelled_at: string | null;
+            carrier: string;
+            /** Format: date-time */
+            confirmed_at: string | null;
+            costs?: components["schemas"]["EventCosts"] | null;
+            /** Format: date-time */
+            delivered_at: string | null;
+            /** Format: date-time */
+            failed_at: string | null;
+            failure_reason: string;
+            /** Format: uuid */
+            id: string;
+            items: components["schemas"]["EventItem"][];
+            note_to_supplier: string;
+            number: string;
+            /** Format: date-time */
+            placed_at: string | null;
+            placement_method: string;
+            ship_to: components["schemas"]["Address"];
+            /** Format: date-time */
+            shipped_at: string | null;
+            source_domain: string;
+            status: string;
+            /** Format: uuid */
+            supplier_id: string | null;
+            supplier_name: string;
+            supplier_order_number: string;
+            tracking_number: string;
+            tracking_url: string | null;
+        };
         EventType: {
             description: string;
             type: string;
@@ -3851,6 +4364,9 @@ export interface components {
         FacetsDoc: {
             categories: components["schemas"]["ProductCategoriesRow"][];
             domains: components["schemas"]["ProductDomainsRow"][];
+        };
+        FailedInput: {
+            reason: string;
         };
         FindingCategoryCountsRow: {
             category: string;
@@ -4105,8 +4621,35 @@ export interface components {
         IntegrationsConfigDoc: {
             api_base_url: string;
             events: components["schemas"]["EventType"][];
+            order_events: components["schemas"]["EventType"][];
             scopes: components["schemas"]["IntegrationScope"][];
             webhooks: components["schemas"]["WebhookPolicyDoc"];
+        };
+        Item: {
+            cost_currency: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            expected_unit_cost: string | null;
+            external_line_id: string;
+            /** Format: uuid */
+            line_id: string;
+            options: {
+                [key: string]: string;
+            };
+            /** Format: int32 */
+            position: number;
+            /** Format: uuid */
+            product_id: string | null;
+            /** Format: int32 */
+            quantity: number;
+            sku: string;
+            source_url: string | null;
+            title: string;
+            /** Format: uuid */
+            variant_id: string | null;
+            variant_title: string;
         };
         Lead: {
             /** Format: uuid */
@@ -4826,6 +5369,248 @@ export interface components {
             /** Format: int64 */
             total: number;
         };
+        OrderAddressInput: {
+            city?: string;
+            company?: string;
+            country?: string;
+            line1?: string;
+            line2?: string;
+            name?: string;
+            phone?: string;
+            postal_code?: string;
+            region?: string;
+        };
+        OrderCustomerInput: {
+            email?: string;
+            name?: string;
+            phone?: string;
+        };
+        OrderDetail: {
+            cancel_reason: string;
+            /** Format: date-time */
+            cancelled_at: string | null;
+            channel: string;
+            /** Format: date-time */
+            created_at: string;
+            currency: string;
+            customer: components["schemas"]["Customer"];
+            /** Format: date-time */
+            customer_erased_at: string | null;
+            customer_note: string;
+            events: components["schemas"]["OrderEventView"][];
+            external_id: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            integration_key_id: string | null;
+            lines: components["schemas"]["OrderLineView"][];
+            needs_attention: boolean;
+            number: string;
+            /** Format: date-time */
+            ordered_at: string;
+            shipping_address: components["schemas"]["Address"];
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            shipping_amount: string | null;
+            source: string;
+            status: string;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            subtotal: string | null;
+            supplier_orders: components["schemas"]["SupplierOrderSummary"][];
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            tax_amount: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            total: string | null;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        OrderEventView: {
+            actor: string;
+            /** Format: date-time */
+            created_at: string;
+            from_status: string;
+            /** Format: int64 */
+            id: number;
+            kind: string;
+            summary: string;
+            /** Format: uuid */
+            supplier_order_id: string | null;
+            to_status: string;
+        };
+        OrderInput: {
+            currency: string;
+            customer: components["schemas"]["OrderCustomerInput"];
+            customer_note?: string;
+            external_id?: string;
+            lines: components["schemas"]["OrderLineInput"][];
+            /** Format: date-time */
+            ordered_at?: string | null;
+            shipping_address: components["schemas"]["OrderAddressInput"];
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            shipping_amount?: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            subtotal?: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            tax_amount?: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            total?: string | null;
+        };
+        OrderLineInput: {
+            external_line_id?: string;
+            /** Format: uuid */
+            product_id?: string | null;
+            /** Format: int32 */
+            quantity: number;
+            sku?: string;
+            title?: string;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            unit_price?: string | null;
+            /** Format: uuid */
+            variant_id?: string | null;
+        };
+        OrderLineSourcing: {
+            cost_currency: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            expected_unit_cost: string | null;
+            options: {
+                [key: string]: string;
+            };
+            /** Format: date-time */
+            prepared_at: string | null;
+            product_title: string;
+            source_domain: string;
+            source_url: string | null;
+            /** Format: uuid */
+            supplier_id: string | null;
+            supplier_name: string;
+            variant_title: string;
+        };
+        OrderLineUpdateInput: {
+            /** Format: uuid */
+            product_id: string | null;
+            /** Format: int32 */
+            quantity: number;
+            /** Format: uuid */
+            variant_id: string | null;
+        };
+        OrderLineView: {
+            /** Format: date-time */
+            cancelled_at: string | null;
+            external_line_id: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            position: number;
+            /** Format: uuid */
+            product_id: string | null;
+            /** Format: int32 */
+            quantity: number;
+            resolution: string;
+            resolution_note: string;
+            sku: string;
+            sourcing?: components["schemas"]["OrderLineSourcing"] | null;
+            /** Format: uuid */
+            supplier_order_id: string | null;
+            title: string;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            unit_price: string | null;
+            /** Format: uuid */
+            variant_id: string | null;
+        };
+        OrderListItem: {
+            cancel_reason: string;
+            /** Format: date-time */
+            cancelled_at: string | null;
+            channel: string;
+            /** Format: date-time */
+            created_at: string;
+            currency: string;
+            customer: components["schemas"]["Customer"];
+            /** Format: date-time */
+            customer_erased_at: string | null;
+            customer_note: string;
+            external_id: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            integration_key_id: string | null;
+            /** Format: int64 */
+            line_count: number;
+            needs_attention: boolean;
+            number: string;
+            /** Format: date-time */
+            ordered_at: string;
+            shipping_address: components["schemas"]["Address"];
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            shipping_amount: string | null;
+            source: string;
+            status: string;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            subtotal: string | null;
+            /** Format: int64 */
+            supplier_order_count: number;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            tax_amount: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            total: string | null;
+            /** Format: int64 */
+            unassigned_count: number;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        OrderListItemPage: {
+            items: components["schemas"]["OrderListItem"][];
+            /** Format: int32 */
+            limit: number;
+            /** Format: int32 */
+            offset: number;
+            /** Format: int64 */
+            total: number;
+        };
         OrganizationSettings: {
             name: string;
         };
@@ -4967,6 +5752,16 @@ export interface components {
         };
         PipelineViewItems: {
             items: components["schemas"]["PipelineView"][];
+        };
+        PlacedInput: {
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            actual_cost?: string | null;
+            currency?: string;
+            note?: string;
+            supplier_order_number: string;
         };
         PriceSnapshot: {
             /**
@@ -6074,6 +6869,11 @@ export interface components {
             needs_setup: boolean;
             setup_token_hint: string;
         };
+        ShipmentInput: {
+            carrier?: string;
+            tracking_number: string;
+            tracking_url?: string;
+        };
         SourceAdapter: {
             /** Format: date-time */
             created_at: string;
@@ -6206,6 +7006,7 @@ export interface components {
             moq_notes: string;
             name: string;
             normalized_name: string;
+            order_placement: string;
             /** Format: uuid */
             owner_id: string | null;
             payment_terms: string;
@@ -6238,6 +7039,7 @@ export interface components {
             lead_time_days: number | null;
             moq_notes: string;
             name: string;
+            order_placement?: string | null;
             /** Format: uuid */
             owner_id: string | null;
             payment_terms: string;
@@ -6251,6 +7053,171 @@ export interface components {
             supplier_type: string;
             tag_ids?: string[];
             website: string | null;
+        };
+        SupplierOrderListItem: {
+            /** Format: date-time */
+            confirmed_at: string | null;
+            cost_currency: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            expected_cost_total: string | null;
+            failure_reason: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            item_count: number;
+            number: string;
+            order_external_id: string;
+            /** Format: uuid */
+            order_id: string;
+            order_number: string;
+            /** Format: date-time */
+            placed_at: string | null;
+            placement_method: string;
+            /** Format: int32 */
+            quantity: number;
+            ship_country: string;
+            source_domain: string;
+            status: string;
+            /** Format: uuid */
+            supplier_id: string | null;
+            supplier_name: string;
+            supplier_order_number: string;
+            tracking_number: string;
+            /** Format: date-time */
+            updated_at: string;
+            /** Format: int32 */
+            warning_count: number;
+        };
+        SupplierOrderListItemPage: {
+            items: components["schemas"]["SupplierOrderListItem"][];
+            /** Format: int32 */
+            limit: number;
+            /** Format: int32 */
+            offset: number;
+            /** Format: int64 */
+            total: number;
+        };
+        SupplierOrderQueuesDoc: {
+            /** Format: int64 */
+            awaiting_tracking: number;
+            /** Format: int64 */
+            failed: number;
+            /** Format: int64 */
+            to_confirm: number;
+            /** Format: int64 */
+            to_place: number;
+        };
+        SupplierOrderSourcing: {
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            actual_cost: string | null;
+            actual_currency: string | null;
+            cost_currency: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            expected_cost_total: string | null;
+            placement_method: string;
+            source_domain: string;
+            /** Format: uuid */
+            supplier_id: string | null;
+            supplier_name: string;
+            supplier_order_number: string;
+        };
+        SupplierOrderSummary: {
+            /** Format: date-time */
+            cancelled_at: string | null;
+            carrier: string;
+            /** Format: date-time */
+            confirmed_at: string | null;
+            /** Format: date-time */
+            delivered_at: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            item_count: number;
+            line_ids: string[];
+            number: string;
+            /** Format: date-time */
+            placed_at: string | null;
+            /** Format: date-time */
+            shipped_at: string | null;
+            sourcing?: components["schemas"]["SupplierOrderSourcing"] | null;
+            status: string;
+            tracking_number: string;
+            tracking_url: string | null;
+        };
+        SupplierOrderUpdateInput: {
+            note_to_supplier: string;
+            ship_to: components["schemas"]["OrderAddressInput"];
+        };
+        SupplierOrderView: {
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            actual_cost: string | null;
+            actual_currency: string | null;
+            /** Format: int32 */
+            attempt: number;
+            cancel_reason: string;
+            /** Format: date-time */
+            cancelled_at: string | null;
+            cancelled_by: string;
+            carrier: string;
+            /** Format: date-time */
+            confirmed_at: string | null;
+            confirmed_by: string;
+            content_hash: string;
+            cost_currency: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            delivered_at: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            expected_cost_total: string | null;
+            /** Format: date-time */
+            failed_at: string | null;
+            failure_reason: string;
+            /** Format: uuid */
+            id: string;
+            items: components["schemas"]["Item"][];
+            note_to_supplier: string;
+            number: string;
+            order_external_id: string;
+            /** Format: uuid */
+            order_id: string;
+            order_number: string;
+            /** Format: date-time */
+            placed_at: string | null;
+            placed_by: string;
+            placement_method: string;
+            placement_note: string;
+            ship_to: components["schemas"]["Address"];
+            /** Format: date-time */
+            shipped_at: string | null;
+            source_domain: string;
+            status: string;
+            /** Format: uuid */
+            supplier_id: string | null;
+            supplier_name: string;
+            supplier_order_number: string;
+            tracking_number: string;
+            tracking_url: string | null;
+            /** Format: date-time */
+            updated_at: string;
+            warnings: components["schemas"]["Warning"][];
         };
         SupplierProduct: {
             /**
@@ -6318,6 +7285,7 @@ export interface components {
             moq_notes: string;
             name: string;
             normalized_name: string;
+            order_placement: string;
             /** Format: uuid */
             owner_id: string | null;
             payment_terms: string;
@@ -6592,6 +7560,12 @@ export interface components {
             plan: components["schemas"]["PricingPlan"];
             /** Format: uuid */
             variant_id: string;
+        };
+        Warning: {
+            code: string;
+            /** Format: uuid */
+            line_id: string | null;
+            message: string;
         };
         WebhookCreatedDoc: {
             secret: string;
@@ -11711,6 +12685,314 @@ export interface operations {
             };
         };
     };
+    listOrders: {
+        parameters: {
+            query?: {
+                status?: string;
+                needs_attention?: string;
+                channel?: string;
+                q?: string;
+                from?: string;
+                to?: string;
+                integration_key_id?: string;
+                limit?: string;
+                offset?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderListItemPage"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    createOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrderInput"];
+            };
+        };
+        responses: {
+            /** @description The external_id was already received with the same contents: the existing order */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderDetail"];
+                };
+            };
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderDetail"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    getOrderByExternalID: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                external_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderDetail"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    getOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderDetail"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    cancelOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderDetail"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    eraseOrderCustomer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderDetail"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    updateOrderLine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                lineID: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrderLineUpdateInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderDetail"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    cancelOrderLine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                lineID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderDetail"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    prepareOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderDetail"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
     listPermissions: {
         parameters: {
             query?: never;
@@ -13320,6 +14602,438 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SetupStatusDoc"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    listSupplierOrders: {
+        parameters: {
+            query?: {
+                queue?: string;
+                status?: string;
+                placement_method?: string;
+                supplier_id?: string;
+                order_id?: string;
+                q?: string;
+                limit?: string;
+                offset?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierOrderListItemPage"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    supplierOrderQueues: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierOrderQueuesDoc"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    getSupplierOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierOrderView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    updateSupplierOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SupplierOrderUpdateInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierOrderView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    cancelSupplierOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierOrderView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    confirmSupplierOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierOrderView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    supplierOrderDelivered: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierOrderView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    supplierOrderFailed: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FailedInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierOrderView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    supplierOrderPlaced: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlacedInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierOrderView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    retrySupplierOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierOrderView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    revertSupplierOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierOrderView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    supplierOrderShipment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShipmentInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierOrderView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    switchSupplierOrderToManual: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierOrderView"];
                 };
             };
             /** @description Error */

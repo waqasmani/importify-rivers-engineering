@@ -797,6 +797,10 @@ func TestEraseCustomerAndNoPersonalDataInLogs(t *testing.T) {
 		t.Fatalf("erasure wrong: %s", erased.Body)
 	}
 	e.owner.Do("POST", "/api/v1/orders/"+id+"/erase-customer", nil).Must(t, 409)
+	// A repeated submission is still recognized and returns the erased order, not a new one.
+	if again := shop.Do("POST", "/api/v1/orders", body).Must(t, 200); again.Str("id") != id || again.Str("customer.name") != "[erased]" {
+		t.Fatalf("repeat after erasure: %s", again.Body)
+	}
 	so := e.owner.Do("GET", "/api/v1/supplier-orders/"+tee.Str("id"), nil).Must(t, 200)
 	if so.Str("ship_to.name") != "[erased]" || so.Str("ship_to.phone") != "[erased]" {
 		t.Fatalf("supplier order snapshot not erased: %s", so.Body)

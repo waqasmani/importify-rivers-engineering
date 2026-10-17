@@ -194,18 +194,19 @@ type Attachment struct {
 }
 
 type AuditLog struct {
-	ID            int64           `json:"id"`
-	OccurredAt    time.Time       `json:"occurred_at"`
-	ActorUserID   *uuid.UUID      `json:"actor_user_id"`
-	ActorDeviceID *uuid.UUID      `json:"actor_device_id"`
-	ActorLabel    string          `json:"actor_label"`
-	Action        string          `json:"action"`
-	EntityType    string          `json:"entity_type"`
-	EntityID      *uuid.UUID      `json:"entity_id"`
-	Summary       string          `json:"summary"`
-	Changes       json.RawMessage `json:"changes"`
-	IpAddress     string          `json:"ip_address"`
-	RequestID     string          `json:"request_id"`
+	ID                    int64           `json:"id"`
+	OccurredAt            time.Time       `json:"occurred_at"`
+	ActorUserID           *uuid.UUID      `json:"actor_user_id"`
+	ActorDeviceID         *uuid.UUID      `json:"actor_device_id"`
+	ActorLabel            string          `json:"actor_label"`
+	Action                string          `json:"action"`
+	EntityType            string          `json:"entity_type"`
+	EntityID              *uuid.UUID      `json:"entity_id"`
+	Summary               string          `json:"summary"`
+	Changes               json.RawMessage `json:"changes"`
+	IpAddress             string          `json:"ip_address"`
+	RequestID             string          `json:"request_id"`
+	ActorIntegrationKeyID *uuid.UUID      `json:"actor_integration_key_id"`
 }
 
 type CapturedPage struct {
@@ -227,6 +228,44 @@ type CapturedPage struct {
 	CapturedBy       *uuid.UUID      `json:"captured_by"`
 	DeviceID         *uuid.UUID      `json:"device_id"`
 	CapturedAt       time.Time       `json:"captured_at"`
+}
+
+type CatalogChange struct {
+	ID            int64     `json:"id"`
+	EventID       uuid.UUID `json:"event_id"`
+	ProductID     uuid.UUID `json:"product_id"`
+	Kind          string    `json:"kind"`
+	Sku           string    `json:"sku"`
+	ChangedFields []string  `json:"changed_fields"`
+	SourcingOnly  bool      `json:"sourcing_only"`
+	OccurredAt    time.Time `json:"occurred_at"`
+	SequencedAt   time.Time `json:"sequenced_at"`
+}
+
+type CatalogChangeEvent struct {
+	ID            int64      `json:"id"`
+	Txid          int64      `json:"txid"`
+	ProductID     uuid.UUID  `json:"product_id"`
+	Source        string     `json:"source"`
+	Op            string     `json:"op"`
+	WasPublished  bool       `json:"was_published"`
+	IsPublished   bool       `json:"is_published"`
+	ChangedFields []string   `json:"changed_fields"`
+	RefID         *uuid.UUID `json:"ref_id"`
+	Sku           string     `json:"sku"`
+	CreatedAt     time.Time  `json:"created_at"`
+}
+
+type CatalogFeedState struct {
+	ID            bool  `json:"id"`
+	PrunedThrough int64 `json:"pruned_through"`
+}
+
+type CatalogProductState struct {
+	ProductID uuid.UUID `json:"product_id"`
+	Version   int64     `json:"version"`
+	ChangedAt time.Time `json:"changed_at"`
+	Published bool      `json:"published"`
 }
 
 type Company struct {
@@ -306,6 +345,29 @@ type ExtensionPairingCode struct {
 	ExpiresAt time.Time  `json:"expires_at"`
 	UsedAt    *time.Time `json:"used_at"`
 	CreatedAt time.Time  `json:"created_at"`
+}
+
+type IntegrationKey struct {
+	ID             uuid.UUID  `json:"id"`
+	Name           string     `json:"name"`
+	Description    string     `json:"description"`
+	TokenHash      []byte     `json:"token_hash"`
+	TokenPrefix    string     `json:"token_prefix"`
+	Scopes         []string   `json:"scopes"`
+	ExpiresAt      *time.Time `json:"expires_at"`
+	LastUsedAt     *time.Time `json:"last_used_at"`
+	LastUsedIp     string     `json:"last_used_ip"`
+	CreatedBy      *uuid.UUID `json:"created_by"`
+	CreatedByLabel string     `json:"created_by_label"`
+	CreatedAt      time.Time  `json:"created_at"`
+	RevokedAt      *time.Time `json:"revoked_at"`
+	RevokedBy      *uuid.UUID `json:"revoked_by"`
+}
+
+type IntegrationKeyUsage struct {
+	KeyID    uuid.UUID `json:"key_id"`
+	Day      time.Time `json:"day"`
+	Requests int64     `json:"requests"`
 }
 
 type Lead struct {
@@ -631,6 +693,65 @@ type UserSession struct {
 	LastSeenAt time.Time  `json:"last_seen_at"`
 	ExpiresAt  time.Time  `json:"expires_at"`
 	RevokedAt  *time.Time `json:"revoked_at"`
+}
+
+type WebhookDelivery struct {
+	ID             uuid.UUID       `json:"id"`
+	EndpointID     uuid.UUID       `json:"endpoint_id"`
+	EventID        uuid.UUID       `json:"event_id"`
+	EventType      string          `json:"event_type"`
+	ChangeID       *int64          `json:"change_id"`
+	ProductID      *uuid.UUID      `json:"product_id"`
+	Payload        json.RawMessage `json:"payload"`
+	IsTest         bool            `json:"is_test"`
+	Status         string          `json:"status"`
+	Attempts       int32           `json:"attempts"`
+	MaxAttempts    int32           `json:"max_attempts"`
+	NextAttemptAt  time.Time       `json:"next_attempt_at"`
+	LastAttemptAt  *time.Time      `json:"last_attempt_at"`
+	ResponseStatus *int32          `json:"response_status"`
+	ResponseBody   string          `json:"response_body"`
+	LatencyMs      *int32          `json:"latency_ms"`
+	Error          string          `json:"error"`
+	RedeliveryOf   *uuid.UUID      `json:"redelivery_of"`
+	LockedBy       string          `json:"locked_by"`
+	LockedAt       *time.Time      `json:"locked_at"`
+	CreatedAt      time.Time       `json:"created_at"`
+	FinishedAt     *time.Time      `json:"finished_at"`
+}
+
+type WebhookDeliveryAttempt struct {
+	ID           int64     `json:"id"`
+	DeliveryID   uuid.UUID `json:"delivery_id"`
+	Attempt      int32     `json:"attempt"`
+	AttemptedAt  time.Time `json:"attempted_at"`
+	StatusCode   *int32    `json:"status_code"`
+	LatencyMs    int32     `json:"latency_ms"`
+	Error        string    `json:"error"`
+	ResponseBody string    `json:"response_body"`
+}
+
+type WebhookEndpoint struct {
+	ID                       uuid.UUID  `json:"id"`
+	Name                     string     `json:"name"`
+	Url                      string     `json:"url"`
+	Events                   []string   `json:"events"`
+	Enabled                  bool       `json:"enabled"`
+	IncludeCosts             bool       `json:"include_costs"`
+	SecretCiphertext         []byte     `json:"secret_ciphertext"`
+	SecretPrefix             string     `json:"secret_prefix"`
+	PreviousSecretCiphertext []byte     `json:"previous_secret_ciphertext"`
+	PreviousSecretExpiresAt  *time.Time `json:"previous_secret_expires_at"`
+	ChangeCursor             int64      `json:"change_cursor"`
+	ConsecutiveFailures      int32      `json:"consecutive_failures"`
+	FailingSince             *time.Time `json:"failing_since"`
+	LastSuccessAt            *time.Time `json:"last_success_at"`
+	LastFailureAt            *time.Time `json:"last_failure_at"`
+	DisabledReason           string     `json:"disabled_reason"`
+	DisabledAt               *time.Time `json:"disabled_at"`
+	CreatedBy                *uuid.UUID `json:"created_by"`
+	CreatedAt                time.Time  `json:"created_at"`
+	UpdatedAt                time.Time  `json:"updated_at"`
 }
 
 type Workspace struct {

@@ -182,10 +182,29 @@ func Evaluate(rules []Rule, rates Rates, s Subject) Result {
 		res.Message = "No enabled pricing rule matches and the default rule is disabled."
 		return res
 	}
-	res.Rule = rule
+	return finish(res, *rule, rates)
+}
+
+// EvaluateRule applies one rule to the subject whatever its conditions and enabled flag, and
+// reports the conditions that would stop it from matching. It previews a rule being edited.
+func EvaluateRule(rule Rule, rates Rates, s Subject) (Result, []string) {
+	res := Evaluate(nil, rates, s)
+	if res.Status != StatusNoRule {
+		return res, nil
+	}
+	unmet := []string{}
+	if !rule.IsDefault {
+		unmet = append(unmet, rule.Conditions.Unmet(s, *res.BaseCost)...)
+	}
+	return finish(res, rule, rates), unmet
+}
+
+func finish(res Result, rule Rule, rates Rates) Result {
+	res.Rule, res.Message = &rule, ""
+	base := *res.BaseCost
 	calc := Calculate(rule.Actions, base, rates.Base)
-	if s.CostCurrency != rates.Base {
-		res.Steps = append(res.Steps, Step{Kind: "conversion", Label: fmt.Sprintf("%s %s converted at 1 %s = %s %s", cost.String(), s.CostCurrency, s.CostCurrency, res.Rate.String(), rates.Base), Amount: base})
+	if res.CostCurrency != rates.Base {
+		res.Steps = append(res.Steps, Step{Kind: "conversion", Label: fmt.Sprintf("%s %s converted at 1 %s = %s %s", res.Cost.String(), res.CostCurrency, res.CostCurrency, res.Rate.String(), rates.Base), Amount: base})
 	}
 	res.Steps = append(res.Steps, calc.Steps...)
 	res.Warnings = append(res.Warnings, calc.Warnings...)

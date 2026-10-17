@@ -18,10 +18,11 @@ const createProduct = `-- name: CreateProduct :one
 INSERT INTO products (original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id,
   supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost,
   cost_currency, price, price_currency, availability, category, status, review_status, extraction_method,
-  extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by)
+  extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, source_price,
+  source_currency, cost_manual, compare_at_price, price_locked)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23,
-  $24, $25, $26, $27, $28, $29, $30, $31, $32)
-RETURNING id, original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id, supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost, cost_currency, price, price_currency, margin_amount, margin_percent, availability, category, status, review_status, first_seen_at, last_checked_at, extraction_method, extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, created_at, updated_at
+  $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37)
+RETURNING id, original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id, supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost, cost_currency, price, price_currency, margin_amount, margin_percent, availability, category, status, review_status, first_seen_at, last_checked_at, extraction_method, extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, created_at, updated_at, source_price, source_currency, cost_manual, compare_at_price, price_locked, pricing_rule_id, priced_at
 `
 
 type CreateProductParams struct {
@@ -57,6 +58,11 @@ type CreateProductParams struct {
 	InternalNotes        string           `json:"internal_notes"`
 	CustomFields         json.RawMessage  `json:"custom_fields"`
 	CreatedBy            *uuid.UUID       `json:"created_by"`
+	SourcePrice          *decimal.Decimal `json:"source_price"`
+	SourceCurrency       *string          `json:"source_currency"`
+	CostManual           bool             `json:"cost_manual"`
+	CompareAtPrice       *decimal.Decimal `json:"compare_at_price"`
+	PriceLocked          bool             `json:"price_locked"`
 }
 
 func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error) {
@@ -93,6 +99,11 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		arg.InternalNotes,
 		arg.CustomFields,
 		arg.CreatedBy,
+		arg.SourcePrice,
+		arg.SourceCurrency,
+		arg.CostManual,
+		arg.CompareAtPrice,
+		arg.PriceLocked,
 	)
 	var i Product
 	err := row.Scan(
@@ -135,25 +146,40 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SourcePrice,
+		&i.SourceCurrency,
+		&i.CostManual,
+		&i.CompareAtPrice,
+		&i.PriceLocked,
+		&i.PricingRuleID,
+		&i.PricedAt,
 	)
 	return i, err
 }
 
 const createVariant = `-- name: CreateVariant :one
-INSERT INTO product_variants (product_id, title, sku, options, price, currency, availability, image_url, position)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id, product_id, title, sku, options, price, currency, availability, image_url, position, created_at, updated_at
+INSERT INTO product_variants (product_id, title, sku, options, price, currency, availability, image_url, position,
+  source_price, source_currency, cost, cost_currency, cost_manual, compare_at_price, price_locked)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id, product_id, title, sku, options, price, currency, availability, image_url, position, created_at, updated_at, source_price, source_currency, cost, cost_currency, cost_manual, compare_at_price, price_locked, pricing_rule_id, priced_at
 `
 
 type CreateVariantParams struct {
-	ProductID    uuid.UUID        `json:"product_id"`
-	Title        string           `json:"title"`
-	Sku          string           `json:"sku"`
-	Options      json.RawMessage  `json:"options"`
-	Price        *decimal.Decimal `json:"price"`
-	Currency     *string          `json:"currency"`
-	Availability string           `json:"availability"`
-	ImageUrl     *string          `json:"image_url"`
-	Position     int32            `json:"position"`
+	ProductID      uuid.UUID        `json:"product_id"`
+	Title          string           `json:"title"`
+	Sku            string           `json:"sku"`
+	Options        json.RawMessage  `json:"options"`
+	Price          *decimal.Decimal `json:"price"`
+	Currency       *string          `json:"currency"`
+	Availability   string           `json:"availability"`
+	ImageUrl       *string          `json:"image_url"`
+	Position       int32            `json:"position"`
+	SourcePrice    *decimal.Decimal `json:"source_price"`
+	SourceCurrency *string          `json:"source_currency"`
+	Cost           *decimal.Decimal `json:"cost"`
+	CostCurrency   *string          `json:"cost_currency"`
+	CostManual     bool             `json:"cost_manual"`
+	CompareAtPrice *decimal.Decimal `json:"compare_at_price"`
+	PriceLocked    bool             `json:"price_locked"`
 }
 
 func (q *Queries) CreateVariant(ctx context.Context, arg CreateVariantParams) (ProductVariant, error) {
@@ -167,6 +193,13 @@ func (q *Queries) CreateVariant(ctx context.Context, arg CreateVariantParams) (P
 		arg.Availability,
 		arg.ImageUrl,
 		arg.Position,
+		arg.SourcePrice,
+		arg.SourceCurrency,
+		arg.Cost,
+		arg.CostCurrency,
+		arg.CostManual,
+		arg.CompareAtPrice,
+		arg.PriceLocked,
 	)
 	var i ProductVariant
 	err := row.Scan(
@@ -182,6 +215,15 @@ func (q *Queries) CreateVariant(ctx context.Context, arg CreateVariantParams) (P
 		&i.Position,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SourcePrice,
+		&i.SourceCurrency,
+		&i.Cost,
+		&i.CostCurrency,
+		&i.CostManual,
+		&i.CompareAtPrice,
+		&i.PriceLocked,
+		&i.PricingRuleID,
+		&i.PricedAt,
 	)
 	return i, err
 }
@@ -254,7 +296,7 @@ func (q *Queries) DeleteVariant(ctx context.Context, arg DeleteVariantParams) (i
 }
 
 const findProductByBrandMPN = `-- name: FindProductByBrandMPN :many
-SELECT id, original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id, supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost, cost_currency, price, price_currency, margin_amount, margin_percent, availability, category, status, review_status, first_seen_at, last_checked_at, extraction_method, extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, created_at, updated_at FROM products WHERE lower(brand) = lower($1::text) AND lower(mpn) = lower($2::text) AND mpn <> '' LIMIT 5
+SELECT id, original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id, supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost, cost_currency, price, price_currency, margin_amount, margin_percent, availability, category, status, review_status, first_seen_at, last_checked_at, extraction_method, extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, created_at, updated_at, source_price, source_currency, cost_manual, compare_at_price, price_locked, pricing_rule_id, priced_at FROM products WHERE lower(brand) = lower($1::text) AND lower(mpn) = lower($2::text) AND mpn <> '' LIMIT 5
 `
 
 type FindProductByBrandMPNParams struct {
@@ -311,6 +353,13 @@ func (q *Queries) FindProductByBrandMPN(ctx context.Context, arg FindProductByBr
 			&i.CreatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.SourcePrice,
+			&i.SourceCurrency,
+			&i.CostManual,
+			&i.CompareAtPrice,
+			&i.PriceLocked,
+			&i.PricingRuleID,
+			&i.PricedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -323,7 +372,7 @@ func (q *Queries) FindProductByBrandMPN(ctx context.Context, arg FindProductByBr
 }
 
 const findProductByCanonicalURL = `-- name: FindProductByCanonicalURL :many
-SELECT id, original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id, supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost, cost_currency, price, price_currency, margin_amount, margin_percent, availability, category, status, review_status, first_seen_at, last_checked_at, extraction_method, extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, created_at, updated_at FROM products WHERE canonical_url = $1 OR source_url = $1 LIMIT 5
+SELECT id, original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id, supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost, cost_currency, price, price_currency, margin_amount, margin_percent, availability, category, status, review_status, first_seen_at, last_checked_at, extraction_method, extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, created_at, updated_at, source_price, source_currency, cost_manual, compare_at_price, price_locked, pricing_rule_id, priced_at FROM products WHERE canonical_url = $1 OR source_url = $1 LIMIT 5
 `
 
 func (q *Queries) FindProductByCanonicalURL(ctx context.Context, canonicalUrl *string) ([]Product, error) {
@@ -375,6 +424,13 @@ func (q *Queries) FindProductByCanonicalURL(ctx context.Context, canonicalUrl *s
 			&i.CreatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.SourcePrice,
+			&i.SourceCurrency,
+			&i.CostManual,
+			&i.CompareAtPrice,
+			&i.PriceLocked,
+			&i.PricingRuleID,
+			&i.PricedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -387,7 +443,7 @@ func (q *Queries) FindProductByCanonicalURL(ctx context.Context, canonicalUrl *s
 }
 
 const findProductByDomainSKU = `-- name: FindProductByDomainSKU :many
-SELECT id, original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id, supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost, cost_currency, price, price_currency, margin_amount, margin_percent, availability, category, status, review_status, first_seen_at, last_checked_at, extraction_method, extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, created_at, updated_at FROM products WHERE source_domain = $1 AND lower(sku) = lower($2::text) AND sku <> '' LIMIT 5
+SELECT id, original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id, supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost, cost_currency, price, price_currency, margin_amount, margin_percent, availability, category, status, review_status, first_seen_at, last_checked_at, extraction_method, extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, created_at, updated_at, source_price, source_currency, cost_manual, compare_at_price, price_locked, pricing_rule_id, priced_at FROM products WHERE source_domain = $1 AND lower(sku) = lower($2::text) AND sku <> '' LIMIT 5
 `
 
 type FindProductByDomainSKUParams struct {
@@ -444,6 +500,13 @@ func (q *Queries) FindProductByDomainSKU(ctx context.Context, arg FindProductByD
 			&i.CreatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.SourcePrice,
+			&i.SourceCurrency,
+			&i.CostManual,
+			&i.CompareAtPrice,
+			&i.PriceLocked,
+			&i.PricingRuleID,
+			&i.PricedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -456,7 +519,7 @@ func (q *Queries) FindProductByDomainSKU(ctx context.Context, arg FindProductByD
 }
 
 const findProductByGTIN = `-- name: FindProductByGTIN :many
-SELECT id, original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id, supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost, cost_currency, price, price_currency, margin_amount, margin_percent, availability, category, status, review_status, first_seen_at, last_checked_at, extraction_method, extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, created_at, updated_at FROM products WHERE gtin = $1 LIMIT 5
+SELECT id, original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id, supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost, cost_currency, price, price_currency, margin_amount, margin_percent, availability, category, status, review_status, first_seen_at, last_checked_at, extraction_method, extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, created_at, updated_at, source_price, source_currency, cost_manual, compare_at_price, price_locked, pricing_rule_id, priced_at FROM products WHERE gtin = $1 LIMIT 5
 `
 
 func (q *Queries) FindProductByGTIN(ctx context.Context, gtin *string) ([]Product, error) {
@@ -508,6 +571,13 @@ func (q *Queries) FindProductByGTIN(ctx context.Context, gtin *string) ([]Produc
 			&i.CreatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.SourcePrice,
+			&i.SourceCurrency,
+			&i.CostManual,
+			&i.CompareAtPrice,
+			&i.PriceLocked,
+			&i.PricingRuleID,
+			&i.PricedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -520,7 +590,7 @@ func (q *Queries) FindProductByGTIN(ctx context.Context, gtin *string) ([]Produc
 }
 
 const findProductsBySimilarTitle = `-- name: FindProductsBySimilarTitle :many
-SELECT p.id, p.original_title, p.title, p.normalized_title, p.source_url, p.canonical_url, p.source_domain, p.supplier_id, p.supplier_contact_id, p.company_id, p.brand, p.sku, p.model, p.mpn, p.gtin, p.identifiers, p.description, p.specifications, p.cost, p.cost_currency, p.price, p.price_currency, p.margin_amount, p.margin_percent, p.availability, p.category, p.status, p.review_status, p.first_seen_at, p.last_checked_at, p.extraction_method, p.extraction_confidence, p.captured_page_id, p.source_evidence, p.internal_notes, p.custom_fields, p.created_by, p.created_at, p.updated_at, similarity(p.normalized_title, $1::text)::float8 AS score
+SELECT p.id, p.original_title, p.title, p.normalized_title, p.source_url, p.canonical_url, p.source_domain, p.supplier_id, p.supplier_contact_id, p.company_id, p.brand, p.sku, p.model, p.mpn, p.gtin, p.identifiers, p.description, p.specifications, p.cost, p.cost_currency, p.price, p.price_currency, p.margin_amount, p.margin_percent, p.availability, p.category, p.status, p.review_status, p.first_seen_at, p.last_checked_at, p.extraction_method, p.extraction_confidence, p.captured_page_id, p.source_evidence, p.internal_notes, p.custom_fields, p.created_by, p.created_at, p.updated_at, p.source_price, p.source_currency, p.cost_manual, p.compare_at_price, p.price_locked, p.pricing_rule_id, p.priced_at, similarity(p.normalized_title, $1::text)::float8 AS score
 FROM products p
 WHERE p.normalized_title % $1::text
   AND p.id <> coalesce($2::uuid, '00000000-0000-0000-0000-000000000000'::uuid)
@@ -573,6 +643,13 @@ type FindProductsBySimilarTitleRow struct {
 	CreatedBy            *uuid.UUID       `json:"created_by"`
 	CreatedAt            time.Time        `json:"created_at"`
 	UpdatedAt            time.Time        `json:"updated_at"`
+	SourcePrice          *decimal.Decimal `json:"source_price"`
+	SourceCurrency       *string          `json:"source_currency"`
+	CostManual           bool             `json:"cost_manual"`
+	CompareAtPrice       *decimal.Decimal `json:"compare_at_price"`
+	PriceLocked          bool             `json:"price_locked"`
+	PricingRuleID        *uuid.UUID       `json:"pricing_rule_id"`
+	PricedAt             *time.Time       `json:"priced_at"`
 	Score                float64          `json:"score"`
 }
 
@@ -625,6 +702,13 @@ func (q *Queries) FindProductsBySimilarTitle(ctx context.Context, arg FindProduc
 			&i.CreatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.SourcePrice,
+			&i.SourceCurrency,
+			&i.CostManual,
+			&i.CompareAtPrice,
+			&i.PriceLocked,
+			&i.PricingRuleID,
+			&i.PricedAt,
 			&i.Score,
 		); err != nil {
 			return nil, err
@@ -638,7 +722,7 @@ func (q *Queries) FindProductsBySimilarTitle(ctx context.Context, arg FindProduc
 }
 
 const getProduct = `-- name: GetProduct :one
-SELECT id, original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id, supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost, cost_currency, price, price_currency, margin_amount, margin_percent, availability, category, status, review_status, first_seen_at, last_checked_at, extraction_method, extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, created_at, updated_at FROM products WHERE id = $1
+SELECT id, original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id, supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost, cost_currency, price, price_currency, margin_amount, margin_percent, availability, category, status, review_status, first_seen_at, last_checked_at, extraction_method, extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, created_at, updated_at, source_price, source_currency, cost_manual, compare_at_price, price_locked, pricing_rule_id, priced_at FROM products WHERE id = $1
 `
 
 func (q *Queries) GetProduct(ctx context.Context, id uuid.UUID) (Product, error) {
@@ -684,6 +768,51 @@ func (q *Queries) GetProduct(ctx context.Context, id uuid.UUID) (Product, error)
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SourcePrice,
+		&i.SourceCurrency,
+		&i.CostManual,
+		&i.CompareAtPrice,
+		&i.PriceLocked,
+		&i.PricingRuleID,
+		&i.PricedAt,
+	)
+	return i, err
+}
+
+const getVariant = `-- name: GetVariant :one
+SELECT id, product_id, title, sku, options, price, currency, availability, image_url, position, created_at, updated_at, source_price, source_currency, cost, cost_currency, cost_manual, compare_at_price, price_locked, pricing_rule_id, priced_at FROM product_variants WHERE id = $1 AND product_id = $2
+`
+
+type GetVariantParams struct {
+	ID        uuid.UUID `json:"id"`
+	ProductID uuid.UUID `json:"product_id"`
+}
+
+func (q *Queries) GetVariant(ctx context.Context, arg GetVariantParams) (ProductVariant, error) {
+	row := q.db.QueryRow(ctx, getVariant, arg.ID, arg.ProductID)
+	var i ProductVariant
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.Title,
+		&i.Sku,
+		&i.Options,
+		&i.Price,
+		&i.Currency,
+		&i.Availability,
+		&i.ImageUrl,
+		&i.Position,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.SourcePrice,
+		&i.SourceCurrency,
+		&i.Cost,
+		&i.CostCurrency,
+		&i.CostManual,
+		&i.CompareAtPrice,
+		&i.PriceLocked,
+		&i.PricingRuleID,
+		&i.PricedAt,
 	)
 	return i, err
 }
@@ -725,11 +854,11 @@ func (q *Queries) ListImages(ctx context.Context, productID uuid.UUID) ([]Produc
 }
 
 const listProducts = `-- name: ListProducts :many
-SELECT p.id, p.original_title, p.title, p.normalized_title, p.source_url, p.canonical_url, p.source_domain, p.supplier_id, p.supplier_contact_id, p.company_id, p.brand, p.sku, p.model, p.mpn, p.gtin, p.identifiers, p.description, p.specifications, p.cost, p.cost_currency, p.price, p.price_currency, p.margin_amount, p.margin_percent, p.availability, p.category, p.status, p.review_status, p.first_seen_at, p.last_checked_at, p.extraction_method, p.extraction_confidence, p.captured_page_id, p.source_evidence, p.internal_notes, p.custom_fields, p.created_by, p.created_at, p.updated_at, s.name AS supplier_name,
+SELECT p.id, p.original_title, p.title, p.normalized_title, p.source_url, p.canonical_url, p.source_domain, p.supplier_id, p.supplier_contact_id, p.company_id, p.brand, p.sku, p.model, p.mpn, p.gtin, p.identifiers, p.description, p.specifications, p.cost, p.cost_currency, p.price, p.price_currency, p.margin_amount, p.margin_percent, p.availability, p.category, p.status, p.review_status, p.first_seen_at, p.last_checked_at, p.extraction_method, p.extraction_confidence, p.captured_page_id, p.source_evidence, p.internal_notes, p.custom_fields, p.created_by, p.created_at, p.updated_at, p.source_price, p.source_currency, p.cost_manual, p.compare_at_price, p.price_locked, p.pricing_rule_id, p.priced_at, s.name AS supplier_name, pr.name AS pricing_rule_name,
   coalesce((SELECT pi.url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.position LIMIT 1), '')::text AS primary_image_url,
   (SELECT count(*) FROM product_variants pv WHERE pv.product_id = p.id) AS variant_count,
   count(*) OVER () AS total
-FROM products p LEFT JOIN suppliers s ON s.id = p.supplier_id
+FROM products p LEFT JOIN suppliers s ON s.id = p.supplier_id LEFT JOIN pricing_rules pr ON pr.id = p.pricing_rule_id
 WHERE ($1::text IS NULL
        OR rea_search_doc(p.title, p.brand, p.sku, p.description) @@ websearch_to_tsquery('simple', $1)
        OR p.normalized_title % lower($1) OR p.title ILIKE '%' || $1 || '%' OR p.sku ILIKE $1)
@@ -770,6 +899,7 @@ type ListProductsParams struct {
 type ListProductsRow struct {
 	Product         Product `json:"product"`
 	SupplierName    *string `json:"supplier_name"`
+	PricingRuleName *string `json:"pricing_rule_name"`
 	PrimaryImageUrl string  `json:"primary_image_url"`
 	VariantCount    int64   `json:"variant_count"`
 	Total           int64   `json:"total"`
@@ -836,7 +966,15 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]L
 			&i.Product.CreatedBy,
 			&i.Product.CreatedAt,
 			&i.Product.UpdatedAt,
+			&i.Product.SourcePrice,
+			&i.Product.SourceCurrency,
+			&i.Product.CostManual,
+			&i.Product.CompareAtPrice,
+			&i.Product.PriceLocked,
+			&i.Product.PricingRuleID,
+			&i.Product.PricedAt,
 			&i.SupplierName,
+			&i.PricingRuleName,
 			&i.PrimaryImageUrl,
 			&i.VariantCount,
 			&i.Total,
@@ -852,7 +990,7 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]L
 }
 
 const listProductsByIDs = `-- name: ListProductsByIDs :many
-SELECT id, original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id, supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost, cost_currency, price, price_currency, margin_amount, margin_percent, availability, category, status, review_status, first_seen_at, last_checked_at, extraction_method, extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, created_at, updated_at FROM products WHERE id = ANY($1::uuid[])
+SELECT id, original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id, supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost, cost_currency, price, price_currency, margin_amount, margin_percent, availability, category, status, review_status, first_seen_at, last_checked_at, extraction_method, extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, created_at, updated_at, source_price, source_currency, cost_manual, compare_at_price, price_locked, pricing_rule_id, priced_at FROM products WHERE id = ANY($1::uuid[])
 `
 
 func (q *Queries) ListProductsByIDs(ctx context.Context, ids []uuid.UUID) ([]Product, error) {
@@ -904,6 +1042,13 @@ func (q *Queries) ListProductsByIDs(ctx context.Context, ids []uuid.UUID) ([]Pro
 			&i.CreatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.SourcePrice,
+			&i.SourceCurrency,
+			&i.CostManual,
+			&i.CompareAtPrice,
+			&i.PriceLocked,
+			&i.PricingRuleID,
+			&i.PricedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -916,7 +1061,7 @@ func (q *Queries) ListProductsByIDs(ctx context.Context, ids []uuid.UUID) ([]Pro
 }
 
 const listVariants = `-- name: ListVariants :many
-SELECT id, product_id, title, sku, options, price, currency, availability, image_url, position, created_at, updated_at FROM product_variants WHERE product_id = $1 ORDER BY position, title
+SELECT id, product_id, title, sku, options, price, currency, availability, image_url, position, created_at, updated_at, source_price, source_currency, cost, cost_currency, cost_manual, compare_at_price, price_locked, pricing_rule_id, priced_at FROM product_variants WHERE product_id = $1 ORDER BY position, title
 `
 
 func (q *Queries) ListVariants(ctx context.Context, productID uuid.UUID) ([]ProductVariant, error) {
@@ -941,6 +1086,15 @@ func (q *Queries) ListVariants(ctx context.Context, productID uuid.UUID) ([]Prod
 			&i.Position,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.SourcePrice,
+			&i.SourceCurrency,
+			&i.Cost,
+			&i.CostCurrency,
+			&i.CostManual,
+			&i.CompareAtPrice,
+			&i.PriceLocked,
+			&i.PricingRuleID,
+			&i.PricedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -1039,14 +1193,14 @@ func (q *Queries) ProductDomains(ctx context.Context) ([]ProductDomainsRow, erro
 
 const refreshProductFromCapture = `-- name: RefreshProductFromCapture :one
 UPDATE products SET original_title = $2, description = CASE WHEN description = '' THEN $3 ELSE description END,
-  specifications = specifications || $4, price = coalesce($13, price),
-  price_currency = coalesce($14, price_currency), availability = $5,
+  specifications = specifications || $4, source_price = coalesce($13, source_price),
+  source_currency = coalesce($14, source_currency), availability = $5,
   extraction_method = $6, extraction_confidence = $7, captured_page_id = coalesce($15, captured_page_id),
   source_evidence = source_evidence || $8, last_checked_at = now(),
   brand = CASE WHEN brand = '' THEN $9 ELSE brand END, sku = CASE WHEN sku = '' THEN $10 ELSE sku END,
   gtin = coalesce(gtin, $16), mpn = CASE WHEN mpn = '' THEN $11 ELSE mpn END,
   identifiers = $12 || identifiers
-WHERE id = $1 RETURNING id, original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id, supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost, cost_currency, price, price_currency, margin_amount, margin_percent, availability, category, status, review_status, first_seen_at, last_checked_at, extraction_method, extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, created_at, updated_at
+WHERE id = $1 RETURNING id, original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id, supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost, cost_currency, price, price_currency, margin_amount, margin_percent, availability, category, status, review_status, first_seen_at, last_checked_at, extraction_method, extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, created_at, updated_at, source_price, source_currency, cost_manual, compare_at_price, price_locked, pricing_rule_id, priced_at
 `
 
 type RefreshProductFromCaptureParams struct {
@@ -1062,8 +1216,8 @@ type RefreshProductFromCaptureParams struct {
 	Sku                  string           `json:"sku"`
 	Mpn                  string           `json:"mpn"`
 	Identifiers          json.RawMessage  `json:"identifiers"`
-	Price                *decimal.Decimal `json:"price"`
-	PriceCurrency        *string          `json:"price_currency"`
+	SourcePrice          *decimal.Decimal `json:"source_price"`
+	SourceCurrency       *string          `json:"source_currency"`
 	CapturedPageID       *uuid.UUID       `json:"captured_page_id"`
 	Gtin                 *string          `json:"gtin"`
 }
@@ -1082,8 +1236,8 @@ func (q *Queries) RefreshProductFromCapture(ctx context.Context, arg RefreshProd
 		arg.Sku,
 		arg.Mpn,
 		arg.Identifiers,
-		arg.Price,
-		arg.PriceCurrency,
+		arg.SourcePrice,
+		arg.SourceCurrency,
 		arg.CapturedPageID,
 		arg.Gtin,
 	)
@@ -1128,6 +1282,70 @@ func (q *Queries) RefreshProductFromCapture(ctx context.Context, arg RefreshProd
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SourcePrice,
+		&i.SourceCurrency,
+		&i.CostManual,
+		&i.CompareAtPrice,
+		&i.PriceLocked,
+		&i.PricingRuleID,
+		&i.PricedAt,
+	)
+	return i, err
+}
+
+const refreshVariantFromCapture = `-- name: RefreshVariantFromCapture :one
+UPDATE product_variants SET title = $3, sku = $4, options = $5, source_price = coalesce($8, source_price),
+  source_currency = coalesce($9, source_currency), availability = $6, image_url = $7
+WHERE id = $1 AND product_id = $2 RETURNING id, product_id, title, sku, options, price, currency, availability, image_url, position, created_at, updated_at, source_price, source_currency, cost, cost_currency, cost_manual, compare_at_price, price_locked, pricing_rule_id, priced_at
+`
+
+type RefreshVariantFromCaptureParams struct {
+	ID             uuid.UUID        `json:"id"`
+	ProductID      uuid.UUID        `json:"product_id"`
+	Title          string           `json:"title"`
+	Sku            string           `json:"sku"`
+	Options        json.RawMessage  `json:"options"`
+	Availability   string           `json:"availability"`
+	ImageUrl       *string          `json:"image_url"`
+	SourcePrice    *decimal.Decimal `json:"source_price"`
+	SourceCurrency *string          `json:"source_currency"`
+}
+
+func (q *Queries) RefreshVariantFromCapture(ctx context.Context, arg RefreshVariantFromCaptureParams) (ProductVariant, error) {
+	row := q.db.QueryRow(ctx, refreshVariantFromCapture,
+		arg.ID,
+		arg.ProductID,
+		arg.Title,
+		arg.Sku,
+		arg.Options,
+		arg.Availability,
+		arg.ImageUrl,
+		arg.SourcePrice,
+		arg.SourceCurrency,
+	)
+	var i ProductVariant
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.Title,
+		&i.Sku,
+		&i.Options,
+		&i.Price,
+		&i.Currency,
+		&i.Availability,
+		&i.ImageUrl,
+		&i.Position,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.SourcePrice,
+		&i.SourceCurrency,
+		&i.Cost,
+		&i.CostCurrency,
+		&i.CostManual,
+		&i.CompareAtPrice,
+		&i.PriceLocked,
+		&i.PricingRuleID,
+		&i.PricedAt,
 	)
 	return i, err
 }
@@ -1148,7 +1366,7 @@ func (q *Queries) SetPrimaryImage(ctx context.Context, arg SetPrimaryImageParams
 
 const setProductEnrichment = `-- name: SetProductEnrichment :one
 UPDATE products SET title = $2, normalized_title = $3, category = $4, description = $5, specifications = $6, brand = $7
-WHERE id = $1 RETURNING id, original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id, supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost, cost_currency, price, price_currency, margin_amount, margin_percent, availability, category, status, review_status, first_seen_at, last_checked_at, extraction_method, extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, created_at, updated_at
+WHERE id = $1 RETURNING id, original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id, supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost, cost_currency, price, price_currency, margin_amount, margin_percent, availability, category, status, review_status, first_seen_at, last_checked_at, extraction_method, extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, created_at, updated_at, source_price, source_currency, cost_manual, compare_at_price, price_locked, pricing_rule_id, priced_at
 `
 
 type SetProductEnrichmentParams struct {
@@ -1212,12 +1430,19 @@ func (q *Queries) SetProductEnrichment(ctx context.Context, arg SetProductEnrich
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SourcePrice,
+		&i.SourceCurrency,
+		&i.CostManual,
+		&i.CompareAtPrice,
+		&i.PriceLocked,
+		&i.PricingRuleID,
+		&i.PricedAt,
 	)
 	return i, err
 }
 
 const setProductReview = `-- name: SetProductReview :one
-UPDATE products SET review_status = $2, status = $3 WHERE id = $1 RETURNING id, original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id, supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost, cost_currency, price, price_currency, margin_amount, margin_percent, availability, category, status, review_status, first_seen_at, last_checked_at, extraction_method, extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, created_at, updated_at
+UPDATE products SET review_status = $2, status = $3 WHERE id = $1 RETURNING id, original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id, supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost, cost_currency, price, price_currency, margin_amount, margin_percent, availability, category, status, review_status, first_seen_at, last_checked_at, extraction_method, extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, created_at, updated_at, source_price, source_currency, cost_manual, compare_at_price, price_locked, pricing_rule_id, priced_at
 `
 
 type SetProductReviewParams struct {
@@ -1269,6 +1494,13 @@ func (q *Queries) SetProductReview(ctx context.Context, arg SetProductReviewPara
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SourcePrice,
+		&i.SourceCurrency,
+		&i.CostManual,
+		&i.CompareAtPrice,
+		&i.PriceLocked,
+		&i.PricingRuleID,
+		&i.PricedAt,
 	)
 	return i, err
 }
@@ -1311,7 +1543,7 @@ func (q *Queries) SetProductStatusBulk(ctx context.Context, arg SetProductStatus
 }
 
 const setProductSupplier = `-- name: SetProductSupplier :one
-UPDATE products SET supplier_id = $2, supplier_contact_id = $3 WHERE id = $1 RETURNING id, original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id, supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost, cost_currency, price, price_currency, margin_amount, margin_percent, availability, category, status, review_status, first_seen_at, last_checked_at, extraction_method, extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, created_at, updated_at
+UPDATE products SET supplier_id = $2, supplier_contact_id = $3 WHERE id = $1 RETURNING id, original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id, supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost, cost_currency, price, price_currency, margin_amount, margin_percent, availability, category, status, review_status, first_seen_at, last_checked_at, extraction_method, extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, created_at, updated_at, source_price, source_currency, cost_manual, compare_at_price, price_locked, pricing_rule_id, priced_at
 `
 
 type SetProductSupplierParams struct {
@@ -1363,6 +1595,13 @@ func (q *Queries) SetProductSupplier(ctx context.Context, arg SetProductSupplier
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SourcePrice,
+		&i.SourceCurrency,
+		&i.CostManual,
+		&i.CompareAtPrice,
+		&i.PriceLocked,
+		&i.PricingRuleID,
+		&i.PricedAt,
 	)
 	return i, err
 }
@@ -1388,8 +1627,10 @@ const updateProduct = `-- name: UpdateProduct :one
 UPDATE products SET title = $2, normalized_title = $3, source_url = $4, canonical_url = $5, source_domain = $6,
   supplier_id = $7, supplier_contact_id = $8, company_id = $9, brand = $10, sku = $11, model = $12, mpn = $13,
   gtin = $14, identifiers = $15, description = $16, specifications = $17, cost = $18, cost_currency = $19, price = $20,
-  price_currency = $21, availability = $22, category = $23, status = $24, internal_notes = $25, custom_fields = $26
-WHERE id = $1 RETURNING id, original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id, supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost, cost_currency, price, price_currency, margin_amount, margin_percent, availability, category, status, review_status, first_seen_at, last_checked_at, extraction_method, extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, created_at, updated_at
+  price_currency = $21, availability = $22, category = $23, status = $24, internal_notes = $25, custom_fields = $26,
+  cost_manual = $27, compare_at_price = $28, price_locked = $29,
+  pricing_rule_id = CASE WHEN $29 THEN NULL ELSE pricing_rule_id END
+WHERE id = $1 RETURNING id, original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id, supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost, cost_currency, price, price_currency, margin_amount, margin_percent, availability, category, status, review_status, first_seen_at, last_checked_at, extraction_method, extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, created_at, updated_at, source_price, source_currency, cost_manual, compare_at_price, price_locked, pricing_rule_id, priced_at
 `
 
 type UpdateProductParams struct {
@@ -1419,6 +1660,9 @@ type UpdateProductParams struct {
 	Status            string           `json:"status"`
 	InternalNotes     string           `json:"internal_notes"`
 	CustomFields      json.RawMessage  `json:"custom_fields"`
+	CostManual        bool             `json:"cost_manual"`
+	CompareAtPrice    *decimal.Decimal `json:"compare_at_price"`
+	PriceLocked       bool             `json:"price_locked"`
 }
 
 func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error) {
@@ -1449,6 +1693,9 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		arg.Status,
 		arg.InternalNotes,
 		arg.CustomFields,
+		arg.CostManual,
+		arg.CompareAtPrice,
+		arg.PriceLocked,
 	)
 	var i Product
 	err := row.Scan(
@@ -1491,27 +1738,40 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SourcePrice,
+		&i.SourceCurrency,
+		&i.CostManual,
+		&i.CompareAtPrice,
+		&i.PriceLocked,
+		&i.PricingRuleID,
+		&i.PricedAt,
 	)
 	return i, err
 }
 
 const updateVariant = `-- name: UpdateVariant :one
 UPDATE product_variants SET title = $3, sku = $4, options = $5, price = $6, currency = $7, availability = $8,
-  image_url = $9, position = $10
-WHERE id = $1 AND product_id = $2 RETURNING id, product_id, title, sku, options, price, currency, availability, image_url, position, created_at, updated_at
+  image_url = $9, position = $10, cost = $11, cost_currency = $12, cost_manual = $13, compare_at_price = $14,
+  price_locked = $15, pricing_rule_id = CASE WHEN $15 THEN NULL ELSE pricing_rule_id END
+WHERE id = $1 AND product_id = $2 RETURNING id, product_id, title, sku, options, price, currency, availability, image_url, position, created_at, updated_at, source_price, source_currency, cost, cost_currency, cost_manual, compare_at_price, price_locked, pricing_rule_id, priced_at
 `
 
 type UpdateVariantParams struct {
-	ID           uuid.UUID        `json:"id"`
-	ProductID    uuid.UUID        `json:"product_id"`
-	Title        string           `json:"title"`
-	Sku          string           `json:"sku"`
-	Options      json.RawMessage  `json:"options"`
-	Price        *decimal.Decimal `json:"price"`
-	Currency     *string          `json:"currency"`
-	Availability string           `json:"availability"`
-	ImageUrl     *string          `json:"image_url"`
-	Position     int32            `json:"position"`
+	ID             uuid.UUID        `json:"id"`
+	ProductID      uuid.UUID        `json:"product_id"`
+	Title          string           `json:"title"`
+	Sku            string           `json:"sku"`
+	Options        json.RawMessage  `json:"options"`
+	Price          *decimal.Decimal `json:"price"`
+	Currency       *string          `json:"currency"`
+	Availability   string           `json:"availability"`
+	ImageUrl       *string          `json:"image_url"`
+	Position       int32            `json:"position"`
+	Cost           *decimal.Decimal `json:"cost"`
+	CostCurrency   *string          `json:"cost_currency"`
+	CostManual     bool             `json:"cost_manual"`
+	CompareAtPrice *decimal.Decimal `json:"compare_at_price"`
+	PriceLocked    bool             `json:"price_locked"`
 }
 
 func (q *Queries) UpdateVariant(ctx context.Context, arg UpdateVariantParams) (ProductVariant, error) {
@@ -1526,6 +1786,11 @@ func (q *Queries) UpdateVariant(ctx context.Context, arg UpdateVariantParams) (P
 		arg.Availability,
 		arg.ImageUrl,
 		arg.Position,
+		arg.Cost,
+		arg.CostCurrency,
+		arg.CostManual,
+		arg.CompareAtPrice,
+		arg.PriceLocked,
 	)
 	var i ProductVariant
 	err := row.Scan(
@@ -1541,6 +1806,15 @@ func (q *Queries) UpdateVariant(ctx context.Context, arg UpdateVariantParams) (P
 		&i.Position,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SourcePrice,
+		&i.SourceCurrency,
+		&i.Cost,
+		&i.CostCurrency,
+		&i.CostManual,
+		&i.CompareAtPrice,
+		&i.PriceLocked,
+		&i.PricingRuleID,
+		&i.PricedAt,
 	)
 	return i, err
 }

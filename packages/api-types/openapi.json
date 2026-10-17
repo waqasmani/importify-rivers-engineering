@@ -1341,6 +1341,14 @@
           "normalized": {
             "$ref": "#/components/schemas/Normalized"
           },
+          "pricing": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImportPricing"
+              }
+            ],
+            "nullable": true
+          },
           "suggested_supplier": {
             "allOf": [
               {
@@ -1944,6 +1952,72 @@
           "mapping",
           "sample_rows",
           "total_rows"
+        ],
+        "type": "object"
+      },
+      "CurrencyRate": {
+        "properties": {
+          "base_currency": {
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "rate": {
+            "example": "12.50",
+            "format": "decimal",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updated_by": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "base_currency",
+          "created_at",
+          "currency",
+          "note",
+          "rate",
+          "updated_at",
+          "updated_by"
+        ],
+        "type": "object"
+      },
+      "CurrencyRatesDoc": {
+        "properties": {
+          "base_currency": {
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CurrencyRate"
+            },
+            "type": "array"
+          },
+          "other_bases": {
+            "items": {
+              "$ref": "#/components/schemas/CurrencyRate"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "base_currency",
+          "items",
+          "other_bases"
         ],
         "type": "object"
       },
@@ -2745,6 +2819,109 @@
         ],
         "type": "object"
       },
+      "ImportDetail": {
+        "properties": {
+          "captured_page_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "created_by": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "decision": {
+            "nullable": true,
+            "type": "string"
+          },
+          "device_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "duplicate_candidates": {
+            "nullable": true
+          },
+          "duplicate_of_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "normalized": {
+            "nullable": true
+          },
+          "payload": {
+            "nullable": true
+          },
+          "pricing": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImportPricing"
+              }
+            ],
+            "nullable": true
+          },
+          "processed_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "product_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "reviewed_by": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "captured_page_id",
+          "created_at",
+          "created_by",
+          "decision",
+          "device_id",
+          "duplicate_candidates",
+          "duplicate_of_id",
+          "error",
+          "id",
+          "normalized",
+          "payload",
+          "processed_at",
+          "product_id",
+          "reviewed_by",
+          "source",
+          "status",
+          "warnings"
+        ],
+        "type": "object"
+      },
       "ImportField": {
         "properties": {
           "key": {
@@ -2933,6 +3110,28 @@
         ],
         "type": "object"
       },
+      "ImportPricing": {
+        "properties": {
+          "base_currency": {
+            "type": "string"
+          },
+          "product": {
+            "$ref": "#/components/schemas/PricingEvaluation"
+          },
+          "variants": {
+            "items": {
+              "$ref": "#/components/schemas/ImportVariantPricing"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "base_currency",
+          "product",
+          "variants"
+        ],
+        "type": "object"
+      },
       "ImportRequest": {
         "properties": {
           "captured_page_id": {
@@ -3065,6 +3264,26 @@
           "auto_link_supplier_by_domain",
           "default_currency",
           "title_similarity_threshold"
+        ],
+        "type": "object"
+      },
+      "ImportVariantPricing": {
+        "properties": {
+          "evaluation": {
+            "$ref": "#/components/schemas/PricingEvaluation"
+          },
+          "index": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "evaluation",
+          "index",
+          "title"
         ],
         "type": "object"
       },
@@ -5828,6 +6047,688 @@
         ],
         "type": "object"
       },
+      "PriceSnapshot": {
+        "properties": {
+          "compare_at_price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "cost": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "cost_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "price_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "pricing_rule_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "pricing_rule_name": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "compare_at_price",
+          "cost",
+          "cost_currency",
+          "price",
+          "price_currency",
+          "pricing_rule_id",
+          "pricing_rule_name"
+        ],
+        "type": "object"
+      },
+      "PricingEvaluation": {
+        "properties": {
+          "base_cost": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "compare_at_price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "cost": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "cost_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "margin_amount": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "margin_percent": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "rate": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "rule": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PricingRuleRef"
+              }
+            ],
+            "nullable": true
+          },
+          "status": {
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/PricingStep"
+            },
+            "type": "array"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "base_cost",
+          "compare_at_price",
+          "cost",
+          "cost_currency",
+          "currency",
+          "margin_amount",
+          "margin_percent",
+          "message",
+          "price",
+          "rate",
+          "rule",
+          "status",
+          "steps",
+          "warnings"
+        ],
+        "type": "object"
+      },
+      "PricingPlan": {
+        "properties": {
+          "changed": {
+            "type": "boolean"
+          },
+          "evaluation": {
+            "$ref": "#/components/schemas/PricingEvaluation"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "changed",
+          "evaluation",
+          "status"
+        ],
+        "type": "object"
+      },
+      "PricingPreviewDoc": {
+        "properties": {
+          "base_cost": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "compare_at_price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "conditions_met": {
+            "nullable": true,
+            "type": "boolean"
+          },
+          "cost": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "cost_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "margin_amount": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "margin_percent": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "rate": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "rule": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PricingRuleRef"
+              }
+            ],
+            "nullable": true
+          },
+          "status": {
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/PricingStep"
+            },
+            "type": "array"
+          },
+          "unmet_conditions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "base_cost",
+          "compare_at_price",
+          "cost",
+          "cost_currency",
+          "currency",
+          "margin_amount",
+          "margin_percent",
+          "message",
+          "price",
+          "rate",
+          "rule",
+          "status",
+          "steps",
+          "warnings"
+        ],
+        "type": "object"
+      },
+      "PricingPreviewInput": {
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "cost": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "rule": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PricingRuleInput"
+              }
+            ],
+            "nullable": true
+          },
+          "rule_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "source_domain": {
+            "type": "string"
+          },
+          "supplier_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "tag_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "cost"
+        ],
+        "type": "object"
+      },
+      "PricingRuleInput": {
+        "properties": {
+          "category_contains": {
+            "type": "string"
+          },
+          "compare_at_mode": {
+            "type": "string"
+          },
+          "compare_at_value": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "enabled": {
+            "nullable": true,
+            "type": "boolean"
+          },
+          "fixed_amount": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "fixed_amount_before_markup": {
+            "type": "boolean"
+          },
+          "markup_percent": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "max_cost": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "min_cost": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "min_margin_amount": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "min_margin_percent": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "min_price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "multiplier": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "priority": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "rounding": {
+            "type": "string"
+          },
+          "rounding_ending": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "rounding_step": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "source_domains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "supplier_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "tag_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "PricingRuleRef": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "is_default": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "is_default",
+          "name"
+        ],
+        "type": "object"
+      },
+      "PricingRuleView": {
+        "properties": {
+          "category_contains": {
+            "type": "string"
+          },
+          "compare_at_mode": {
+            "type": "string"
+          },
+          "compare_at_value": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "created_by": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "fixed_amount": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "fixed_amount_before_markup": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "is_default": {
+            "type": "boolean"
+          },
+          "markup_percent": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "max_cost": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "min_cost": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "min_margin_amount": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "min_margin_percent": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "min_price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "multiplier": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "priority": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "product_count": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "rounding": {
+            "type": "string"
+          },
+          "rounding_ending": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "rounding_step": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "source_domains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "supplier_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "suppliers": {
+            "items": {
+              "$ref": "#/components/schemas/SupplierRef"
+            },
+            "type": "array"
+          },
+          "tag_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "tags": {
+            "items": {
+              "$ref": "#/components/schemas/TagRef"
+            },
+            "type": "array"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category_contains",
+          "compare_at_mode",
+          "compare_at_value",
+          "created_at",
+          "created_by",
+          "description",
+          "enabled",
+          "fixed_amount",
+          "fixed_amount_before_markup",
+          "id",
+          "is_default",
+          "markup_percent",
+          "max_cost",
+          "min_cost",
+          "min_margin_amount",
+          "min_margin_percent",
+          "min_price",
+          "multiplier",
+          "name",
+          "priority",
+          "product_count",
+          "rounding",
+          "rounding_ending",
+          "rounding_step",
+          "source_domains",
+          "supplier_ids",
+          "suppliers",
+          "tag_ids",
+          "tags",
+          "updated_at"
+        ],
+        "type": "object"
+      },
+      "PricingRulesDoc": {
+        "properties": {
+          "base_currency": {
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PricingRuleView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "base_currency",
+          "items"
+        ],
+        "type": "object"
+      },
+      "PricingStep": {
+        "properties": {
+          "amount": {
+            "example": "12.50",
+            "format": "decimal",
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "kind",
+          "label"
+        ],
+        "type": "object"
+      },
       "Product": {
         "properties": {
           "availability": {
@@ -5853,6 +6754,12 @@
             "nullable": true,
             "type": "string"
           },
+          "compare_at_price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
           "cost": {
             "example": "12.50",
             "format": "decimal",
@@ -5862,6 +6769,9 @@
           "cost_currency": {
             "nullable": true,
             "type": "string"
+          },
+          "cost_manual": {
+            "type": "boolean"
           },
           "created_at": {
             "format": "date-time",
@@ -5943,10 +6853,27 @@
             "nullable": true,
             "type": "string"
           },
+          "price_locked": {
+            "type": "boolean"
+          },
+          "priced_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "pricing_rule_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "review_status": {
             "type": "string"
           },
           "sku": {
+            "type": "string"
+          },
+          "source_currency": {
+            "nullable": true,
             "type": "string"
           },
           "source_domain": {
@@ -5954,6 +6881,12 @@
           },
           "source_evidence": {
             "nullable": true
+          },
+          "source_price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
           },
           "source_url": {
             "nullable": true,
@@ -5990,8 +6923,10 @@
           "captured_page_id",
           "category",
           "company_id",
+          "compare_at_price",
           "cost",
           "cost_currency",
+          "cost_manual",
           "created_at",
           "created_by",
           "custom_fields",
@@ -6012,10 +6947,15 @@
           "original_title",
           "price",
           "price_currency",
+          "price_locked",
+          "priced_at",
+          "pricing_rule_id",
           "review_status",
           "sku",
+          "source_currency",
           "source_domain",
           "source_evidence",
+          "source_price",
           "source_url",
           "specifications",
           "status",
@@ -6075,6 +7015,12 @@
             "nullable": true,
             "type": "string"
           },
+          "compare_at_price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
           "cost": {
             "example": "12.50",
             "format": "decimal",
@@ -6084,6 +7030,9 @@
           "cost_currency": {
             "nullable": true,
             "type": "string"
+          },
+          "cost_manual": {
+            "type": "boolean"
           },
           "created_at": {
             "format": "date-time",
@@ -6177,6 +7126,26 @@
             "nullable": true,
             "type": "string"
           },
+          "price_locked": {
+            "type": "boolean"
+          },
+          "priced_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "pricing": {
+            "$ref": "#/components/schemas/ProductPricing"
+          },
+          "pricing_rule_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "pricing_rule_name": {
+            "nullable": true,
+            "type": "string"
+          },
           "primary_image_url": {
             "nullable": true,
             "type": "string"
@@ -6187,11 +7156,21 @@
           "sku": {
             "type": "string"
           },
+          "source_currency": {
+            "nullable": true,
+            "type": "string"
+          },
           "source_domain": {
             "type": "string"
           },
           "source_evidence": {
             "nullable": true
+          },
+          "source_price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
           },
           "source_url": {
             "nullable": true,
@@ -6255,8 +7234,10 @@
           "captured_page_id",
           "category",
           "company_id",
+          "compare_at_price",
           "cost",
           "cost_currency",
+          "cost_manual",
           "created_at",
           "created_by",
           "custom_fields",
@@ -6279,10 +7260,16 @@
           "original_title",
           "price",
           "price_currency",
+          "price_locked",
+          "priced_at",
+          "pricing",
+          "pricing_rule_id",
           "review_status",
           "sku",
+          "source_currency",
           "source_domain",
           "source_evidence",
+          "source_price",
           "source_url",
           "specifications",
           "status",
@@ -6499,6 +7486,12 @@
             "nullable": true,
             "type": "string"
           },
+          "compare_at_price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
           "cost": {
             "example": "12.50",
             "format": "decimal",
@@ -6544,6 +7537,10 @@
           "price_currency": {
             "nullable": true,
             "type": "string"
+          },
+          "price_locked": {
+            "nullable": true,
+            "type": "boolean"
           },
           "sku": {
             "type": "string"
@@ -6608,10 +7605,85 @@
         ],
         "type": "object"
       },
+      "ProductPricing": {
+        "properties": {
+          "base_currency": {
+            "type": "string"
+          },
+          "product": {
+            "$ref": "#/components/schemas/PricingPlan"
+          },
+          "rule_names": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "variants": {
+            "items": {
+              "$ref": "#/components/schemas/VariantPricingPlan"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "base_currency",
+          "product",
+          "rule_names",
+          "variants"
+        ],
+        "type": "object"
+      },
+      "ProductPricingInput": {
+        "properties": {
+          "compare_at_price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "price_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "price_locked": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "price_locked"
+        ],
+        "type": "object"
+      },
       "ProductVariant": {
         "properties": {
           "availability": {
             "type": "string"
+          },
+          "compare_at_price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "cost": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "cost_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "cost_manual": {
+            "type": "boolean"
           },
           "created_at": {
             "format": "date-time",
@@ -6642,11 +7714,34 @@
             "nullable": true,
             "type": "string"
           },
+          "price_locked": {
+            "type": "boolean"
+          },
+          "priced_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "pricing_rule_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "product_id": {
             "format": "uuid",
             "type": "string"
           },
           "sku": {
+            "type": "string"
+          },
+          "source_currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "source_price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
             "type": "string"
           },
           "title": {
@@ -6659,6 +7754,10 @@
         },
         "required": [
           "availability",
+          "compare_at_price",
+          "cost",
+          "cost_currency",
+          "cost_manual",
           "created_at",
           "currency",
           "id",
@@ -6666,8 +7765,13 @@
           "options",
           "position",
           "price",
+          "price_locked",
+          "priced_at",
+          "pricing_rule_id",
           "product_id",
           "sku",
+          "source_currency",
+          "source_price",
           "title",
           "updated_at"
         ],
@@ -6698,6 +7802,12 @@
             "nullable": true,
             "type": "string"
           },
+          "compare_at_price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
           "cost": {
             "example": "12.50",
             "format": "decimal",
@@ -6707,6 +7817,9 @@
           "cost_currency": {
             "nullable": true,
             "type": "string"
+          },
+          "cost_manual": {
+            "type": "boolean"
           },
           "created_at": {
             "format": "date-time",
@@ -6788,6 +7901,23 @@
             "nullable": true,
             "type": "string"
           },
+          "price_locked": {
+            "type": "boolean"
+          },
+          "priced_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "pricing_rule_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "pricing_rule_name": {
+            "nullable": true,
+            "type": "string"
+          },
           "primary_image_url": {
             "nullable": true,
             "type": "string"
@@ -6798,11 +7928,21 @@
           "sku": {
             "type": "string"
           },
+          "source_currency": {
+            "nullable": true,
+            "type": "string"
+          },
           "source_domain": {
             "type": "string"
           },
           "source_evidence": {
             "nullable": true
+          },
+          "source_price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
           },
           "source_url": {
             "nullable": true,
@@ -6854,8 +7994,10 @@
           "captured_page_id",
           "category",
           "company_id",
+          "compare_at_price",
           "cost",
           "cost_currency",
+          "cost_manual",
           "created_at",
           "created_by",
           "custom_fields",
@@ -6876,10 +8018,15 @@
           "original_title",
           "price",
           "price_currency",
+          "price_locked",
+          "priced_at",
+          "pricing_rule_id",
           "review_status",
           "sku",
+          "source_currency",
           "source_domain",
           "source_evidence",
+          "source_price",
           "source_url",
           "specifications",
           "status",
@@ -7320,6 +8467,39 @@
         ],
         "type": "object"
       },
+      "RateInput": {
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "rate": {
+            "example": "12.50",
+            "format": "decimal",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rate"
+        ],
+        "type": "object"
+      },
+      "RatesInput": {
+        "properties": {
+          "rates": {
+            "items": {
+              "$ref": "#/components/schemas/RateInput"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "rates"
+        ],
+        "type": "object"
+      },
       "RecordTagsInput": {
         "properties": {
           "entity_id": {
@@ -7362,6 +8542,21 @@
         ],
         "type": "object"
       },
+      "ReorderInput": {
+        "properties": {
+          "ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ids"
+        ],
+        "type": "object"
+      },
       "ReportDetailDoc": {
         "properties": {
           "findings": {
@@ -7396,6 +8591,219 @@
           "content_markdown",
           "kind",
           "title"
+        ],
+        "type": "object"
+      },
+      "RepriceFilter": {
+        "properties": {
+          "availability": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "q": {
+            "type": "string"
+          },
+          "review_status": {
+            "type": "string"
+          },
+          "source_domain": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "supplier_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "tag_id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "RepriceInput": {
+        "properties": {
+          "dry_run": {
+            "type": "boolean"
+          },
+          "filter": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RepriceFilter"
+              }
+            ],
+            "nullable": true
+          },
+          "ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "dry_run"
+        ],
+        "type": "object"
+      },
+      "RepriceItem": {
+        "properties": {
+          "after": {
+            "$ref": "#/components/schemas/PriceSnapshot"
+          },
+          "before": {
+            "$ref": "#/components/schemas/PriceSnapshot"
+          },
+          "changed": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "product_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "variants": {
+            "items": {
+              "$ref": "#/components/schemas/RepriceVariant"
+            },
+            "type": "array"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "after",
+          "before",
+          "changed",
+          "message",
+          "product_id",
+          "status",
+          "title",
+          "variants",
+          "warnings"
+        ],
+        "type": "object"
+      },
+      "RepriceResult": {
+        "properties": {
+          "base_currency": {
+            "type": "string"
+          },
+          "dry_run": {
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RepriceItem"
+            },
+            "type": "array"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/RepriceSummary"
+          }
+        },
+        "required": [
+          "base_currency",
+          "dry_run",
+          "items",
+          "summary"
+        ],
+        "type": "object"
+      },
+      "RepriceSummary": {
+        "properties": {
+          "changed": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "locked": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "not_priced": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "products": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "unchanged": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "variants": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "variants_changed": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "changed",
+          "locked",
+          "not_priced",
+          "products",
+          "unchanged",
+          "variants",
+          "variants_changed"
+        ],
+        "type": "object"
+      },
+      "RepriceVariant": {
+        "properties": {
+          "after": {
+            "$ref": "#/components/schemas/PriceSnapshot"
+          },
+          "before": {
+            "$ref": "#/components/schemas/PriceSnapshot"
+          },
+          "changed": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "variant_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "after",
+          "before",
+          "changed",
+          "message",
+          "status",
+          "title",
+          "variant_id"
         ],
         "type": "object"
       },
@@ -8539,6 +9947,22 @@
         ],
         "type": "object"
       },
+      "SupplierRef": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
       "SupplierView": {
         "properties": {
           "address": {
@@ -9438,6 +10862,22 @@
           "availability": {
             "type": "string"
           },
+          "compare_at_price": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "cost": {
+            "example": "12.50",
+            "format": "decimal",
+            "nullable": true,
+            "type": "string"
+          },
+          "cost_currency": {
+            "nullable": true,
+            "type": "string"
+          },
           "currency": {
             "nullable": true,
             "type": "string"
@@ -9462,6 +10902,10 @@
             "nullable": true,
             "type": "string"
           },
+          "price_locked": {
+            "nullable": true,
+            "type": "boolean"
+          },
           "sku": {
             "type": "string"
           },
@@ -9478,6 +10922,22 @@
           "price",
           "sku",
           "title"
+        ],
+        "type": "object"
+      },
+      "VariantPricingPlan": {
+        "properties": {
+          "plan": {
+            "$ref": "#/components/schemas/PricingPlan"
+          },
+          "variant_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "plan",
+          "variant_id"
         ],
         "type": "object"
       },
@@ -14500,7 +15960,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProductImport"
+                  "$ref": "#/components/schemas/ImportDetail"
                 }
               }
             },
@@ -14517,7 +15977,7 @@
             "description": "Error"
           }
         },
-        "summary": "One import with its payload",
+        "summary": "One import with its payload and the price the current rules give it",
         "tags": [
           "Products"
         ]
@@ -16207,6 +17667,447 @@
         ]
       }
     },
+    "/api/v1/pricing/preview": {
+      "post": {
+        "operationId": "previewPricing",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PricingPreviewInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PricingPreviewDoc"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Evaluate the saved rules, or a draft rule, for an input without saving anything",
+        "tags": [
+          "Pricing"
+        ]
+      }
+    },
+    "/api/v1/pricing/rates": {
+      "get": {
+        "operationId": "listCurrencyRates",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrencyRatesDoc"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Manually maintained exchange rates against the base currency",
+        "tags": [
+          "Pricing"
+        ]
+      },
+      "put": {
+        "operationId": "putCurrencyRates",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RatesInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrencyRatesDoc"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Create or replace several exchange rates at once",
+        "tags": [
+          "Pricing"
+        ]
+      }
+    },
+    "/api/v1/pricing/rates/{currency}": {
+      "delete": {
+        "operationId": "deleteCurrencyRate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "currency",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "base",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete an exchange rate (base selects a rate recorded against another base currency)",
+        "tags": [
+          "Pricing"
+        ]
+      },
+      "put": {
+        "operationId": "putCurrencyRate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "currency",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RateInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrencyRate"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Create or replace the rate of one currency (1 currency = rate base)",
+        "tags": [
+          "Pricing"
+        ]
+      }
+    },
+    "/api/v1/pricing/rules": {
+      "get": {
+        "operationId": "listPricingRules",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PricingRulesDoc"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Pricing rules in evaluation order (the default rule last)",
+        "tags": [
+          "Pricing"
+        ]
+      },
+      "post": {
+        "operationId": "createPricingRule",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PricingRuleInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PricingRuleView"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Create a pricing rule (evaluated last unless a priority is given)",
+        "tags": [
+          "Pricing"
+        ]
+      }
+    },
+    "/api/v1/pricing/rules/reorder": {
+      "post": {
+        "operationId": "reorderPricingRules",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PricingRulesDoc"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Set the evaluation order of every rule except the default rule",
+        "tags": [
+          "Pricing"
+        ]
+      }
+    },
+    "/api/v1/pricing/rules/{id}": {
+      "delete": {
+        "operationId": "deletePricingRule",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete a pricing rule (the default rule cannot be deleted)",
+        "tags": [
+          "Pricing"
+        ]
+      },
+      "get": {
+        "operationId": "getPricingRule",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PricingRuleView"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Get a pricing rule",
+        "tags": [
+          "Pricing"
+        ]
+      },
+      "put": {
+        "operationId": "updatePricingRule",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PricingRuleInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PricingRuleView"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Replace a pricing rule",
+        "tags": [
+          "Pricing"
+        ]
+      }
+    },
     "/api/v1/products": {
       "get": {
         "operationId": "listProducts",
@@ -16575,6 +18476,48 @@
         ]
       }
     },
+    "/api/v1/products/reprice": {
+      "post": {
+        "operationId": "repriceProducts",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RepriceInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepriceResult"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Recalculate costs and prices by ids or filter; dry_run returns before/after without saving",
+        "tags": [
+          "Pricing"
+        ]
+      }
+    },
     "/api/v1/products/{id}": {
       "delete": {
         "operationId": "deleteProduct",
@@ -16928,6 +18871,57 @@
         "summary": "Merge products into this one",
         "tags": [
           "Products"
+        ]
+      }
+    },
+    "/api/v1/products/{id}/pricing": {
+      "put": {
+        "operationId": "setProductPricing",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductPricingInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDetail"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDoc"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Lock a manual price, or unlock it so the pricing rules set it again",
+        "tags": [
+          "Pricing"
         ]
       }
     },

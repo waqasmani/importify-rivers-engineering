@@ -70,7 +70,7 @@ func (s *Server) exportSpecs() map[string]exportSpec {
 				v, _, err := s.listTasks(r, l, o)
 				return toAnySlice(v), err
 			}},
-		"product": {strings.Fields("id title original_title brand sku model mpn gtin category source_url source_domain supplier_name cost cost_currency price price_currency margin_amount margin_percent availability status review_status extraction_method extraction_confidence variant_count primary_image_url description specifications tags first_seen_at last_checked_at"),
+		"product": {strings.Fields("id title original_title brand sku model mpn gtin category source_url source_domain supplier_name source_price source_currency cost cost_currency price price_currency compare_at_price price_locked pricing_rule_name margin_amount margin_percent availability status review_status extraction_method extraction_confidence variant_count primary_image_url description specifications tags first_seen_at last_checked_at"),
 			func(r *http.Request, l, o int32) ([]any, error) {
 				v, _, err := s.listProducts(r, l, o)
 				return toAnySlice(v), err
@@ -265,9 +265,11 @@ var importFields = map[string][]importField{
 		{"gtin", "GTIN", false, []string{"ean", "upc", "barcode"}},
 		{"description", "Description", false, nil},
 		{"category", "Category", false, nil},
+		{"source_price", "Source price", false, []string{"supplier price", "marketplace price", "original price"}},
+		{"source_currency", "Source currency", false, []string{"supplier currency"}},
 		{"cost", "Cost", false, []string{"unit cost", "purchase price", "buy price"}},
 		{"cost_currency", "Cost currency", false, nil},
-		{"price", "Price", false, []string{"retail price", "sell price", "selling price"}},
+		{"price", "Selling price", false, []string{"retail price", "sell price", "selling price"}},
 		{"price_currency", "Price currency", false, []string{"currency"}},
 		{"availability", "Availability", false, []string{"stock", "in stock"}},
 		{"supplier", "Supplier", false, []string{"supplier name", "vendor"}},

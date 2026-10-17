@@ -62,6 +62,8 @@ var exportTables = []struct{ name, query string }{
 	{"product_images", "SELECT * FROM product_images"},
 	{"supplier_products", "SELECT * FROM supplier_products"},
 	{"product_imports", "SELECT * FROM product_imports"},
+	{"pricing_rules", "SELECT * FROM pricing_rules"},
+	{"currency_rates", "SELECT base_currency, currency, rate, note, updated_by, created_at, updated_at FROM currency_rates"},
 	{"analysis_projects", "SELECT * FROM analysis_projects"},
 	{"analysis_sources", "SELECT * FROM analysis_sources"},
 	{"analysis_runs", "SELECT * FROM analysis_runs"},

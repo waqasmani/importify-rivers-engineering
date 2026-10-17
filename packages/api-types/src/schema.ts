@@ -1316,7 +1316,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** One import with its payload */
+        /** One import with its payload and the price the current rules give it */
         get: operations["getImport"];
         put?: never;
         post?: never;
@@ -1694,6 +1694,113 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pricing/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Evaluate the saved rules, or a draft rule, for an input without saving anything */
+        post: operations["previewPricing"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pricing/rates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Manually maintained exchange rates against the base currency */
+        get: operations["listCurrencyRates"];
+        /** Create or replace several exchange rates at once */
+        put: operations["putCurrencyRates"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pricing/rates/{currency}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Create or replace the rate of one currency (1 currency = rate base) */
+        put: operations["putCurrencyRate"];
+        post?: never;
+        /** Delete an exchange rate (base selects a rate recorded against another base currency) */
+        delete: operations["deleteCurrencyRate"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pricing/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pricing rules in evaluation order (the default rule last) */
+        get: operations["listPricingRules"];
+        put?: never;
+        /** Create a pricing rule (evaluated last unless a priority is given) */
+        post: operations["createPricingRule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pricing/rules/reorder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set the evaluation order of every rule except the default rule */
+        post: operations["reorderPricingRules"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pricing/rules/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a pricing rule */
+        get: operations["getPricingRule"];
+        /** Replace a pricing rule */
+        put: operations["updatePricingRule"];
+        post?: never;
+        /** Delete a pricing rule (the default rule cannot be deleted) */
+        delete: operations["deletePricingRule"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/products": {
         parameters: {
             query?: never;
@@ -1757,6 +1864,23 @@ export interface paths {
         get: operations["productFacets"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/products/reprice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Recalculate costs and prices by ids or filter; dry_run returns before/after without saving */
+        post: operations["repriceProducts"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1861,6 +1985,23 @@ export interface paths {
         put?: never;
         /** Merge products into this one */
         post: operations["mergeProducts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/products/{id}/pricing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Lock a manual price, or unlock it so the pricing rules set it again */
+        put: operations["setProductPricing"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2964,6 +3105,7 @@ export interface components {
                 [key: string]: string;
             };
             normalized: components["schemas"]["Normalized"];
+            pricing?: components["schemas"]["ImportPricing"] | null;
             suggested_supplier: components["schemas"]["DuplicateCandidate"] | null;
             warnings: string[];
         };
@@ -3131,6 +3273,27 @@ export interface components {
             sample_rows: string[][];
             /** Format: int32 */
             total_rows: number;
+        };
+        CurrencyRate: {
+            base_currency: string;
+            /** Format: date-time */
+            created_at: string;
+            currency: string;
+            note: string;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            rate: string;
+            /** Format: date-time */
+            updated_at: string;
+            /** Format: uuid */
+            updated_by: string | null;
+        };
+        CurrencyRatesDoc: {
+            base_currency: string;
+            items: components["schemas"]["CurrencyRate"][];
+            other_bases: components["schemas"]["CurrencyRate"][];
         };
         CustomFieldDefinition: {
             /** Format: date-time */
@@ -3367,6 +3530,35 @@ export interface components {
             alt_text: string;
             url: string;
         };
+        ImportDetail: {
+            /** Format: uuid */
+            captured_page_id: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: uuid */
+            created_by: string | null;
+            decision: string | null;
+            /** Format: uuid */
+            device_id: string | null;
+            duplicate_candidates: unknown;
+            /** Format: uuid */
+            duplicate_of_id: string | null;
+            error: string;
+            /** Format: uuid */
+            id: string;
+            normalized: unknown;
+            payload: unknown;
+            pricing?: components["schemas"]["ImportPricing"] | null;
+            /** Format: date-time */
+            processed_at: string | null;
+            /** Format: uuid */
+            product_id: string | null;
+            /** Format: uuid */
+            reviewed_by: string | null;
+            source: string;
+            status: string;
+            warnings: string[];
+        };
         ImportField: {
             key: string;
             label: string;
@@ -3418,6 +3610,11 @@ export interface components {
             status: string;
             warnings: string[];
         };
+        ImportPricing: {
+            base_currency: string;
+            product: components["schemas"]["PricingEvaluation"];
+            variants: components["schemas"]["ImportVariantPricing"][];
+        };
         ImportRequest: {
             /** Format: uuid */
             captured_page_id: string | null;
@@ -3457,6 +3654,12 @@ export interface components {
             auto_link_supplier_by_domain: boolean;
             default_currency: string;
             title_similarity_threshold: number;
+        };
+        ImportVariantPricing: {
+            evaluation: components["schemas"]["PricingEvaluation"];
+            /** Format: int32 */
+            index: number;
+            title: string;
         };
         ImportsPerDayRow: {
             /** Format: date-time */
@@ -4324,6 +4527,309 @@ export interface components {
         PipelineViewItems: {
             items: components["schemas"]["PipelineView"][];
         };
+        PriceSnapshot: {
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            compare_at_price: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            cost: string | null;
+            cost_currency: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            price: string | null;
+            price_currency: string | null;
+            /** Format: uuid */
+            pricing_rule_id: string | null;
+            pricing_rule_name: string | null;
+        };
+        PricingEvaluation: {
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            base_cost: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            compare_at_price: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            cost: string | null;
+            cost_currency: string | null;
+            currency: string;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            margin_amount: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            margin_percent: string | null;
+            message: string;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            price: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            rate: string | null;
+            rule: components["schemas"]["PricingRuleRef"] | null;
+            status: string;
+            steps: components["schemas"]["PricingStep"][];
+            warnings: string[];
+        };
+        PricingPlan: {
+            changed: boolean;
+            evaluation: components["schemas"]["PricingEvaluation"];
+            status: string;
+        };
+        PricingPreviewDoc: {
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            base_cost: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            compare_at_price: string | null;
+            conditions_met?: boolean | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            cost: string | null;
+            cost_currency: string | null;
+            currency: string;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            margin_amount: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            margin_percent: string | null;
+            message: string;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            price: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            rate: string | null;
+            rule: components["schemas"]["PricingRuleRef"] | null;
+            status: string;
+            steps: components["schemas"]["PricingStep"][];
+            unmet_conditions?: string[];
+            warnings: string[];
+        };
+        PricingPreviewInput: {
+            category?: string;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            cost: string | null;
+            currency?: string;
+            rule?: components["schemas"]["PricingRuleInput"] | null;
+            /** Format: uuid */
+            rule_id?: string | null;
+            source_domain?: string;
+            /** Format: uuid */
+            supplier_id?: string | null;
+            tag_ids?: string[];
+        };
+        PricingRuleInput: {
+            category_contains?: string;
+            compare_at_mode?: string;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            compare_at_value?: string | null;
+            description?: string;
+            enabled?: boolean | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            fixed_amount?: string | null;
+            fixed_amount_before_markup?: boolean;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            markup_percent?: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            max_cost?: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            min_cost?: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            min_margin_amount?: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            min_margin_percent?: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            min_price?: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            multiplier?: string | null;
+            name: string;
+            /** Format: int32 */
+            priority?: number | null;
+            rounding?: string;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            rounding_ending?: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            rounding_step?: string | null;
+            source_domains?: string[];
+            supplier_ids?: string[];
+            tag_ids?: string[];
+        };
+        PricingRuleRef: {
+            /** Format: uuid */
+            id: string;
+            is_default: boolean;
+            name: string;
+        };
+        PricingRuleView: {
+            category_contains: string;
+            compare_at_mode: string;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            compare_at_value: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: uuid */
+            created_by: string | null;
+            description: string;
+            enabled: boolean;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            fixed_amount: string | null;
+            fixed_amount_before_markup: boolean;
+            /** Format: uuid */
+            id: string;
+            is_default: boolean;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            markup_percent: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            max_cost: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            min_cost: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            min_margin_amount: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            min_margin_percent: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            min_price: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            multiplier: string | null;
+            name: string;
+            /** Format: int32 */
+            priority: number;
+            /** Format: int64 */
+            product_count: number;
+            rounding: string;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            rounding_ending: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            rounding_step: string | null;
+            source_domains: string[];
+            supplier_ids: string[];
+            suppliers: components["schemas"]["SupplierRef"][];
+            tag_ids: string[];
+            tags: components["schemas"]["TagRef"][];
+            /** Format: date-time */
+            updated_at: string;
+        };
+        PricingRulesDoc: {
+            base_currency: string;
+            items: components["schemas"]["PricingRuleView"][];
+        };
+        PricingStep: {
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            amount: string;
+            kind: string;
+            label: string;
+        };
         Product: {
             availability: string;
             brand: string;
@@ -4337,8 +4843,14 @@ export interface components {
              * Format: decimal
              * @example 12.50
              */
+            compare_at_price: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
             cost: string | null;
             cost_currency: string | null;
+            cost_manual: boolean;
             /** Format: date-time */
             created_at: string;
             /** Format: uuid */
@@ -4380,10 +4892,21 @@ export interface components {
              */
             price: string | null;
             price_currency: string | null;
+            price_locked: boolean;
+            /** Format: date-time */
+            priced_at: string | null;
+            /** Format: uuid */
+            pricing_rule_id: string | null;
             review_status: string;
             sku: string;
+            source_currency: string | null;
             source_domain: string;
             source_evidence: unknown;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            source_price: string | null;
             source_url: string | null;
             specifications: unknown;
             status: string;
@@ -4414,8 +4937,14 @@ export interface components {
              * Format: decimal
              * @example 12.50
              */
+            compare_at_price: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
             cost: string | null;
             cost_currency: string | null;
+            cost_manual: boolean;
             /** Format: date-time */
             created_at: string;
             /** Format: uuid */
@@ -4459,11 +4988,24 @@ export interface components {
              */
             price: string | null;
             price_currency: string | null;
+            price_locked: boolean;
+            /** Format: date-time */
+            priced_at: string | null;
+            pricing: components["schemas"]["ProductPricing"];
+            /** Format: uuid */
+            pricing_rule_id: string | null;
+            pricing_rule_name?: string | null;
             primary_image_url?: string | null;
             review_status: string;
             sku: string;
+            source_currency: string | null;
             source_domain: string;
             source_evidence: unknown;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            source_price: string | null;
             source_url: string | null;
             specifications: unknown;
             status: string;
@@ -4547,6 +5089,11 @@ export interface components {
              * Format: decimal
              * @example 12.50
              */
+            compare_at_price?: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
             cost: string | null;
             cost_currency: string | null;
             custom_fields: {
@@ -4566,6 +5113,7 @@ export interface components {
              */
             price: string | null;
             price_currency: string | null;
+            price_locked?: boolean | null;
             sku: string;
             source_url: string | null;
             specifications: {
@@ -4579,8 +5127,42 @@ export interface components {
             tag_ids?: string[];
             title: string;
         };
+        ProductPricing: {
+            base_currency: string;
+            product: components["schemas"]["PricingPlan"];
+            rule_names: {
+                [key: string]: string;
+            };
+            variants: components["schemas"]["VariantPricingPlan"][];
+        };
+        ProductPricingInput: {
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            compare_at_price?: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            price?: string | null;
+            price_currency?: string | null;
+            price_locked: boolean;
+        };
         ProductVariant: {
             availability: string;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            compare_at_price: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            cost: string | null;
+            cost_currency: string | null;
+            cost_manual: boolean;
             /** Format: date-time */
             created_at: string;
             currency: string | null;
@@ -4595,9 +5177,20 @@ export interface components {
              * @example 12.50
              */
             price: string | null;
+            price_locked: boolean;
+            /** Format: date-time */
+            priced_at: string | null;
+            /** Format: uuid */
+            pricing_rule_id: string | null;
             /** Format: uuid */
             product_id: string;
             sku: string;
+            source_currency: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            source_price: string | null;
             title: string;
             /** Format: date-time */
             updated_at: string;
@@ -4615,8 +5208,14 @@ export interface components {
              * Format: decimal
              * @example 12.50
              */
+            compare_at_price: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
             cost: string | null;
             cost_currency: string | null;
+            cost_manual: boolean;
             /** Format: date-time */
             created_at: string;
             /** Format: uuid */
@@ -4658,11 +5257,23 @@ export interface components {
              */
             price: string | null;
             price_currency: string | null;
+            price_locked: boolean;
+            /** Format: date-time */
+            priced_at: string | null;
+            /** Format: uuid */
+            pricing_rule_id: string | null;
+            pricing_rule_name?: string | null;
             primary_image_url?: string | null;
             review_status: string;
             sku: string;
+            source_currency: string | null;
             source_domain: string;
             source_evidence: unknown;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            source_price: string | null;
             source_url: string | null;
             specifications: unknown;
             status: string;
@@ -4810,6 +5421,18 @@ export interface components {
             /** Format: date-time */
             before: string;
         };
+        RateInput: {
+            currency?: string;
+            note?: string;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            rate: string;
+        };
+        RatesInput: {
+            rates: components["schemas"]["RateInput"][];
+        };
         RecordTagsInput: {
             /** Format: uuid */
             entity_id: string;
@@ -4820,6 +5443,9 @@ export interface components {
         RefreshInput: {
             refresh_token: string;
         };
+        ReorderInput: {
+            ids: string[];
+        };
         ReportDetailDoc: {
             findings: components["schemas"]["AnalysisFinding"][];
             report: components["schemas"]["AnalysisReport"];
@@ -4828,6 +5454,67 @@ export interface components {
             content_markdown: string;
             kind: string;
             title: string;
+        };
+        RepriceFilter: {
+            availability?: string;
+            category?: string;
+            q?: string;
+            review_status?: string;
+            source_domain?: string;
+            status?: string;
+            /** Format: uuid */
+            supplier_id?: string | null;
+            /** Format: uuid */
+            tag_id?: string | null;
+        };
+        RepriceInput: {
+            dry_run: boolean;
+            filter?: components["schemas"]["RepriceFilter"] | null;
+            ids?: string[];
+        };
+        RepriceItem: {
+            after: components["schemas"]["PriceSnapshot"];
+            before: components["schemas"]["PriceSnapshot"];
+            changed: boolean;
+            message: string;
+            /** Format: uuid */
+            product_id: string;
+            status: string;
+            title: string;
+            variants: components["schemas"]["RepriceVariant"][];
+            warnings: string[];
+        };
+        RepriceResult: {
+            base_currency: string;
+            dry_run: boolean;
+            items: components["schemas"]["RepriceItem"][];
+            summary: components["schemas"]["RepriceSummary"];
+        };
+        RepriceSummary: {
+            /** Format: int32 */
+            changed: number;
+            /** Format: int32 */
+            locked: number;
+            /** Format: int32 */
+            not_priced: number;
+            /** Format: int32 */
+            products: number;
+            /** Format: int32 */
+            unchanged: number;
+            /** Format: int32 */
+            variants: number;
+            /** Format: int32 */
+            variants_changed: number;
+        };
+        RepriceVariant: {
+            after: components["schemas"]["PriceSnapshot"];
+            before: components["schemas"]["PriceSnapshot"];
+            changed: boolean;
+            message: string;
+            status: string;
+            title: string;
+            /** Format: uuid */
+            variant_id: string;
         };
         ResetPasswordInput: {
             password: string;
@@ -5162,6 +5849,11 @@ export interface components {
             notes: string;
             supplier_sku: string;
         };
+        SupplierRef: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
         SupplierView: {
             address: string;
             certifications: string[];
@@ -5428,6 +6120,17 @@ export interface components {
         };
         VariantInput: {
             availability: string;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            compare_at_price?: string | null;
+            /**
+             * Format: decimal
+             * @example 12.50
+             */
+            cost?: string | null;
+            cost_currency?: string | null;
             currency: string | null;
             image_url: string | null;
             options: {
@@ -5440,8 +6143,14 @@ export interface components {
              * @example 12.50
              */
             price: string | null;
+            price_locked?: boolean | null;
             sku: string;
             title: string;
+        };
+        VariantPricingPlan: {
+            plan: components["schemas"]["PricingPlan"];
+            /** Format: uuid */
+            variant_id: string;
         };
         WorkflowStep: {
             action: string;
@@ -8908,7 +9617,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProductImport"];
+                    "application/json": components["schemas"]["ImportDetail"];
                 };
             };
             /** @description Error */
@@ -9993,6 +10702,357 @@ export interface operations {
             };
         };
     };
+    previewPricing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PricingPreviewInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PricingPreviewDoc"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    listCurrencyRates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CurrencyRatesDoc"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    putCurrencyRates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RatesInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CurrencyRatesDoc"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    putCurrencyRate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                currency: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RateInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CurrencyRate"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    deleteCurrencyRate: {
+        parameters: {
+            query?: {
+                base?: string;
+            };
+            header?: never;
+            path: {
+                currency: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    listPricingRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PricingRulesDoc"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    createPricingRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PricingRuleInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PricingRuleView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    reorderPricingRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReorderInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PricingRulesDoc"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    getPricingRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PricingRuleView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    updatePricingRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PricingRuleInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PricingRuleView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    deletePricingRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
     listProducts: {
         parameters: {
             query?: {
@@ -10159,6 +11219,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FacetsDoc"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    repriceProducts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RepriceInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepriceResult"];
                 };
             };
             /** @description Error */
@@ -10407,6 +11500,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["MergeInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductDetail"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDoc"];
+                };
+            };
+        };
+    };
+    setProductPricing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductPricingInput"];
             };
         };
         responses: {

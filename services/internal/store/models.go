@@ -274,6 +274,16 @@ type Contact struct {
 	SupplierID      *uuid.UUID      `json:"supplier_id"`
 }
 
+type CurrencyRate struct {
+	BaseCurrency string          `json:"base_currency"`
+	Currency     string          `json:"currency"`
+	Rate         decimal.Decimal `json:"rate"`
+	Note         string          `json:"note"`
+	UpdatedBy    *uuid.UUID      `json:"updated_by"`
+	CreatedAt    time.Time       `json:"created_at"`
+	UpdatedAt    time.Time       `json:"updated_at"`
+}
+
 type CustomFieldDefinition struct {
 	ID         uuid.UUID `json:"id"`
 	EntityType string    `json:"entity_type"`
@@ -398,6 +408,36 @@ type PipelineStage struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
+type PricingRule struct {
+	ID                      uuid.UUID        `json:"id"`
+	Name                    string           `json:"name"`
+	Description             string           `json:"description"`
+	Enabled                 bool             `json:"enabled"`
+	Priority                int32            `json:"priority"`
+	IsDefault               bool             `json:"is_default"`
+	SourceDomains           []string         `json:"source_domains"`
+	SupplierIds             []uuid.UUID      `json:"supplier_ids"`
+	CategoryContains        string           `json:"category_contains"`
+	TagIds                  []uuid.UUID      `json:"tag_ids"`
+	MinCost                 *decimal.Decimal `json:"min_cost"`
+	MaxCost                 *decimal.Decimal `json:"max_cost"`
+	MarkupPercent           *decimal.Decimal `json:"markup_percent"`
+	Multiplier              *decimal.Decimal `json:"multiplier"`
+	FixedAmount             *decimal.Decimal `json:"fixed_amount"`
+	FixedAmountBeforeMarkup bool             `json:"fixed_amount_before_markup"`
+	MinPrice                *decimal.Decimal `json:"min_price"`
+	MinMarginPercent        *decimal.Decimal `json:"min_margin_percent"`
+	MinMarginAmount         *decimal.Decimal `json:"min_margin_amount"`
+	Rounding                string           `json:"rounding"`
+	RoundingEnding          *decimal.Decimal `json:"rounding_ending"`
+	RoundingStep            *decimal.Decimal `json:"rounding_step"`
+	CompareAtMode           string           `json:"compare_at_mode"`
+	CompareAtValue          *decimal.Decimal `json:"compare_at_value"`
+	CreatedBy               *uuid.UUID       `json:"created_by"`
+	CreatedAt               time.Time        `json:"created_at"`
+	UpdatedAt               time.Time        `json:"updated_at"`
+}
+
 type Product struct {
 	ID                   uuid.UUID        `json:"id"`
 	OriginalTitle        string           `json:"original_title"`
@@ -438,6 +478,13 @@ type Product struct {
 	CreatedBy            *uuid.UUID       `json:"created_by"`
 	CreatedAt            time.Time        `json:"created_at"`
 	UpdatedAt            time.Time        `json:"updated_at"`
+	SourcePrice          *decimal.Decimal `json:"source_price"`
+	SourceCurrency       *string          `json:"source_currency"`
+	CostManual           bool             `json:"cost_manual"`
+	CompareAtPrice       *decimal.Decimal `json:"compare_at_price"`
+	PriceLocked          bool             `json:"price_locked"`
+	PricingRuleID        *uuid.UUID       `json:"pricing_rule_id"`
+	PricedAt             *time.Time       `json:"priced_at"`
 }
 
 type ProductImage struct {
@@ -475,18 +522,27 @@ type ProductImport struct {
 }
 
 type ProductVariant struct {
-	ID           uuid.UUID        `json:"id"`
-	ProductID    uuid.UUID        `json:"product_id"`
-	Title        string           `json:"title"`
-	Sku          string           `json:"sku"`
-	Options      json.RawMessage  `json:"options"`
-	Price        *decimal.Decimal `json:"price"`
-	Currency     *string          `json:"currency"`
-	Availability string           `json:"availability"`
-	ImageUrl     *string          `json:"image_url"`
-	Position     int32            `json:"position"`
-	CreatedAt    time.Time        `json:"created_at"`
-	UpdatedAt    time.Time        `json:"updated_at"`
+	ID             uuid.UUID        `json:"id"`
+	ProductID      uuid.UUID        `json:"product_id"`
+	Title          string           `json:"title"`
+	Sku            string           `json:"sku"`
+	Options        json.RawMessage  `json:"options"`
+	Price          *decimal.Decimal `json:"price"`
+	Currency       *string          `json:"currency"`
+	Availability   string           `json:"availability"`
+	ImageUrl       *string          `json:"image_url"`
+	Position       int32            `json:"position"`
+	CreatedAt      time.Time        `json:"created_at"`
+	UpdatedAt      time.Time        `json:"updated_at"`
+	SourcePrice    *decimal.Decimal `json:"source_price"`
+	SourceCurrency *string          `json:"source_currency"`
+	Cost           *decimal.Decimal `json:"cost"`
+	CostCurrency   *string          `json:"cost_currency"`
+	CostManual     bool             `json:"cost_manual"`
+	CompareAtPrice *decimal.Decimal `json:"compare_at_price"`
+	PriceLocked    bool             `json:"price_locked"`
+	PricingRuleID  *uuid.UUID       `json:"pricing_rule_id"`
+	PricedAt       *time.Time       `json:"priced_at"`
 }
 
 type RecordTag struct {

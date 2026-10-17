@@ -63,7 +63,9 @@ func Apply(st State, rules []Rule, rates Rates, s Subject, inherited *Money) Out
 	out := Outcome{Result: res, Status: res.Status}
 	switch {
 	case st.Locked:
+		// A locked price is a person's, so it carries no rule.
 		out.Status = OutcomeLocked
+		next.RuleID = nil
 	case res.Status == StatusPriced:
 		out.Status = OutcomeRepriced
 		price := *res.Price

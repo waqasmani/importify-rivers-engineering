@@ -294,3 +294,17 @@ func TestApplyLockedVariantsAndDerivedCost(t *testing.T) {
 		t.Fatalf("no rate: %+v", nr)
 	}
 }
+
+func TestEvaluateRuleDraft(t *testing.T) {
+	draft := Rule{Name: "Draft", Conditions: Conditions{SourceDomains: []string{"alibaba.com"}, MinCost: dp("20")}, Actions: Actions{Multiplier: dp("3")}}
+	res, unmet := EvaluateRule(draft, usd(), Subject{SourceDomain: "shop.example", Cost: dp("10"), CostCurrency: "EUR"})
+	if res.Status != StatusPriced || !res.Price.Equal(d("32.4")) || res.Message != "" || strings.Join(unmet, ",") != "source domain,minimum cost" {
+		t.Fatalf("draft preview: %+v %v", res, unmet)
+	}
+	if _, unmet := EvaluateRule(draft, usd(), Subject{SourceDomain: "www.alibaba.com", Cost: dp("25"), CostCurrency: "USD"}); len(unmet) != 0 {
+		t.Fatalf("draft should match: %v", unmet)
+	}
+	if res, _ := EvaluateRule(draft, usd(), Subject{Cost: dp("1"), CostCurrency: "GBP"}); res.Status != StatusNoRate {
+		t.Fatal("draft preview needs a rate too")
+	}
+}

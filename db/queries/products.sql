@@ -1,9 +1,9 @@
 -- name: ListProducts :many
-SELECT sqlc.embed(p), s.name AS supplier_name,
+SELECT sqlc.embed(p), s.name AS supplier_name, pr.name AS pricing_rule_name,
   coalesce((SELECT pi.url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.position LIMIT 1), '')::text AS primary_image_url,
   (SELECT count(*) FROM product_variants pv WHERE pv.product_id = p.id) AS variant_count,
   count(*) OVER () AS total
-FROM products p LEFT JOIN suppliers s ON s.id = p.supplier_id
+FROM products p LEFT JOIN suppliers s ON s.id = p.supplier_id LEFT JOIN pricing_rules pr ON pr.id = p.pricing_rule_id
 WHERE (sqlc.narg('q')::text IS NULL
        OR rea_search_doc(p.title, p.brand, p.sku, p.description) @@ websearch_to_tsquery('simple', sqlc.narg('q'))
        OR p.normalized_title % lower(sqlc.narg('q')) OR p.title ILIKE '%' || sqlc.narg('q') || '%' OR p.sku ILIKE sqlc.narg('q'))
@@ -33,22 +33,25 @@ SELECT * FROM products WHERE id = $1;
 INSERT INTO products (original_title, title, normalized_title, source_url, canonical_url, source_domain, supplier_id,
   supplier_contact_id, company_id, brand, sku, model, mpn, gtin, identifiers, description, specifications, cost,
   cost_currency, price, price_currency, availability, category, status, review_status, extraction_method,
-  extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by)
+  extraction_confidence, captured_page_id, source_evidence, internal_notes, custom_fields, created_by, source_price,
+  source_currency, cost_manual, compare_at_price, price_locked)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23,
-  $24, $25, $26, $27, $28, $29, $30, $31, $32)
+  $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37)
 RETURNING *;
 
 -- name: UpdateProduct :one
 UPDATE products SET title = $2, normalized_title = $3, source_url = $4, canonical_url = $5, source_domain = $6,
   supplier_id = $7, supplier_contact_id = $8, company_id = $9, brand = $10, sku = $11, model = $12, mpn = $13,
   gtin = $14, identifiers = $15, description = $16, specifications = $17, cost = $18, cost_currency = $19, price = $20,
-  price_currency = $21, availability = $22, category = $23, status = $24, internal_notes = $25, custom_fields = $26
+  price_currency = $21, availability = $22, category = $23, status = $24, internal_notes = $25, custom_fields = $26,
+  cost_manual = $27, compare_at_price = $28, price_locked = $29,
+  pricing_rule_id = CASE WHEN $29 THEN NULL ELSE pricing_rule_id END
 WHERE id = $1 RETURNING *;
 
 -- name: RefreshProductFromCapture :one
 UPDATE products SET original_title = $2, description = CASE WHEN description = '' THEN $3 ELSE description END,
-  specifications = specifications || $4, price = coalesce(sqlc.narg('price'), price),
-  price_currency = coalesce(sqlc.narg('price_currency'), price_currency), availability = $5,
+  specifications = specifications || $4, source_price = coalesce(sqlc.narg('source_price'), source_price),
+  source_currency = coalesce(sqlc.narg('source_currency'), source_currency), availability = $5,
   extraction_method = $6, extraction_confidence = $7, captured_page_id = coalesce(sqlc.narg('captured_page_id'), captured_page_id),
   source_evidence = source_evidence || $8, last_checked_at = now(),
   brand = CASE WHEN brand = '' THEN $9 ELSE brand END, sku = CASE WHEN sku = '' THEN $10 ELSE sku END,
@@ -111,13 +114,23 @@ SELECT * FROM products WHERE id = ANY(sqlc.arg(ids)::uuid[]);
 SELECT * FROM product_variants WHERE product_id = $1 ORDER BY position, title;
 
 -- name: CreateVariant :one
-INSERT INTO product_variants (product_id, title, sku, options, price, currency, availability, image_url, position)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *;
+INSERT INTO product_variants (product_id, title, sku, options, price, currency, availability, image_url, position,
+  source_price, source_currency, cost, cost_currency, cost_manual, compare_at_price, price_locked)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *;
 
 -- name: UpdateVariant :one
 UPDATE product_variants SET title = $3, sku = $4, options = $5, price = $6, currency = $7, availability = $8,
-  image_url = $9, position = $10
+  image_url = $9, position = $10, cost = $11, cost_currency = $12, cost_manual = $13, compare_at_price = $14,
+  price_locked = $15, pricing_rule_id = CASE WHEN $15 THEN NULL ELSE pricing_rule_id END
 WHERE id = $1 AND product_id = $2 RETURNING *;
+
+-- name: RefreshVariantFromCapture :one
+UPDATE product_variants SET title = $3, sku = $4, options = $5, source_price = coalesce(sqlc.narg('source_price'), source_price),
+  source_currency = coalesce(sqlc.narg('source_currency'), source_currency), availability = $6, image_url = $7
+WHERE id = $1 AND product_id = $2 RETURNING *;
+
+-- name: GetVariant :one
+SELECT * FROM product_variants WHERE id = $1 AND product_id = $2;
 
 -- name: DeleteVariant :execrows
 DELETE FROM product_variants WHERE id = $1 AND product_id = $2;

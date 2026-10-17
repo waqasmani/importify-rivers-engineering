@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"slices"
 	"sort"
 	"strings"
 
@@ -30,10 +31,12 @@ func (s *Server) mountProducts(r chi.Router) {
 		r.With(s.requirePerm(auth.PermDataExport)).Get("/export", s.h(s.handleExport("product")))
 		r.With(s.requirePerm(auth.PermProductsWrite)).Post("/", s.h(s.handleCreateProduct))
 		r.With(s.requirePerm(auth.PermProductsWrite)).Post("/bulk", s.h(s.handleBulk("product", s.productBulkActions())))
+		r.With(s.requirePerm(auth.PermProductsWrite)).Post("/reprice", s.h(s.handleRepriceProducts))
 		r.With(s.requirePerm(auth.PermProductsRead)).Get("/{id}", s.h(s.handleGetProduct))
 		r.With(s.requirePerm(auth.PermProductsWrite)).Put("/{id}", s.h(s.handleUpdateProduct))
 		r.With(s.requirePerm(auth.PermProductsDelete)).Delete("/{id}", s.h(s.handleDeleteProduct))
 		r.With(s.requirePerm(auth.PermImportsReview)).Post("/{id}/review", s.h(s.handleReviewProduct))
+		r.With(s.requirePerm(auth.PermProductsWrite)).Put("/{id}/pricing", s.h(s.handleSetProductPricing))
 		r.With(s.requirePerm(auth.PermProductsRead)).Get("/{id}/duplicates", s.h(s.handleProductDuplicates))
 		r.With(s.requirePerm(auth.PermProductsDelete)).Post("/{id}/merge", s.h(s.handleMergeProducts))
 		r.With(s.requirePerm(auth.PermProductsWrite)).Post("/{id}/variants", s.h(s.handleCreateVariant))
@@ -50,7 +53,9 @@ func (s *Server) mountProducts(r chi.Router) {
 
 type productView struct {
 	store.Product
-	SupplierName    *string  `json:"supplier_name,omitempty"`
+	SupplierName *string `json:"supplier_name,omitempty"`
+	// PricingRuleName names the rule that produced the stored selling price.
+	PricingRuleName *string  `json:"pricing_rule_name,omitempty"`
 	PrimaryImageURL *string  `json:"primary_image_url,omitempty"`
 	VariantCount    *int64   `json:"variant_count,omitempty"`
 	Tags            []tagRef `json:"tags"`
@@ -63,6 +68,8 @@ type productDetail struct {
 	Suppliers    []store.ListProductSuppliersRow `json:"suppliers"`
 	Imports      []store.ProductImport           `json:"imports"`
 	CapturedPage *capturedPageSummary            `json:"captured_page,omitempty"`
+	// Pricing is the price breakdown under the current rules (source → cost → rule → price).
+	Pricing ProductPricing `json:"pricing"`
 }
 
 type capturedPageSummary struct {
@@ -104,8 +111,8 @@ func (s *Server) listProducts(r *http.Request, limit, offset int32) ([]productVi
 	for _, row := range rows {
 		vc := row.VariantCount
 		img := row.PrimaryImageUrl
-		out = append(out, productView{Product: row.Product, SupplierName: row.SupplierName, PrimaryImageURL: strPtr(img),
-			VariantCount: &vc, Tags: nonNilTags(tags[row.Product.ID])})
+		out = append(out, productView{Product: row.Product, SupplierName: row.SupplierName, PricingRuleName: row.PricingRuleName,
+			PrimaryImageURL: strPtr(img), VariantCount: &vc, Tags: nonNilTags(tags[row.Product.ID])})
 		total = row.Total
 	}
 	return out, total, nil
@@ -166,6 +173,14 @@ func (s *Server) productDetail(ctx context.Context, p store.Product) (productDet
 				ExtractionMethod: cp.ExtractionMethod, HasSnapshot: cp.HtmlSnapshot != nil, Warnings: cp.Warnings}
 		}
 	}
+	if d.Pricing, err = s.productPricing(ctx, p, d.Variants, d.Tags); err != nil {
+		return d, err
+	}
+	if p.PricingRuleID != nil {
+		if n, found := d.Pricing.RuleNames[p.PricingRuleID.String()]; found {
+			d.PricingRuleName = &n
+		}
+	}
 	return d, nil
 }
 
@@ -205,12 +220,64 @@ type productInput struct {
 	CostCurrency      *string           `json:"cost_currency"`
 	Price             *decimal.Decimal  `json:"price"`
 	PriceCurrency     *string           `json:"price_currency"`
-	Availability      string            `json:"availability"`
-	Category          string            `json:"category"`
-	Status            string            `json:"status"`
-	InternalNotes     string            `json:"internal_notes"`
-	CustomFields      map[string]any    `json:"custom_fields"`
-	TagIDs            []uuid.UUID       `json:"tag_ids,omitempty"`
+	// CompareAtPrice is the list price shown crossed out; kept as entered while the price is locked.
+	CompareAtPrice *decimal.Decimal `json:"compare_at_price,omitempty"`
+	// PriceLocked keeps price and compare-at price as entered. When omitted, entering a price that
+	// differs from the stored one locks it; false hands the price to the pricing rules.
+	PriceLocked   *bool          `json:"price_locked,omitempty"`
+	Availability  string         `json:"availability"`
+	Category      string         `json:"category"`
+	Status        string         `json:"status"`
+	InternalNotes string         `json:"internal_notes"`
+	CustomFields  map[string]any `json:"custom_fields"`
+	TagIDs        []uuid.UUID    `json:"tag_ids,omitempty"`
+}
+
+func sameMoney(a *decimal.Decimal, ac *string, b *decimal.Decimal, bc *string) bool {
+	if a == nil || b == nil {
+		return a == nil && b == nil
+	}
+	return a.Equal(*b) && strOr(ac) == strOr(bc)
+}
+
+func sameAmountPtr(a, b *decimal.Decimal) bool {
+	if a == nil || b == nil {
+		return a == nil && b == nil
+	}
+	return a.Equal(*b)
+}
+
+// costIsManual decides whether an entered cost is a person's own: a cost equal to the one REA
+// derived from the source price stays derived, and clearing the cost makes REA derive it again.
+func costIsManual(cost *decimal.Decimal, cur *string, currentCost *decimal.Decimal, currentCur *string, currentManual, hasCurrent bool) bool {
+	if cost == nil {
+		return false
+	}
+	if hasCurrent && !currentManual && sameMoney(currentCost, currentCur, cost, cur) {
+		return false
+	}
+	return true
+}
+
+// priceIsLocked decides the lock state: explicit when sent, otherwise entering a new price locks it.
+func priceIsLocked(explicit *bool, price *decimal.Decimal, cur *string, currentPrice *decimal.Decimal, currentCur *string, currentLocked bool) bool {
+	if explicit != nil {
+		return *explicit
+	}
+	if price != nil && !sameMoney(currentPrice, currentCur, price, cur) {
+		return true
+	}
+	return currentLocked
+}
+
+// pricingInputsChanged reports whether an edit touched anything the pricing rules depend on.
+func pricingInputsChanged(before, after store.Product, tagsChanged bool) bool {
+	if !after.PriceLocked && (before.PriceLocked || !sameMoney(before.Price, before.PriceCurrency, after.Price, after.PriceCurrency) ||
+		!sameAmountPtr(before.CompareAtPrice, after.CompareAtPrice)) {
+		return true
+	}
+	return tagsChanged || !sameMoney(before.Cost, before.CostCurrency, after.Cost, after.CostCurrency) || before.CostManual != after.CostManual ||
+		before.Category != after.Category || before.SourceDomain != after.SourceDomain || uuidOrNil(before.SupplierID) != uuidOrNil(after.SupplierID)
 }
 
 func moneyCurrency(v *valid.V, amount *decimal.Decimal, cur *string, amountField, curField string) *string {
@@ -265,6 +332,17 @@ func (s *Server) prepareProduct(ctx context.Context, q *store.Queries, in *produ
 	}
 	in.CostCurrency = moneyCurrency(v, in.Cost, in.CostCurrency, "cost", "cost_currency")
 	in.PriceCurrency = moneyCurrency(v, in.Price, in.PriceCurrency, "price", "price_currency")
+	if in.CompareAtPrice != nil {
+		v.Check(!in.CompareAtPrice.IsNegative(), "compare_at_price", "must not be negative")
+		v.Check(in.CompareAtPrice.LessThan(decimal.NewFromInt(10_000_000_000)), "compare_at_price", "is too large")
+	}
+	var cur store.Product
+	if current != nil {
+		cur = *current
+	}
+	locked := priceIsLocked(in.PriceLocked, in.Price, in.PriceCurrency, cur.Price, cur.PriceCurrency, cur.PriceLocked)
+	v.Check(!locked || in.Price != nil, "price", "is required for a locked manual price")
+	costManual := costIsManual(in.Cost, in.CostCurrency, cur.Cost, cur.CostCurrency, cur.CostManual, current != nil)
 	var srcURL, canonical *string
 	domain := ""
 	if in.SourceURL != nil && strings.TrimSpace(*in.SourceURL) != "" {
@@ -318,7 +396,7 @@ func (s *Server) prepareProduct(ctx context.Context, q *store.Queries, in *produ
 		CompanyID: in.CompanyID, Brand: in.Brand, Sku: in.SKU, Model: in.Model, Mpn: in.MPN, Gtin: gtin, Identifiers: idsRaw,
 		Description: in.Description, Specifications: specsRaw, Cost: in.Cost, CostCurrency: in.CostCurrency, Price: in.Price,
 		PriceCurrency: in.PriceCurrency, Availability: in.Availability, Category: in.Category, Status: in.Status,
-		InternalNotes: in.InternalNotes, CustomFields: cf}, nil
+		InternalNotes: in.InternalNotes, CustomFields: cf, CostManual: costManual, CompareAtPrice: in.CompareAtPrice, PriceLocked: locked}, nil
 }
 
 func (s *Server) handleCreateProduct(w http.ResponseWriter, r *http.Request) error {
@@ -339,7 +417,8 @@ func (s *Server) handleCreateProduct(w http.ResponseWriter, r *http.Request) err
 			Specifications: p.Specifications, Cost: p.Cost, CostCurrency: p.CostCurrency, Price: p.Price,
 			PriceCurrency: p.PriceCurrency, Availability: p.Availability, Category: p.Category, Status: "draft",
 			ReviewStatus: "pending", ExtractionMethod: "manual", SourceEvidence: json.RawMessage("{}"),
-			InternalNotes: p.InternalNotes, CustomFields: p.CustomFields, CreatedBy: userIDPtr(r)})
+			InternalNotes: p.InternalNotes, CustomFields: p.CustomFields, CreatedBy: userIDPtr(r), CostManual: p.CostManual,
+			CompareAtPrice: p.CompareAtPrice, PriceLocked: p.PriceLocked})
 		if err != nil {
 			return err
 		}
@@ -352,7 +431,11 @@ func (s *Server) handleCreateProduct(w http.ResponseWriter, r *http.Request) err
 		if err := setRecordTags(r.Context(), q, "product", pr.ID, in.TagIDs); err != nil {
 			return err
 		}
-		return s.audit(r.Context(), q, r, auditEvent{Action: "product.create", EntityType: "product", EntityID: &pr.ID, Summary: "Created product " + pr.Title, After: pr})
+		if err := s.audit(r.Context(), q, r, auditEvent{Action: "product.create", EntityType: "product", EntityID: &pr.ID, Summary: "Created product " + pr.Title, After: pr}); err != nil {
+			return err
+		}
+		pr, _, err = s.priceStoredProduct(r, q, pr.ID, "product created")
+		return err
 	})
 	if err != nil {
 		return err
@@ -393,10 +476,28 @@ func (s *Server) handleUpdateProduct(w http.ResponseWriter, r *http.Request) err
 				return err
 			}
 		}
+		tagsChanged := false
+		if in.TagIDs != nil {
+			old, err := q.TagsForRecord(r.Context(), store.TagsForRecordParams{EntityType: "product", EntityID: id})
+			if err != nil {
+				return err
+			}
+			newIDs := dedupeIDs(in.TagIDs)
+			tagsChanged = len(old) != len(newIDs)
+			for _, t := range old {
+				tagsChanged = tagsChanged || !slices.Contains(newIDs, t.ID)
+			}
+		}
 		if err := setRecordTags(r.Context(), q, "product", id, in.TagIDs); err != nil {
 			return err
 		}
-		return s.audit(r.Context(), q, r, auditEvent{Action: "product.update", EntityType: "product", EntityID: &id, Summary: "Updated product " + pr.Title, Before: before, After: pr})
+		if err := s.audit(r.Context(), q, r, auditEvent{Action: "product.update", EntityType: "product", EntityID: &id, Summary: "Updated product " + pr.Title, Before: before, After: pr}); err != nil {
+			return err
+		}
+		if pricingInputsChanged(before, pr, tagsChanged) {
+			pr, _, err = s.priceStoredProduct(r, q, id, "product edited")
+		}
+		return err
 	})
 	if err != nil {
 		return err
@@ -720,6 +821,13 @@ type variantInput struct {
 	Availability string            `json:"availability"`
 	ImageURL     *string           `json:"image_url"`
 	Position     int32             `json:"position"`
+	// Cost is the variant's own cost; without one it is derived from its source price or the
+	// product's cost.
+	Cost           *decimal.Decimal `json:"cost,omitempty"`
+	CostCurrency   *string          `json:"cost_currency,omitempty"`
+	CompareAtPrice *decimal.Decimal `json:"compare_at_price,omitempty"`
+	// PriceLocked works as for products: omitted, entering a new price locks it.
+	PriceLocked *bool `json:"price_locked,omitempty"`
 }
 
 func (in *variantInput) validate() (json.RawMessage, error) {
@@ -733,6 +841,14 @@ func (in *variantInput) validate() (json.RawMessage, error) {
 	v.Check(in.Title != "" || in.SKU != "" || len(in.Options) > 0, "title", "a title, SKU or option is required")
 	v.OneOf("availability", in.Availability, availabilities...)
 	in.Currency = moneyCurrency(v, in.Price, in.Currency, "price", "currency")
+	in.CostCurrency = moneyCurrency(v, in.Cost, in.CostCurrency, "cost", "cost_currency")
+	if in.CompareAtPrice != nil {
+		v.Check(!in.CompareAtPrice.IsNegative(), "compare_at_price", "must not be negative")
+		v.Check(in.CompareAtPrice.LessThan(decimal.NewFromInt(10_000_000_000)), "compare_at_price", "is too large")
+	}
+	if in.PriceLocked != nil && *in.PriceLocked {
+		v.Check(in.Price != nil, "price", "is required for a locked manual price")
+	}
 	if in.ImageURL != nil && *in.ImageURL != "" {
 		v.URL("image_url", *in.ImageURL)
 	} else {
@@ -762,16 +878,50 @@ func (s *Server) handleCreateVariant(w http.ResponseWriter, r *http.Request) err
 	if err != nil {
 		return err
 	}
-	if _, err := s.db.GetProduct(r.Context(), pid); err != nil {
-		return errNotFound("Product")
-	}
-	v, err := s.db.CreateVariant(r.Context(), store.CreateVariantParams{ProductID: pid, Title: in.Title, Sku: in.SKU, Options: opts,
-		Price: in.Price, Currency: in.Currency, Availability: in.Availability, ImageUrl: in.ImageURL, Position: in.Position})
+	var v store.ProductVariant
+	err = s.db.Tx(r.Context(), func(q *store.Queries, _ pgx.Tx) error {
+		ctx := r.Context()
+		p, err := q.GetProduct(ctx, pid)
+		if err != nil {
+			return errNotFound("Product")
+		}
+		locked := priceIsLocked(in.PriceLocked, in.Price, in.Currency, nil, nil, false)
+		if v, err = q.CreateVariant(ctx, store.CreateVariantParams{ProductID: pid, Title: in.Title, Sku: in.SKU, Options: opts,
+			Price: in.Price, Currency: in.Currency, Availability: in.Availability, ImageUrl: in.ImageURL, Position: in.Position,
+			Cost: in.Cost, CostCurrency: in.CostCurrency, CostManual: in.Cost != nil, CompareAtPrice: in.CompareAtPrice, PriceLocked: locked}); err != nil {
+			return err
+		}
+		if err := s.audit(ctx, q, r, auditEvent{Action: "product.variant_create", EntityType: "product", EntityID: &pid, Summary: "Added variant " + v.Title, After: v}); err != nil {
+			return err
+		}
+		v, err = s.repriceVariant(r, q, p, v, "variant added")
+		return err
+	})
 	if err != nil {
 		return err
 	}
-	_ = s.audit(r.Context(), nil, r, auditEvent{Action: "product.variant_create", EntityType: "product", EntityID: &pid, Summary: "Added variant " + v.Title, After: v})
 	return created(w, v)
+}
+
+// repriceVariant applies the pricing rules to one variant and returns it as stored.
+func (s *Server) repriceVariant(r *http.Request, q *store.Queries, p store.Product, v store.ProductVariant, reason string) (store.ProductVariant, error) {
+	ctx := r.Context()
+	env, err := s.loadPricing(ctx, q)
+	if err != nil {
+		return v, err
+	}
+	tags, err := q.TagsForRecord(ctx, store.TagsForRecordParams{EntityType: "product", EntityID: p.ID})
+	if err != nil {
+		return v, err
+	}
+	ids := make([]uuid.UUID, 0, len(tags))
+	for _, t := range tags {
+		ids = append(ids, t.ID)
+	}
+	if _, _, err := s.repriceProduct(ctx, q, r, env, p, ids, []store.ProductVariant{v}, repriceOpts{variantID: &v.ID, reason: reason}); err != nil {
+		return v, err
+	}
+	return q.GetVariant(ctx, store.GetVariantParams{ID: v.ID, ProductID: p.ID})
 }
 
 func (s *Server) handleUpdateVariant(w http.ResponseWriter, r *http.Request) error {
@@ -791,12 +941,39 @@ func (s *Server) handleUpdateVariant(w http.ResponseWriter, r *http.Request) err
 	if err != nil {
 		return err
 	}
-	v, err := s.db.UpdateVariant(r.Context(), store.UpdateVariantParams{ID: vid, ProductID: pid, Title: in.Title, Sku: in.SKU, Options: opts,
-		Price: in.Price, Currency: in.Currency, Availability: in.Availability, ImageUrl: in.ImageURL, Position: in.Position})
+	var v store.ProductVariant
+	err = s.db.Tx(r.Context(), func(q *store.Queries, _ pgx.Tx) error {
+		ctx := r.Context()
+		p, err := q.GetProduct(ctx, pid)
+		if err != nil {
+			return errNotFound("Product")
+		}
+		before, err := q.GetVariant(ctx, store.GetVariantParams{ID: vid, ProductID: pid})
+		if err != nil {
+			return errNotFound("Variant")
+		}
+		locked := priceIsLocked(in.PriceLocked, in.Price, in.Currency, before.Price, before.Currency, before.PriceLocked)
+		if locked && in.Price == nil {
+			return errField("price", "is required for a locked manual price")
+		}
+		costManual := costIsManual(in.Cost, in.CostCurrency, before.Cost, before.CostCurrency, before.CostManual, true)
+		if v, err = q.UpdateVariant(ctx, store.UpdateVariantParams{ID: vid, ProductID: pid, Title: in.Title, Sku: in.SKU, Options: opts,
+			Price: in.Price, Currency: in.Currency, Availability: in.Availability, ImageUrl: in.ImageURL, Position: in.Position,
+			Cost: in.Cost, CostCurrency: in.CostCurrency, CostManual: costManual, CompareAtPrice: in.CompareAtPrice, PriceLocked: locked}); err != nil {
+			return err
+		}
+		if err := s.audit(ctx, q, r, auditEvent{Action: "product.variant_update", EntityType: "product", EntityID: &pid, Summary: "Updated variant " + v.Title, Before: before, After: v}); err != nil {
+			return err
+		}
+		changed := !locked && (before.PriceLocked || !sameMoney(before.Price, before.Currency, v.Price, v.Currency) || !sameAmountPtr(before.CompareAtPrice, v.CompareAtPrice))
+		if changed || !sameMoney(before.Cost, before.CostCurrency, v.Cost, v.CostCurrency) || before.CostManual != v.CostManual {
+			v, err = s.repriceVariant(r, q, p, v, "variant edited")
+		}
+		return err
+	})
 	if err != nil {
 		return err
 	}
-	_ = s.audit(r.Context(), nil, r, auditEvent{Action: "product.variant_update", EntityType: "product", EntityID: &pid, Summary: "Updated variant " + v.Title, After: v})
 	return ok(w, v)
 }
 
@@ -907,10 +1084,12 @@ func (s *Server) importProductRow(r *http.Request, q *store.Queries, row map[str
 	payload := products.Payload{Title: row["title"], URL: row["source_url"], Brand: row["brand"], SKU: row["sku"], Model: row["model"],
 		MPN: row["mpn"], GTIN: row["gtin"], Description: row["description"], Category: row["category"],
 		Availability: row["availability"], ExtractionMethod: "csv"}
-	if row["price"] != "" {
-		pr := row["price"]
-		payload.Price = &pr
-		payload.Currency = row["price_currency"]
+	// A source price is the supplier's price, as an import from a page would observe it; a price
+	// column is the selling price the user already decided on, kept as a locked manual price.
+	if row["source_price"] != "" {
+		sp := row["source_price"]
+		payload.Price = &sp
+		payload.Currency = row["source_currency"]
 	}
 	if row["image_url"] != "" {
 		payload.Images = []products.Image{{URL: row["image_url"]}}
@@ -933,6 +1112,20 @@ func (s *Server) importProductRow(r *http.Request, q *store.Queries, row map[str
 		}
 		costCur = &c
 	}
+	var manualPrice *decimal.Decimal
+	var manualCur *string
+	if row["price"] != "" {
+		res, okp := normalize.ParsePrice(row["price"], strings.ToUpper(row["price_currency"]))
+		if !okp {
+			return "", errField("price", "is not a number")
+		}
+		c := res.Currency
+		if c == "" {
+			c = s.importSettings(ctx).DefaultCurrency
+		}
+		amt := res.Amount.Round(4)
+		manualPrice, manualCur = &amt, &c
+	}
 	supplierID, err := s.findOrCreateSupplier(r, q, row["supplier"])
 	if err != nil {
 		return "", err
@@ -947,13 +1140,25 @@ func (s *Server) importProductRow(r *http.Request, q *store.Queries, row map[str
 				return "skipped", nil
 			}
 			existing := cands[0].ID
-			if _, err := s.refreshProduct(r, q, existing, n, nil); err != nil {
+			pr, err := s.refreshProduct(r, q, existing, n, nil)
+			if err != nil {
 				return "", err
 			}
-			return "updated", s.addTagNames(ctx, q, "product", existing, row["tags"])
+			if manualPrice != nil {
+				if _, err := q.SetProductPricing(ctx, store.SetProductPricingParams{ID: existing, Cost: pr.Cost, CostCurrency: pr.CostCurrency,
+					Price: manualPrice, PriceCurrency: manualCur, CompareAtPrice: pr.CompareAtPrice, PriceLocked: true, PricedAt: pr.PricedAt}); err != nil {
+					return "", err
+				}
+			}
+			if err := s.addTagNames(ctx, q, "product", existing, row["tags"]); err != nil {
+				return "", err
+			}
+			_, _, err = s.priceStoredProduct(r, q, existing, "CSV import")
+			return "updated", err
 		}
 	}
-	p, err := s.createProductFromNormalized(r, q, n, productExtras{SupplierID: supplierID, Cost: cost, CostCurrency: costCur})
+	p, err := s.createProductFromNormalized(r, q, n, productExtras{SupplierID: supplierID, Cost: cost, CostCurrency: costCur,
+		ManualPrice: manualPrice, ManualPriceCurrency: manualCur})
 	if err != nil {
 		return "", err
 	}
@@ -964,5 +1169,9 @@ func (s *Server) importProductRow(r *http.Request, q *store.Queries, row map[str
 		CreatedBy: userIDPtr(r), ProcessedAt: nowPtr()}); err != nil {
 		return "", err
 	}
-	return "created", s.addTagNames(ctx, q, "product", p.ID, row["tags"])
+	if err := s.addTagNames(ctx, q, "product", p.ID, row["tags"]); err != nil {
+		return "", err
+	}
+	_, _, err = s.priceStoredProduct(r, q, p.ID, "CSV import")
+	return "created", err
 }

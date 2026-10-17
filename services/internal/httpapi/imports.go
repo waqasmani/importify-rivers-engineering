@@ -25,8 +25,9 @@ func nowPtr() *time.Time { t := time.Now(); return &t }
 func (s *Server) mountImports(r chi.Router) {
 	r.Route("/imports", func(r chi.Router) {
 		r.With(s.requirePerm(auth.PermProductsRead)).Get("/", s.h(s.handleListImports))
-		r.With(s.requirePerm(auth.PermProductsWrite)).Post("/products/check", s.h(s.handleCheckProductImport))
-		r.With(s.requirePerm(auth.PermProductsWrite)).Post("/products", s.h(s.handleSubmitProductImport))
+		// Integration keys with imports.write may submit products; they land in review like any import.
+		r.With(s.requirePerm(auth.PermProductsWrite, auth.ScopeImportsWrite)).Post("/products/check", s.h(s.handleCheckProductImport))
+		r.With(s.requirePerm(auth.PermProductsWrite, auth.ScopeImportsWrite)).Post("/products", s.h(s.handleSubmitProductImport))
 		r.With(s.requirePerm(auth.PermProductsRead)).Get("/{id}", s.h(s.handleGetImport))
 		r.With(s.requirePerm(auth.PermProductsWrite)).Post("/{id}/resolve", s.h(s.handleResolveImport))
 	})
@@ -206,6 +207,9 @@ func (s *Server) handleCheckProductImport(w http.ResponseWriter, r *http.Request
 	if err := decodeLimit(r, &in, 4<<20); err != nil {
 		return err
 	}
+	if err := checkIntegrationImport(r, &in); err != nil {
+		return err
+	}
 	n, errs := s.normalizeImport(r.Context(), &in)
 	resp := checkResponse{Normalized: n, Warnings: n.Warnings, Errors: errs, Duplicates: []duplicateCandidate{}}
 	if len(errs) == 0 {
@@ -217,7 +221,38 @@ func (s *Server) handleCheckProductImport(w http.ResponseWriter, r *http.Request
 		resp.Definite = definiteDuplicate(resp.Duplicates)
 		resp.Supplier = s.suggestSupplier(r.Context(), s.db.Queries, n)
 	}
+	if principal(r).Integration != nil {
+		stripRecords(resp.Duplicates)
+		if resp.Supplier != nil {
+			resp.Supplier.Record = nil
+		}
+	}
 	return ok(w, resp)
+}
+
+// stripRecords removes full records from duplicate candidates. Integration keys only learn which
+// existing products look similar, not their stored data (costs, notes, suppliers).
+func stripRecords(c []duplicateCandidate) {
+	for i := range c {
+		c[i].Record = nil
+	}
+}
+
+// checkIntegrationImport limits what an integration key may ask of the import endpoints: the
+// source is always "api", existing products are never overwritten directly (a likely duplicate is
+// parked for a person to decide), and no CRM records are created.
+func checkIntegrationImport(r *http.Request, in *importRequest) error {
+	if principal(r).Integration == nil {
+		return nil
+	}
+	if in.Source != "" && in.Source != "api" {
+		return errField("source", "must be api for integration keys")
+	}
+	in.Source = "api"
+	if in.Decision == "update_existing" {
+		return errForbidden("Integration keys cannot update existing products. Submit without a decision; a likely duplicate is parked in the import queue for review.")
+	}
+	return nil
 }
 
 type importOutcome struct {
@@ -236,6 +271,9 @@ func (s *Server) handleSubmitProductImport(w http.ResponseWriter, r *http.Reques
 		return err
 	}
 	p := principal(r)
+	if err := checkIntegrationImport(r, &in); err != nil {
+		return err
+	}
 	if in.Source == "" {
 		in.Source = "api"
 		if p.DeviceID != nil {
@@ -358,6 +396,9 @@ func (s *Server) handleSubmitProductImport(w http.ResponseWriter, r *http.Reques
 	})
 	if err != nil {
 		return err
+	}
+	if p.Integration != nil {
+		stripRecords(out.Duplicates)
 	}
 	if out.Status == "needs_decision" {
 		writeJSON(w, http.StatusAccepted, out)

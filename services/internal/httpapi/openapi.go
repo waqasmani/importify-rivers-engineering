@@ -15,8 +15,10 @@ import (
 
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/ai"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/analysis"
+	"github.com/waqasmani/importify-rivers-engineering/services/internal/catalog"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/products"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/store"
+	"github.com/waqasmani/importify-rivers-engineering/services/internal/webhooks"
 )
 
 // The OpenAPI document is generated from the Go request and response types so that it cannot
@@ -32,6 +34,7 @@ type opDoc struct {
 	Multipart                      []string // form fields; "file" is the upload
 	Produces                       string   // non-JSON response media type
 	Public                         bool
+	ETag                           bool // answers 304 when If-None-Match matches the ETag
 }
 
 func op(method, path, id, tag, summary string, req, resp any, status int, query ...string) opDoc {
@@ -42,6 +45,7 @@ func op(method, path, id, tag, summary string, req, resp any, status int, query 
 }
 
 func (o opDoc) public() opDoc               { o.Public = true; return o }
+func (o opDoc) etag() opDoc                 { o.ETag = true; return o }
 func (o opDoc) produces(mt string) opDoc    { o.Produces = mt; return o }
 func (o opDoc) multipart(f ...string) opDoc { o.Multipart = f; return o }
 
@@ -228,6 +232,26 @@ func Operations() []opDoc {
 		op("GET", "/api/v1/ai/jobs/{id}", "getAIJob", "AI", "An AI job with output and grounding", nil, aiJobDetailDoc{}, 200),
 		op("POST", "/api/v1/ai/jobs/{id}/cancel", "cancelAIJob", "AI", "Cancel a queued job", nil, nil, 204),
 		op("POST", "/api/v1/ai/jobs/{id}/apply", "applyAIJob", "AI", "Apply reviewed AI output to the record", applyInput{}, aiApplyDoc{}, 200),
+
+		op("GET", "/api/v1/catalog/products", "listCatalogProducts", "Catalog", "Published products in catalog version order (keyset pagination; cursor from next_cursor)", nil, CatalogProductPage{}, 200,
+			"cursor", "limit", "updated_since", "tag", "category", "availability", "source_domain", "sku", "fields").etag(),
+		op("GET", "/api/v1/catalog/products/by-sku/{sku}", "getCatalogProductBySKU", "Catalog", "A published product by product or variant SKU (409 when several match)", nil, catalog.CatalogProduct{}, 200, "fields").etag(),
+		op("GET", "/api/v1/catalog/products/{id}", "getCatalogProduct", "Catalog", "One published product", nil, catalog.CatalogProduct{}, 200, "fields").etag(),
+		op("GET", "/api/v1/catalog/changes", "listCatalogChanges", "Catalog", "Ordered change feed with tombstones (410 when the cursor is outside the retained feed)", nil, CatalogChangePage{}, 200, "since", "limit", "fields"),
+		op("GET", "/api/v1/integrations/config", "integrationsConfig", "Catalog", "Scopes, event types, API base URL and webhook delivery policy", nil, integrationsConfigDoc{}, 200),
+		op("GET", "/api/v1/integrations/keys", "listIntegrationKeys", "Catalog", "Integration keys with usage", nil, Items[IntegrationKeyView]{}, 200),
+		op("POST", "/api/v1/integrations/keys", "createIntegrationKey", "Catalog", "Create an integration key (the token is returned only once)", createIntegrationKeyInput{}, integrationKeyCreatedDoc{}, 201),
+		op("DELETE", "/api/v1/integrations/keys/{id}", "revokeIntegrationKey", "Catalog", "Revoke an integration key", nil, nil, 204),
+		op("GET", "/api/v1/integrations/webhooks", "listWebhooks", "Catalog", "Webhook endpoints", nil, Items[WebhookView]{}, 200),
+		op("POST", "/api/v1/integrations/webhooks", "createWebhook", "Catalog", "Register a webhook endpoint (the signing secret is returned only once)", webhookInput{}, webhookCreatedDoc{}, 201),
+		op("GET", "/api/v1/integrations/webhooks/{id}", "getWebhook", "Catalog", "One webhook endpoint", nil, WebhookView{}, 200),
+		op("PUT", "/api/v1/integrations/webhooks/{id}", "updateWebhook", "Catalog", "Update, enable or disable a webhook endpoint", webhookInput{}, WebhookView{}, 200),
+		op("DELETE", "/api/v1/integrations/webhooks/{id}", "deleteWebhook", "Catalog", "Delete a webhook endpoint and its delivery log", nil, nil, 204),
+		op("POST", "/api/v1/integrations/webhooks/{id}/rotate-secret", "rotateWebhookSecret", "Catalog", "Issue a new signing secret (the previous one also signs for 24 hours)", nil, webhookCreatedDoc{}, 200),
+		op("POST", "/api/v1/integrations/webhooks/{id}/test", "testWebhook", "Catalog", "Send a signed webhook.test event now and return the result", nil, WebhookDeliveryDetail{}, 200),
+		op("GET", "/api/v1/integrations/webhooks/{id}/deliveries", "listWebhookDeliveries", "Catalog", "Delivery log of an endpoint (newest first)", nil, Page[WebhookDeliveryView]{}, 200, "status", "limit", "offset"),
+		op("GET", "/api/v1/integrations/deliveries/{id}", "getWebhookDelivery", "Catalog", "A delivery with its payload and attempts", nil, WebhookDeliveryDetail{}, 200),
+		op("POST", "/api/v1/integrations/deliveries/{id}/redeliver", "redeliverWebhook", "Catalog", "Queue the same event again", nil, WebhookDeliveryDetail{}, 202),
 
 		op("GET", "/api/v1/admin/export", "fullExport", "Data", "Download all data as JSON Lines in a ZIP", nil, nil, 200).produces("application/zip"),
 		op("GET", "/api/v1/admin/backups", "listBackups", "Data", "Database backups", nil, backupListDoc{}, 200),
@@ -449,6 +473,11 @@ func BuildOpenAPI(version string) map[string]any {
 		if o.ID == "createAIJob" {
 			responses["409"] = map[string]any{"description": "AI unavailable, or confirmation required before data leaves the server", "content": map[string]any{"application/json": map[string]any{"schema": g.schema(reflect.TypeOf(externalConfirmDoc{}))}}}
 		}
+		if o.ETag {
+			params = append(params, map[string]any{"name": "If-None-Match", "in": "header", "required": false, "schema": map[string]any{"type": "string"},
+				"description": "ETag of a previous response; 304 Not Modified when nothing changed"})
+			responses["304"] = map[string]any{"description": "Not modified since the ETag sent in If-None-Match"}
+		}
 		operation := map[string]any{"operationId": o.ID, "tags": []string{o.Tag}, "summary": o.Summary, "parameters": params, "responses": responses}
 		if o.Public {
 			operation["security"] = []any{}
@@ -474,18 +503,48 @@ func BuildOpenAPI(version string) map[string]any {
 	return map[string]any{
 		"openapi": "3.0.3",
 		"info": map[string]any{"title": "REA and Importify CRM API", "version": version,
-			"description": "Self-hosted API for REA (Reverse Engineering Anything) and Importify CRM. Browser sessions use the session cookie plus the X-CSRF-Token header on unsafe methods; the browser extension and scripts use Bearer tokens."},
-		"servers":  []any{map[string]any{"url": "/"}},
-		"security": []any{map[string]any{"session": []any{}}, map[string]any{"bearer": []any{}}},
-		"paths":    paths,
+			"description": "Self-hosted API for REA (Reverse Engineering Anything) and Importify CRM. Browser sessions use the session cookie plus the X-CSRF-Token header on unsafe methods; the browser extension and scripts use Bearer tokens; external systems use integration keys (reai_...) on the Catalog endpoints."},
+		"servers":    []any{map[string]any{"url": "/"}},
+		"security":   []any{map[string]any{"session": []any{}}, map[string]any{"bearer": []any{}}},
+		"paths":      paths,
+		"x-webhooks": webhookDoc(g),
 		"components": map[string]any{
 			"schemas": g.components,
 			"securitySchemes": map[string]any{
 				"session": map[string]any{"type": "apiKey", "in": "cookie", "name": "rea_session", "description": "__Host-rea_session when served over HTTPS"},
-				"bearer":  map[string]any{"type": "http", "scheme": "bearer", "description": "Extension access tokens (reaa_...) and personal API tokens (reap_...)"},
+				"bearer":  map[string]any{"type": "http", "scheme": "bearer", "description": "Extension access tokens (reaa_...), personal API tokens (reap_...) and integration keys (reai_...)"},
 			},
 		},
 	}
+}
+
+// webhookDoc describes the requests REA sends to registered webhook endpoints (OpenAPI 3.0 has no
+// webhooks section, so it is an x- extension; the body schema is CatalogEvent).
+func webhookDoc(g *schemaGen) map[string]any {
+	header := func(name, desc string) map[string]any {
+		return map[string]any{"name": name, "in": "header", "required": true, "description": desc, "schema": map[string]any{"type": "string"}}
+	}
+	types := []string{}
+	for _, e := range catalog.EventTypes {
+		types = append(types, e.Type)
+	}
+	types = append(types, catalog.EventTest)
+	return map[string]any{"catalogEvent": map[string]any{"post": map[string]any{
+		"summary": "Catalog event delivered to a registered endpoint",
+		"description": "POSTed as JSON for every subscribed event (" + strings.Join(types, ", ") + "). Verify " + webhooks.HeaderSignature +
+			": v1=hex(HMAC-SHA256(secret, timestamp + \".\" + raw body)); during a secret rotation two v1 values are sent. " +
+			"Answer 2xx within the timeout; anything else is retried with exponential backoff. Deduplicate on the event id.",
+		"parameters": []any{
+			header(webhooks.HeaderEventID, "Event ID, identical across retries and redeliveries"),
+			header(webhooks.HeaderEventType, "Event type"),
+			header(webhooks.HeaderDeliveryID, "Delivery ID (a redelivery has a new one)"),
+			header(webhooks.HeaderTimestamp, "Unix seconds when the request was signed; reject old timestamps"),
+			header(webhooks.HeaderSignature, "Comma-separated v1=<hex HMAC-SHA256> signatures"),
+		},
+		"requestBody": map[string]any{"required": true, "content": map[string]any{"application/json": map[string]any{
+			"schema": g.schema(reflect.TypeOf(catalog.CatalogEvent{}))}}},
+		"responses": map[string]any{"200": map[string]any{"description": "Any 2xx status acknowledges the delivery"}},
+	}}}
 }
 
 func itoaStatus(n int) string {

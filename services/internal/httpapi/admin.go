@@ -70,6 +70,8 @@ var exportTables = []struct{ name, query string }{
 	{"ai_provider_configs", "SELECT id, name, kind, base_url, model, is_default, enabled, is_local, allow_external_data, supports_vision, temperature, max_output_tokens, timeout_seconds, created_at, updated_at FROM ai_provider_configs"},
 	{"ai_jobs", "SELECT * FROM ai_jobs"},
 	{"extension_devices", "SELECT id, user_id, name, browser, extension_version, created_at, last_seen_at, revoked_at FROM extension_devices"},
+	{"integration_keys", "SELECT id, name, description, token_prefix, scopes, expires_at, last_used_at, created_by, created_by_label, created_at, revoked_at, revoked_by FROM integration_keys"},
+	{"webhook_endpoints", "SELECT id, name, url, events, enabled, include_costs, secret_prefix, change_cursor, consecutive_failures, disabled_reason, disabled_at, created_by, created_at, updated_at FROM webhook_endpoints"},
 	{"audit_logs", "SELECT * FROM audit_logs ORDER BY id DESC LIMIT 200000"},
 }
 
@@ -114,7 +116,7 @@ func (s *Server) handleFullExport(w http.ResponseWriter, r *http.Request) error 
 		counts[t.name] = n
 	}
 	manifest, _ := json.MarshalIndent(map[string]any{"format": "rea-export-v1", "exported_at": time.Now().UTC(), "server_version": s.cfg.Version,
-		"tables": counts, "notes": "JSON Lines, one row per line. Passwords, sessions, API tokens and encrypted AI keys are excluded. Attachment files are in the data directory backup."}, "", "  ")
+		"tables": counts, "notes": "JSON Lines, one row per line. Passwords, sessions, API tokens, integration key hashes, webhook secrets and encrypted AI keys are excluded. Attachment files are in the data directory backup."}, "", "  ")
 	if f, err := zw.Create("manifest.json"); err == nil {
 		_, _ = f.Write(manifest)
 	}

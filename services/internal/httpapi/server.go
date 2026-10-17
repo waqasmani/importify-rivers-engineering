@@ -20,6 +20,7 @@ import (
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/ratelimit"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/secretbox"
 	"github.com/waqasmani/importify-rivers-engineering/services/internal/store"
+	"github.com/waqasmani/importify-rivers-engineering/services/internal/webhooks"
 )
 
 // Server holds the dependencies shared by every handler.
@@ -33,6 +34,9 @@ type Server struct {
 
 	limMu    sync.Mutex
 	limiters []*ratelimit.Limiter
+	// integrationLimiter is keyed by integration key ID.
+	integrationLimiter *ratelimit.Limiter
+	hooks              *webhooks.Dispatcher
 
 	setupMu    sync.Mutex
 	setupToken string
@@ -57,7 +61,11 @@ func New(cfg *config.Config, db *store.DB, log *slog.Logger, deps Deps) (*Server
 	if deps.Wake == nil {
 		deps.Wake = func() {}
 	}
-	return &Server{cfg: cfg, db: db, log: log, box: box, files: files, deps: deps}, nil
+	s := &Server{cfg: cfg, db: db, log: log, box: box, files: files, deps: deps}
+	s.integrationLimiter = s.newLimiter(float64(cfg.IntegrationRateLimit), max(10, cfg.IntegrationRateLimit/6))
+	host, _ := os.Hostname()
+	s.hooks = webhooks.New(cfg, db, box, log, "api-"+host)
+	return s, nil
 }
 
 // Box exposes the secret box for other subsystems (the AI worker decrypts provider keys).

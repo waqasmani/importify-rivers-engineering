@@ -553,6 +553,7 @@ describe.each(defs.map((d) => [d.key, d] as const))('%s fixture', (key, d) => {
     expect(p.price_amount).toBe(want.price)
     expect(p.currency).toBe(want.currency)
     expect(page.pageType).toBe('product')
+    expect(page.inspector.platform?.key).toBe(key)
   })
 
   it('extracts images', () => {

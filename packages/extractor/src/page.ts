@@ -114,6 +114,12 @@ export function analyzePage(doc: Document, pageUrl: string, adapters: AdapterCon
     inspector = emptyInspector()
     warnings.push(`the page inspector failed: ${truncate(message(e), 200)}`)
   }
+  // A marketplace definition that recognised the page names the platform more precisely than
+  // technology markers do.
+  const marketplace = results.find((r) => r.cfg.kind === 'rules' && r.output.matched)
+  if (marketplace && inspector.platform?.key !== marketplace.cfg.key) {
+    inspector.platform = { key: marketplace.cfg.key, label: marketplace.cfg.name, evidence: `the ${marketplace.cfg.name} definition recognised the page` }
+  }
   const pageType = detectPageType(ctx, product.detected, inspector.generator)
   const title = truncate(collapse(doc.title || meta(doc, 'og:title') || product.payload.title), 500)
   const description = truncate(meta(doc, 'description') || meta(doc, 'og:description'), 2000)

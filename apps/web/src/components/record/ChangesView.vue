@@ -39,9 +39,9 @@ const rows = computed<Row[]>(() => {
   <details v-if="rows.length" class="text-xs text-slate-600">
     <summary class="cursor-pointer text-slate-500 hover:text-slate-800">{{ rows.length }} change{{ rows.length === 1 ? '' : 's' }}</summary>
     <dl class="mt-1 space-y-0.5 rounded bg-slate-50 p-2">
-      <div v-for="r in rows" :key="r.field" class="grid grid-cols-[8rem_1fr] gap-2">
+      <div v-for="r in rows" :key="r.field" class="grid grid-cols-[8rem_minmax(0,1fr)] gap-2">
         <dt class="truncate font-medium text-slate-700">{{ r.field.replace(/_/g, ' ') }}</dt>
-        <dd class="break-words"><span v-if="r.before" class="text-slate-400 line-through">{{ r.before }}</span> <span>{{ r.after }}</span></dd>
+        <dd class="min-w-0 wrap-anywhere"><span v-if="r.before" class="text-slate-400 line-through">{{ r.before }}</span> <span>{{ r.after }}</span></dd>
       </div>
     </dl>
   </details>

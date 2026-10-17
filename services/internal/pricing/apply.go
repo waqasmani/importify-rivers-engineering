@@ -1,6 +1,8 @@
 package pricing
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 )
@@ -46,9 +48,15 @@ type Outcome struct {
 // a cost of its own is priced from inherited (the product's cost).
 func Apply(st State, rules []Rule, rates Rates, s Subject, inherited *Money) Outcome {
 	next := st
+	var derivation *Step
 	if !st.CostManual && st.SourcePrice != nil && st.SourceCurrency != "" {
-		c, cur, _ := rates.DeriveCost(*st.SourcePrice, st.SourceCurrency)
+		c, cur, converted := rates.DeriveCost(*st.SourcePrice, st.SourceCurrency)
 		next.Cost, next.CostCurrency = &c, cur
+		if converted && st.SourceCurrency != rates.Base {
+			rate, _ := rates.Rate(st.SourceCurrency)
+			derivation = &Step{Kind: "source", Amount: c, Label: fmt.Sprintf("Source price %s %s at 1 %s = %s %s",
+				st.SourcePrice.String(), st.SourceCurrency, st.SourceCurrency, rate.String(), rates.Base)}
+		}
 	}
 	s.Cost, s.CostCurrency = nil, ""
 	switch {
@@ -60,6 +68,9 @@ func Apply(st State, rules []Rule, rates Rates, s Subject, inherited *Money) Out
 		s.Cost, s.CostCurrency = &c, inherited.Currency
 	}
 	res := Evaluate(rules, rates, s)
+	if derivation != nil && res.Status == StatusPriced {
+		res.Steps = append([]Step{*derivation}, res.Steps...)
+	}
 	out := Outcome{Result: res, Status: res.Status}
 	switch {
 	case st.Locked:

@@ -256,6 +256,9 @@ func TestApplyLockedVariantsAndDerivedCost(t *testing.T) {
 		!out.State.Price.Equal(d("21.6")) || out.State.PriceCurrency != "USD" || !out.State.CompareAt.Equal(d("32.4")) || *out.State.RuleID != rule.ID {
 		t.Fatalf("apply: %+v", out.State)
 	}
+	if st0 := out.Result.Steps[0]; st0.Kind != "source" || st0.Label != "Source price 10 EUR at 1 EUR = 1.08 USD" || !st0.Amount.Equal(d("10.8")) {
+		t.Fatalf("derivation step missing: %+v", out.Result.Steps)
+	}
 	// Applying again changes nothing.
 	if again := Apply(out.State, rules, usd(), subject, nil); again.Changed {
 		t.Fatal("repricing an up-to-date product must be a no-op")

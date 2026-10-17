@@ -41,8 +41,10 @@ async function submit() {
     <form class="grid gap-4 sm:grid-cols-2" @submit.prevent="submit">
       <div class="rounded-md bg-slate-50 p-3 text-sm text-slate-600 sm:col-span-2">
         <p class="font-medium text-slate-800">Setup token</p>
-        <p>{{ status.data.value?.setup_token_hint || 'The server wrote a one-time token to its data directory. Read it on the server and paste it here.' }}</p>
-        <pre class="mt-2 overflow-x-auto rounded bg-white px-2 py-1 text-xs">docker compose exec api cat /data/setup-token</pre>
+        <p>{{ status.data.value?.setup_token_hint || 'The server holds a one-time setup token. Read it on the server and paste it here.' }}</p>
+        <p class="mt-2">With Docker Compose it is in <code>deploy/.env</code>:</p>
+        <pre class="mt-1 overflow-x-auto rounded bg-white px-2 py-1 text-xs">grep '^REA_SETUP_TOKEN=' deploy/.env | cut -d= -f2</pre>
+        <p class="mt-2">Otherwise it is the <code>setup-token</code> file in the API's data directory.</p>
       </div>
       <FormField v-slot="{ id }" label="Setup token" required :error="errors.setup_token" class="sm:col-span-2">
         <input :id="id" v-model="form.setup_token" class="input font-mono" autocomplete="off" required />

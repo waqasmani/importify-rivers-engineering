@@ -132,7 +132,7 @@ function onApplied() {
     </template>
     <template v-else-if="status.data.value && !status.data.value.configured">
       <p class="text-sm text-slate-600">
-        No AI provider is configured. {{ status.data.value.message }}
+        {{ status.data.value.message || 'No AI provider is configured.' }}
         <RouterLink v-if="auth.can('ai.configure')" to="/settings/ai" class="text-brand-700 hover:underline">Configure a provider</RouterLink>
       </p>
     </template>
